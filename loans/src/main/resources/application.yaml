@@ -1,11 +1,12 @@
 server:
-  port: 8092
+  port: 8093
+
 spring:
   application:
-    name: cards
+    name: loans
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:jdbc:postgresql://localhost:5424/cards}
+    url: ${DB_URL:jdbc:postgresql://localhost:5425/loans}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   flyway:
@@ -18,4 +19,3 @@ spring:
   docker:
     compose:
       lifecycle-management: start_only
-      file: compose.yml
