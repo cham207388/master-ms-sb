@@ -17,6 +17,7 @@ services:
       start_period: 30s
     networks:
       - loans
+
   loans-api:
     build:
       context: .

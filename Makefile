@@ -1,5 +1,10 @@
-.PHONY: accounts-build cards-build loans-build
+.PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
+        cards cards-build cards-db-up cards-db-down cards-api-run \
+        loans loans-build loans-db-up loans-db-down loans-api dbs-down
 
+# ==============================================================================
+# Accounts Service
+# ==============================================================================
 accounts-build:
 	cd accounts && ./gradlew clean build
 
@@ -7,45 +12,52 @@ accounts-db-up:
 	cd accounts && docker compose up accounts-db -d
 
 accounts-db-down:
-	cd accounts && docker compose down accounts-db -v
+	docker compose -f accounts/compose.yml down accounts-db -v
 
 accounts-api-run:
-	cd accounts && docker compose up accounts-api -d
+	docker compose -f accounts/compose.yml up accounts-api -d
 
-accounts: accounts-db-up accounts-api-run
-	echo "accounts service is running"
+accounts:
+	docker compose -f accounts/compose.yml up -d
 
+# ==============================================================================
+# Cards Service
+# ==============================================================================
 cards-build:
 	cd cards && ./gradlew clean build
 
 cards-db-up:
-	cd cards && docker compose up cards-db -d
+	docker compose -f cards/compose.yml up cards-db -d
 
 cards-db-down:
-	cd cards && docker compose down cards-db -v
+	docker compose -f cards/compose.yml down cards-db -v
 
 cards-api-run:
-	cd cards && docker compose up cards-api -d
+	docker compose -f cards/compose.yml up cards-api -d
 
+cards:
+	docker compose -f cards/compose.yml up -d
 
-cards: cards-db-up cards-api-run
-	echo "cards service is running"
-	
-
+# ==============================================================================
+# Loans Service
+# ==============================================================================
 loans-build:
 	cd loans && ./gradlew clean build
 
 loans-db-up:
-	cd loans && docker compose up loans-db -d
+	docker compose -f loans/compose.yml up loans-db -d
 
 loans-db-down:
-	cd loans && docker compose down loans-db -v
+	docker compose -f loans/compose.yml down loans-db -v
 
 loans-api:
-	cd loans && docker compose up loans-api -d
+	docker compose -f loans/compose.yml up loans-api -d
 
-loans: loans-db-up loans-api-run
-	echo "loans service is running"
+loans:
+	docker compose -f loans/compose.yml up -d
 
+# ==============================================================================
+# Global / Teardown
+# ==============================================================================
 dbs-down: accounts-db-down cards-db-down loans-db-down
-	echo "all dbs are down"
+	@echo "all dbs are down"
