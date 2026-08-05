@@ -6,9 +6,36 @@ services:
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:
-      - '5425:5432'
+      - '5423:5432'
     volumes:
       - loans-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d loans" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - loans
+  loans-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: loans-api
+    ports:
+      - '8091:8091'
+    environment:
+      - 'DB_URL=jdbc:postgresql://loans-db:5432/loans'
+      - 'DB_USERNAME=postgres'
+      - 'DB_PASSWORD=postgres'
+    depends_on:
+      loans-db:
+        condition: service_healthy
+    networks:
+      - loans
 
 volumes:
   loans-pg-volume:
+networks:
+  loans:
+    driver: bridge

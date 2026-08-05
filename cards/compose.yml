@@ -6,9 +6,36 @@ services:
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:
-      - '5424:5432'
+      - '5423:5432'
     volumes:
       - cards-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cards" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cards
+  cards-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cards-api
+    ports:
+      - '8091:8091'
+    environment:
+      - 'DB_URL=jdbc:postgresql://cards-db:5432/cards'
+      - 'DB_USERNAME=postgres'
+      - 'DB_PASSWORD=postgres'
+    depends_on:
+      cards-db:
+        condition: service_healthy
+    networks:
+      - cards
 
 volumes:
   cards-pg-volume:
+networks:
+  cards:
+    driver: bridge

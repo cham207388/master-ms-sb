@@ -4,13 +4,13 @@ accounts-build:
 	cd accounts && ./gradlew clean build
 
 accounts-db-up:
-	docker compose up accounts-db -d
+	cd accounts && docker compose up accounts-db -d
 
 accounts-db-down:
-	docker compose down accounts-db -v
+	cd accounts && docker compose down accounts-db -v
 
 accounts-api-run:
-	docker compose up accounts-api -d
+	cd accounts && docker compose up accounts-api -d
 
 accounts: accounts-db-up accounts-api-run
 	echo "accounts service is running"
@@ -19,13 +19,14 @@ cards-build:
 	cd cards && ./gradlew clean build
 
 cards-db-up:
-	docker compose up cards-db -d
+	cd cards && docker compose up cards-db -d
 
 cards-db-down:
-	docker compose down cards-db -v
+	cd cards && docker compose down cards-db -v
 
 cards-api-run:
-	docker compose up cards-api -d
+	cd cards && docker compose up cards-api -d
+
 
 cards: cards-db-up cards-api-run
 	echo "cards service is running"
@@ -35,19 +36,16 @@ loans-build:
 	cd loans && ./gradlew clean build
 
 loans-db-up:
-	docker compose up loans-db -d
+	cd loans && docker compose up loans-db -d
 
 loans-db-down:
-	docker compose down loans-db -v
+	cd loans && docker compose down loans-db -v
 
 loans-api:
-	docker compose up loans-api -d
+	cd loans && docker compose up loans-api -d
 
 loans: loans-db-up loans-api-run
 	echo "loans service is running"
-
-dbs-up: accounts-db-up cards-db-up loans-db-up
-	echo "all dbs are running"
 
 dbs-down: accounts-db-down cards-db-down loans-db-down
 	echo "all dbs are down"
