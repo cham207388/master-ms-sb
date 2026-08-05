@@ -81,6 +81,10 @@ When adding or updating endpoints, models, or database schemas:
 3. **OpenAPI / Swagger Annotations**:
    - Annotate controllers with `@Tag(name = "...", description = "...")`.
    - Annotate methods with `@Operation(summary = "...", description = "...")` and `@ApiResponses`.
+   - UI is available at `/swagger-ui/index.html` for each microservice.
+     - Accounts: http://localhost:8091/swagger-ui/index.html
+     - Cards: http://localhost:8092/swagger-ui/index.html
+     - Loans: http://localhost:8093/swagger-ui/index.html
 
 4. **Flyway Migrations**:
    - Never modify existing, already-applied Flyway SQL scripts.
