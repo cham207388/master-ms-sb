@@ -26,7 +26,9 @@ services:
     ports:
       - '8091:8091'
     environment:
-      - 'DB_URL=jdbc:postgresql://accounts-db:5432/accounts'
+      - 'DB_NAME=accounts'
+      - 'DB_HOST=accounts-db'
+      - 'DB_PORT=5432'
       - 'DB_USERNAME=postgres'
       - 'DB_PASSWORD=postgres'
     depends_on:

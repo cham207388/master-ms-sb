@@ -6,7 +6,7 @@ spring:
     name: loans
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DB_URL:jdbc:postgresql://localhost:5425/loans}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5425}/${DB_NAME:loans}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   flyway:
