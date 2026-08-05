@@ -1,0 +1,99 @@
+services:
+  accounts-db:
+    image: 'postgres:18-alpine'
+    environment:
+      - 'POSTGRES_DB=accounts'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5423:5432'
+    volumes:
+      - accounts-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accounts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  cards-db:
+    image: 'postgres:18-alpine'
+    environment:
+      - 'POSTGRES_DB=cards'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5424:5432'
+    volumes:
+      - cards-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cards"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  loans-db:
+    image: 'postgres:18-alpine'
+    environment:
+      - 'POSTGRES_DB=loans'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5425:5432'
+    volumes:
+      - loans-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d loans"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  accounts-api:
+    build:
+      context: ./accounts
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    environment:
+      - 'DB_URL=jdbc:postgresql://accounts-db:5423/accounts'
+      - 'DB_USERNAME=postgres'
+      - 'DB_PASSWORD=postgres'
+    depends_on:
+      accounts-db:
+        condition: service_healthy
+    
+
+  cards-api:
+    build:
+      context: ./cards
+      dockerfile: Dockerfile
+    ports:
+      - '8081:8080'
+    environment:
+      - 'DB_URL=jdbc:postgresql://cards-db:5424/cards'
+      - 'DB_USERNAME=postgres'
+      - 'DB_PASSWORD=postgres'
+    depends_on:
+      cards-db:
+        condition: service_healthy
+
+  loans-api:
+    build:
+      context: ./loans
+      dockerfile: Dockerfile
+    ports:
+      - '8082:8080'
+    environment:
+      - 'DB_URL=jdbc:postgresql://loans-db:5425/loans'
+      - 'DB_USERNAME=postgres'
+      - 'DB_PASSWORD=postgres'
+    depends_on:
+      loans-db:
+        condition: service_healthy
+
+volumes:
+  accounts-pg-volume:
+  cards-pg-volume:
+  loans-pg-volume:
