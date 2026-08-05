@@ -16,7 +16,7 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - secure-banking
+      - accounts
   accounts-api:
     build:
       context: .
@@ -25,17 +25,17 @@ services:
     ports:
       - '8091:8091'
     environment:
-      - 'DB_URL=jdbc:postgresql://accounts-db:5423/accounts'
+      - 'DB_URL=jdbc:postgresql://accounts-db:5432/accounts'
       - 'DB_USERNAME=postgres'
       - 'DB_PASSWORD=postgres'
     depends_on:
       accounts-db:
         condition: service_healthy
     networks:
-      - secure-banking
+      - accounts
 
 volumes:
   accounts-pg-volume:
 networks:
-  secure-banking:
+  accounts:
     driver: bridge
