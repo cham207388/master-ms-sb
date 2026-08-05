@@ -1,5 +1,6 @@
 package com.abcham.accounts.exception;
 
+import com.abcham.accounts.dto.ErrorResponseDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
