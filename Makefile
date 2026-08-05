@@ -12,13 +12,13 @@ accounts-db-down:
 accounts-api-run:
 	docker compose up accounts-api -d
 
-accounts: accounts-build accounts-db-up accounts-api-run
+accounts: accounts-db-up accounts-api-run
 	echo "accounts service is running"
 
 cards-build:
 	cd cards && ./gradlew clean build
 
-cards-db:
+cards-db-up:
 	docker compose up cards-db -d
 
 cards-db-down:
@@ -34,7 +34,7 @@ cards: cards-build cards-db-up cards-api-run
 loans-build:
 	cd loans && ./gradlew clean build
 
-loans-db:
+loans-db-up:
 	docker compose up loans-db -d
 
 loans-db-down:
@@ -46,8 +46,8 @@ loans-api:
 loans: loans-build loans-db-up loans-api-run
 	echo "loans service is running"
 
-dbs-up:
-    docker compose up -d
+dbs-up: accounts-db-up cards-db-up loans-db-up
+	echo "all dbs are running"
 
-dbs-down:
-    docker compose down -v
+dbs-down: accounts-db-down cards-db-down loans-db-down
+	echo "all dbs are down"

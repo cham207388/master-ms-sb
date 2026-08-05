@@ -1,6 +1,7 @@
 services:
   accounts-db:
     image: 'postgres:18-alpine'
+    container_name: accounts-db
     environment:
       - 'POSTGRES_DB=accounts'
       - 'POSTGRES_PASSWORD=postgres'
@@ -10,14 +11,17 @@ services:
     volumes:
       - accounts-pg-volume:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d accounts"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d accounts" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - secure-banking
 
   cards-db:
     image: 'postgres:18-alpine'
+    container_name: cards-db
     environment:
       - 'POSTGRES_DB=cards'
       - 'POSTGRES_PASSWORD=postgres'
@@ -27,14 +31,17 @@ services:
     volumes:
       - cards-pg-volume:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d cards"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cards" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - secure-banking
 
   loans-db:
     image: 'postgres:18-alpine'
+    container_name: loans-db
     environment:
       - 'POSTGRES_DB=loans'
       - 'POSTGRES_PASSWORD=postgres'
@@ -44,18 +51,21 @@ services:
     volumes:
       - loans-pg-volume:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d loans"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d loans" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - secure-banking
 
   accounts-api:
     build:
       context: ./accounts
       dockerfile: Dockerfile
+    container_name: accounts-api
     ports:
-      - '8080:8080'
+      - '8091:8091'
     environment:
       - 'DB_URL=jdbc:postgresql://accounts-db:5423/accounts'
       - 'DB_USERNAME=postgres'
@@ -63,14 +73,16 @@ services:
     depends_on:
       accounts-db:
         condition: service_healthy
-    
+    networks:
+      - secure-banking
 
   cards-api:
     build:
       context: ./cards
       dockerfile: Dockerfile
+    container_name: cards-api
     ports:
-      - '8081:8080'
+      - '8092:8092'
     environment:
       - 'DB_URL=jdbc:postgresql://cards-db:5424/cards'
       - 'DB_USERNAME=postgres'
@@ -78,13 +90,16 @@ services:
     depends_on:
       cards-db:
         condition: service_healthy
+    networks:
+      - secure-banking
 
   loans-api:
     build:
       context: ./loans
       dockerfile: Dockerfile
+    container_name: loans-api
     ports:
-      - '8082:8080'
+      - '8093:8093'
     environment:
       - 'DB_URL=jdbc:postgresql://loans-db:5425/loans'
       - 'DB_USERNAME=postgres'
@@ -92,8 +107,14 @@ services:
     depends_on:
       loans-db:
         condition: service_healthy
+    networks:
+      - secure-banking
 
 volumes:
   accounts-pg-volume:
   cards-pg-volume:
   loans-pg-volume:
+
+networks:
+  secure-banking:
+    driver: bridge

@@ -15,7 +15,7 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     out-of-order: false
-  docker:
-    compose:
-      lifecycle-management: start_only
-      file: compose.yml
+#  docker:
+#    compose:
+#      lifecycle-management: start_only
+#      file: compose.yml
