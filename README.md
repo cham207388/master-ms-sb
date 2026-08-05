@@ -5,6 +5,7 @@
 ![Spring Dependency Management](https://img.shields.io/badge/Dependency%20Management-1.1.7-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
+![Testcontainers](https://img.shields.io/badge/Testcontainers-1.20.4-black.svg)
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
@@ -55,6 +56,7 @@ graph TD
 | **Database** | PostgreSQL 18 Alpine | Containerized relational database per microservice (`postgres:18-alpine`) |
 | **Database Migration**| Flyway (`org.flywaydb:flyway-database-postgresql`) | Versioned SQL database migrations (`db/migration/V1__init.sql`) |
 | **API Documentation**| SpringDoc OpenAPI 3.0 (`3.0.2`) | Automated Swagger UI (`/swagger-ui.html`) & OpenAPI documentation |
+| **Testing** | Spring Boot Testcontainers | Ephemeral PostgreSQL containers (`@ServiceConnection`) for isolated integration tests |
 | **Containerization** | Docker & Docker Compose | Multi-stage container builds & per-service orchestration (`compose.yml`) |
 | **Utilities** | Project Lombok, Jakarta Validation | Boilerplate reduction & declarative bean validation (`@Valid`, `@Pattern`) |
 
