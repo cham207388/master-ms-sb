@@ -6,7 +6,7 @@ services:
       - 'POSTGRES_PASSWORD=postgres'
       - 'POSTGRES_USER=postgres'
     ports:
-      - '5423:5432'
+      - '5424:5432'
     volumes:
       - cards-pg-volume:/var/lib/postgresql
     healthcheck:
@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: cards-api
     ports:
-      - '8091:8091'
+      - '8092:8092'
     environment:
       - 'DB_URL=jdbc:postgresql://cards-db:5432/cards'
       - 'DB_USERNAME=postgres'
