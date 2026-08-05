@@ -24,10 +24,10 @@ cards-db-up:
 cards-db-down:
 	docker compose down cards-db -v
 
-cards-api:
+cards-api-run:
 	docker compose up cards-api -d
 
-cards: cards-build cards-db-up cards-api-run
+cards: cards-db-up cards-api-run
 	echo "cards service is running"
 	
 
@@ -43,7 +43,7 @@ loans-db-down:
 loans-api:
 	docker compose up loans-api -d
 
-loans: loans-build loans-db-up loans-api-run
+loans: loans-db-up loans-api-run
 	echo "loans service is running"
 
 dbs-up: accounts-db-up cards-db-up loans-db-up
