@@ -1,0 +1,13 @@
+build:
+  version: "1.0"
+
+loans:
+  message: "Welcome to SecureBank loans related default APIs"
+  contactDetails:
+    name: "Reine Aishwarya - Product Owner"
+    email: "default@abcham.com"
+  onCallSupport:
+    - (453) 392-4829
+    - (236) 203-0384
+  environment:
+    name: "default"

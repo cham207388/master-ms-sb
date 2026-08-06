@@ -1,0 +1,43 @@
+services:
+  config-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - '8071:8071'
+    environment:
+      RABBITMQ_HOST: rabbit-mq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent localhost:8071/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - config-server
+  rabbit-mq:
+    image: 'rabbitmq:3.12-management'
+    container_name: rabbit-mq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - config-server
+networks:
+  config-server:
+    driver: bridge

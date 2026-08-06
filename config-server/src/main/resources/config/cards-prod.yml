@@ -1,0 +1,13 @@
+build:
+  version: "2.0"
+
+cards:
+  message: "Welcome to SecureBank cards related prod APIs"
+  contactDetails:
+    name: "Ebrahim - Product Owner"
+    email: "alhagie@abcham.com"
+  onCallSupport:
+    - (453) 392-4829
+    - (236) 203-0384
+  environment:
+    name: "prod"
