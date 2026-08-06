@@ -1,0 +1,18 @@
+services:
+  shared-network:
+    networks:
+      - securedbank
+  microservices-base:
+    extends:
+      service: shared-network
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+  microservice-config-server:
+    extends: 
+      service: microservices-base
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://host.docker.internal:8071
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
