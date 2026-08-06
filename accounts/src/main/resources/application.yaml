@@ -16,6 +16,8 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     out-of-order: false
+  config:
+    import: "optional:configserver:http://localhost:8071"
 #  docker:
 #    compose:
 #      lifecycle-management: start_only

@@ -3,6 +3,9 @@ plugins {
 	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
+ext {
+	springCloudVersion = "2025.1.2"
+}
 
 group = 'com.abcham'
 version = '0.0.1-SNAPSHOT'
@@ -27,6 +30,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 	// Dedicated Flyway PostgreSQL Database Module (Required)
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	// PostgreSQL JDBC Driver (Compatible with PostgreSQL 18)
 	runtimeOnly 'org.postgresql:postgresql'
 
@@ -45,6 +49,11 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+}
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
+	}
 }
 
 tasks.named('test') {
