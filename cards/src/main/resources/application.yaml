@@ -15,6 +15,19 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     out-of-order: false
+  config:
+    import: "optional:configserver:http://localhost:8071"
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+management:
+  endpoint:
+    web:
+      exposure:
+        include: "*"
 #  docker:
 #    compose:
 #      lifecycle-management: start_only
