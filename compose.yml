@@ -1,0 +1,163 @@
+services:
+  accounts-db:
+    image: 'postgres:18-alpine'
+    container_name: accounts-db
+    environment:
+      POSTGRES_DB: accounts
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5423:5432'
+    volumes:
+      - accounts-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d accounts" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - securedbank
+
+  accounts-api:
+    build:
+      context: ./accounts
+      dockerfile: Dockerfile
+    container_name: accounts-api
+    ports:
+      - '8091:8091'
+    environment:
+      DB_NAME: accounts
+      DB_HOST: accounts-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CONFIG_SERVER_URL: http://host.docker.internal:8071/
+      RABBITMQ_HOST: "host.docker.internal"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      accounts-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - securedbank
+
+  cards-db:
+    image: 'postgres:18-alpine'
+    container_name: cards-db
+    environment:
+      POSTGRES_DB: cards
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5424:5432'
+    volumes:
+      - cards-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cards" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - securedbank
+
+  cards-api:
+    build:
+      context: ./cards
+      dockerfile: Dockerfile
+    container_name: cards-api
+    ports:
+      - '8092:8092'
+    environment:
+      DB_NAME: cards
+      DB_HOST: cards-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CONFIG_SERVER_URL: http://host.docker.internal:8071/
+      RABBITMQ_HOST: "host.docker.internal"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      cards-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - securedbank
+
+  loans-db:
+    image: 'postgres:18-alpine'
+    container_name: loans-db
+    environment:
+      POSTGRES_DB: loans
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5425:5432'
+    volumes:
+      - loans-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d loans" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - securedbank
+
+  loans-api:
+    build:
+      context: ./loans
+      dockerfile: Dockerfile
+    container_name: loans-api
+    ports:
+      - '8093:8093'
+    environment:
+      DB_NAME: loans
+      DB_HOST: loans-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CONFIG_SERVER_URL: http://host.docker.internal:8071/
+      RABBITMQ_HOST: "host.docker.internal"
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      loans-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - securedbank
+
+volumes:
+  accounts-pg-volume:
+  cards-pg-volume:
+  loans-pg-volume:
+
+networks:
+  securedbank:
+    driver: bridge

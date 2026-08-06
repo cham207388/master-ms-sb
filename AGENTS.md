@@ -6,7 +6,7 @@ Welcome to the **EazyBank Microservices Platform** codebase. This file provides 
 
 ## 🏛 Architecture & Domain Boundaries
 
-The application is structured as a domain-driven microservices architecture composed of independent, decoupled Spring Boot services located in subdirectories:
+The application is structured as a domain-driven microservices architecture composed of independent, decoupled Spring Boot services operating alongside centralized Spring Cloud infrastructure:
 
 1. **Accounts Microservice** ([`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts))
    - **Server Port**: `8091`
@@ -23,19 +23,26 @@ The application is structured as a domain-driven microservices architecture comp
    - **Database**: PostgreSQL 18 on host port `5425` (DB: `loans`)
    - **Domain**: Customer loan creation, repayment tracking, and outstanding balance management.
 
+4. **Centralized Configuration & Event Bus Infrastructure**
+   - **Spring Cloud Config Server**: Port `8071` (exposing `/accounts/default`, `/cards/default`, `/loans/default`).
+   - **RabbitMQ Message Broker**: Port `5672` (Management UI: `15672`) providing Spring Cloud Bus AMQP for dynamic configuration refresh (`/actuator/busrefresh`).
+
 ---
 
 ## ⚙️ Tech Stack & Toolchain Standards
 
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` configured in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Spring Data JPA, Actuator, Flyway).
+- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-bus-amqp`).
 - **Dependency Management**: Spring Dependency Management `1.1.7`.
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
 - **Database Migration**: Flyway (`org.flywaydb:flyway-database-postgresql`), with scripts located at `src/main/resources/db/migration/V1__init.sql`.
 - **API Documentation**: SpringDoc OpenAPI 3.0 (`springdoc-openapi-starter-webmvc-ui:3.0.2`).
 - **Testing & Testcontainers**: Spring Boot Testcontainers (`org.springframework.boot:spring-boot-testcontainers`), Testcontainers PostgreSQL (`org.testcontainers:postgresql:1.20.4`), and JUnit 5 integration (`org.testcontainers:junit-jupiter:1.20.4`) with `@ServiceConnection` for isolated containerized integration testing.
 - **Build System**: Independent Gradle wrapper scripts (`./gradlew`) inside each microservice directory, managed globally via the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile).
-- **Containerization**: Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root user `producer:producer`.
+- **Containerization & Orchestration**:
+  - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root user `producer:producer`.
+  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all databases and API containers via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
 
 ---
 
@@ -54,14 +61,19 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Build: `make accounts-build`, `make cards-build`, `make loans-build`
      - Databases: `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
      - Service Stacks: `make accounts`, `make cards`, `make loans`
+     - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`
+     - Config Server & RabbitMQ: `make rabbit-mq-up`, `make config-server-up`, `make config-all-up`, `make config-all-down`
 
-3. **Database Configuration**:
-   - Database connection settings in `application.yaml` use the environment variables:
-     - `DB_HOST` (default: `localhost`)
-     - `DB_PORT` (defaults: `5423`, `5424`, `5425`)
-     - `DB_NAME` (defaults: `accounts`, `cards`, `loans`)
-     - `DB_USERNAME` (default: `postgres`)
-     - `DB_PASSWORD` (default: `postgres`)
+3. **Orchestration with Root Compose**:
+   - To bring up the entire platform (all DBs and APIs) on the `securedbank` network:
+     - `docker compose up -d`
+     - `docker compose down -v`
+
+4. **Environment Configuration**:
+   - Settings in `application.yaml` use the environment variables:
+     - Database: `DB_HOST` (`localhost`), `DB_PORT` (`5423`, `5424`, `5425`), `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
+     - Config Server: `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/`)
+     - Event Bus / RabbitMQ: `RABBITMQ_HOST` (default: `localhost` or `host.docker.internal`), `RABBITMQ_PORT` (`5672`), `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`
 
 ---
 
