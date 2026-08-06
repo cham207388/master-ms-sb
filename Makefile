@@ -15,7 +15,7 @@ accounts-db-down:
 	docker compose -f accounts/compose.yml down accounts-db -v
 
 accounts-api-run:
-	docker compose -f accounts/compose.yml up accounts-api -d
+	docker compose -f accounts/compose.yml up accounts-api -d --build
 
 accounts:
 	docker compose -f accounts/compose.yml up -d

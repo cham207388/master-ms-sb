@@ -31,6 +31,10 @@ services:
       - 'DB_PORT=5432'
       - 'DB_USERNAME=postgres'
       - 'DB_PASSWORD=postgres'
+      - 'CONFIG_SERVER_URL=http://host.docker.internal:8071/'
+      - 'RABBITMQ_HOST=host.docker.internal'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       accounts-db:
         condition: service_healthy

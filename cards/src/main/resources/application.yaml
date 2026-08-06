@@ -16,7 +16,7 @@ spring:
     clean-disabled: true
     out-of-order: false
   config:
-    import: "optional:configserver:http://localhost:8071"
+    import: "configserver:${CONFIG_SERVER_URL:http://localhost:8071/}"
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -24,7 +24,7 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
 
 management:
-  endpoint:
+  endpoints:
     web:
       exposure:
         include: "*"
