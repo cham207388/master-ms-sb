@@ -26,6 +26,26 @@ spring:
     listener:
       simple:
         missing-queues-fatal: false
+  cloud:
+    stream:
+      rabbit:
+        binder:
+          quorum:
+            enabled: false
+        bindings:
+          springCloudBusInput:
+            consumer:
+              quorum:
+                enabled: false
+        default:
+          quorum:
+            enabled: false
+          consumer:
+            quorum:
+              enabled: false
+            queue-type: classic
+
+
 
 logging:
   level:
