@@ -30,6 +30,8 @@ spring:
 logging:
   level:
     org.springframework.amqp.rabbit.listener.BlockingQueueConsumer: ERROR
+    org.springframework.amqp.rabbit.connection.CachingConnectionFactory: ERROR
+
 
 
 management:

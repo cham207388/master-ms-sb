@@ -26,36 +26,15 @@ spring:
     listener:
       simple:
         missing-queues-fatal: false
-  cloud:
-    stream:
-      rabbit:
-        binder:
-          quorum:
-            enabled: false
-        bindings:
-          springCloudBusInput:
-            consumer:
-              quorum:
-                enabled: false
-        default:
-          quorum:
-            enabled: false
-          consumer:
-            quorum:
-              enabled: false
-            queue-type: classic
-
-
 
 logging:
   level:
     org.springframework.amqp.rabbit.listener.BlockingQueueConsumer: ERROR
+    org.springframework.amqp.rabbit.connection.CachingConnectionFactory: ERROR
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-#  docker:
-#    compose:
-#      lifecycle-management: start_only
+
