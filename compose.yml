@@ -76,7 +76,7 @@ services:
         condition: service_healthy
     extends:
       file: common-docker-config.yml
-      service: microservice-with-config-server
+      service: microservice-with-config-eureka
 
   cards-db:
     image: 'postgres:18-alpine'
@@ -117,7 +117,7 @@ services:
         condition: service_healthy
     extends:
       file: common-docker-config.yml
-      service: microservice-with-config-server
+      service: microservice-with-config-eureka
   loans-db:
     image: 'postgres:18-alpine'
     container_name: loans-db
@@ -157,7 +157,7 @@ services:
         condition: service_healthy
     extends:
       file: common-docker-config.yml
-      service: microservice-with-config-server
+      service: microservice-with-config-eureka
 
 volumes:
   accounts-pg-volume:
