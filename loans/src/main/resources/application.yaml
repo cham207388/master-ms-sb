@@ -30,7 +30,7 @@ management:
       exposure:
         include: "*"
   info:
-    build:
+    env:
       enabled: true
   endpoint:
     shutdown:
