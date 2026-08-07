@@ -24,10 +24,33 @@ logging:
     org.springframework.amqp.rabbit.listener.BlockingQueueConsumer: ERROR
     org.springframework.amqp.rabbit.connection.CachingConnectionFactory: ERROR
 
-
-
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  info:
+    build:
+      enabled: true
+  endpoint:
+    shutdown:
+      enabled: true
+
+endpoints:
+  shutdown:
+    enabled: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8070/eureka/
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: "Loans Service"
+    version: ${APP_VERSION:1.0.0}

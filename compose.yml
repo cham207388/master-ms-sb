@@ -14,6 +14,26 @@ services:
       start_period: 10s
     networks:
       - securedbank
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - '8070:8070'
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8071/
+    healthcheck:
+      test: "wget -q --spider http://localhost:8070/actuator/health/readiness || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - securedbank
+    depends_on:
+      config-server:
+        condition: service_healthy
 
   accounts-db:
     image: 'postgres:18-alpine'
@@ -49,10 +69,13 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8070/
     depends_on:
       accounts-db:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
     deploy:
       resources:
@@ -99,10 +122,13 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8070/
     depends_on:
       cards-db:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
     deploy:
       resources:
@@ -145,10 +171,13 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8070/
     depends_on:
       loans-db:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
     deploy:
       resources:

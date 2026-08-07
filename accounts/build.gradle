@@ -31,6 +31,7 @@ dependencies {
 	// Dedicated Flyway PostgreSQL Database Module (Required)
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 //	implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
 	// PostgreSQL JDBC Driver (Compatible with PostgreSQL 18)
 	runtimeOnly 'org.postgresql:postgresql'

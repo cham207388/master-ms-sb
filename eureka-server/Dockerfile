@@ -19,12 +19,12 @@ RUN ./gradlew build --no-daemon -x test
 # Second stage: runtime image
 FROM eclipse-temurin:25-jre-alpine
 
-RUN addgroup -S -g 1000 producer && \
-    adduser -S -u 1000 -G producer producer && \
+RUN addgroup -S -g 1000 eureka && \
+    adduser -S -u 1000 -G eureka eureka && \
     mkdir -p /app && \
-    chown producer:producer /app
+    chown eureka:eureka /app
 
-USER producer
+USER eureka
 
 # Set working directory
 WORKDIR /app
@@ -33,7 +33,7 @@ WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 
 # Expose the application port
-EXPOSE 8071
+EXPOSE 8070
 
 # Run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
