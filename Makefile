@@ -1,6 +1,7 @@
 .PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
         cards cards-build cards-db-up cards-db-down cards-api-run \
-        loans loans-build loans-db-up loans-db-down loans-api dbs-down
+        loans loans-build loans-db-up loans-db-down loans-api \
+        eureka-server-build eureka-server-up eureka-server-down dbs-down
 
 # ==============================================================================
 # Accounts Service
@@ -65,6 +66,18 @@ loans:
 
 loans-down:
 	docker compose -f loans/compose.yml down -d
+
+# ==============================================================================
+# Eureka Server
+# ==============================================================================
+eureka-server-build:
+	cd eureka-server && ./gradlew clean build
+
+eureka-server-up:
+	docker compose up eureka-server -d
+
+eureka-server-down:
+	docker compose stop eureka-server
 
 # ==============================================================================
 # Config Server

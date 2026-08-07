@@ -3,6 +3,7 @@
 ![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.2-blue.svg)
+![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Bus-ff6600.svg)
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
@@ -10,7 +11,7 @@
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)) and dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**).
+An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)), service registration & discovery ([**Eureka Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)), and dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**).
 
 ---
 
@@ -22,6 +23,7 @@ graph TD
 
     subgraph Infrastructure [Shared Network: securedbank]
         ConfigServer[Spring Cloud Config Server<br/>Port: 8071]
+        EurekaServer[Spring Cloud Eureka Server<br/>Port: 8070]
         RabbitMQ[RabbitMQ Event Bus<br/>Port: 5672]
     end
 
@@ -47,6 +49,10 @@ graph TD
     CardsApp -.->|Fetch Config| ConfigServer
     LoansApp -.->|Fetch Config| ConfigServer
 
+    AccountsApp -.->|Register & Discover| EurekaServer
+    CardsApp -.->|Register & Discover| EurekaServer
+    LoansApp -.->|Register & Discover| EurekaServer
+
     AccountsApp <==>|Spring Cloud Bus| RabbitMQ
     CardsApp <==>|Spring Cloud Bus| RabbitMQ
     LoansApp <==>|Spring Cloud Bus| RabbitMQ
@@ -67,6 +73,7 @@ graph TD
 | **Language** | Java 25 | Latest Java Toolchain standard (`JavaLanguageVersion.of(25)`) |
 | **Framework** | Spring Boot 4.1.0 | Core microservice framework (Spring Web MVC, Data JPA, Actuator) |
 | **Central Config** | Spring Cloud Config 2025.1.2 | Centralized configuration management ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)) |
+| **Service Discovery**| Spring Cloud Netflix Eureka | Service registration server & management dashboard ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)) |
 | **Event Bus** | Spring Cloud Bus AMQP | Event-driven dynamic configuration refresh via RabbitMQ (`/actuator/busrefresh`) |
 | **Build Tool** | Gradle | Independent wrapper scripts (`./gradlew`) for each service |
 | **Database** | PostgreSQL 18 Alpine | Containerized relational database per microservice (`postgres:18-alpine`) |
@@ -85,12 +92,13 @@ graph TD
 
 ### Service Port & Infrastructure Allocation
 
-| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Swagger UI Endpoint | Actuator Health |
+| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Swagger UI / Dashboard Endpoint | Actuator Health |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) |
 | **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) |
 | **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) |
 | **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) |
+| **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) |
 | **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | N/A | N/A |
 
 ---
@@ -170,6 +178,16 @@ graph TD
 
 </details>
 
+---
+
+<details>
+<summary><strong>5. Spring Cloud Eureka Server</strong></summary>
+
+- **Path**: [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)
+- **Description**: Centralized Netflix Eureka service discovery server providing microservice registration (`/eureka/apps/{APP_NAME}`) and web management dashboard at [http://localhost:8070](http://localhost:8070).
+
+</details>
+
 </details>
 
 ---
@@ -185,7 +203,7 @@ graph TD
 
 ### 1. Provisioning Platform via Docker Compose
 
-To launch the full architecture (Config Server, RabbitMQ, 3 Databases, and 3 Microservice APIs) on the shared `securedbank` network:
+To launch the full architecture (Config Server, Eureka Server, RabbitMQ, 3 Databases, and 3 Microservice APIs) on the shared `securedbank` network:
 
 ```bash
 # Launch entire platform
@@ -212,6 +230,7 @@ cd accounts && ./gradlew clean build
 cd ../cards && ./gradlew clean build
 cd ../loans && ./gradlew clean build
 cd ../config-server && ./gradlew clean build
+cd ../eureka-server && ./gradlew clean build
 ```
 
 ---
@@ -223,6 +242,9 @@ Navigate into the respective service folder and launch via the Gradle wrapper:
 ```bash
 # Launch Config Server (Port 8071)
 cd config-server && ./gradlew bootRun
+
+# Launch Eureka Server (Port 8070)
+cd eureka-server && ./gradlew bootRun
 
 # Launch Accounts Service (Port 8091)
 cd accounts && ./gradlew bootRun
@@ -240,16 +262,17 @@ cd loans && ./gradlew bootRun
 
 Each microservice relies on configurable environment variables in its `application.yaml` file:
 
-| Environment Variable | Description | Accounts Default | Cards Default | Loans Default | Config Server Default |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `DB_HOST` | Database Hostname | `localhost` | `localhost` | `localhost` | N/A |
-| `DB_PORT` | PostgreSQL Host Port | `5423` | `5424` | `5425` | N/A |
-| `DB_NAME` | PostgreSQL DB Name | `accounts` | `cards` | `loans` | N/A |
-| `DB_USERNAME` | Database User | `postgres` | `postgres` | `postgres` | N/A |
-| `DB_PASSWORD` | Database Password | `postgres` | `postgres` | `postgres` | N/A |
-| `CONFIG_SERVER_URL` | Config Server Endpoint | `http://localhost:8071/` | `http://localhost:8071/` | `http://localhost:8071/` | N/A |
-| `RABBITMQ_HOST` | RabbitMQ Broker Host | `localhost` | `localhost` | `localhost` | `localhost` |
-| `RABBITMQ_PORT` | RabbitMQ AMQP Port | `5672` | `5672` | `5672` | `5672` |
+| Environment Variable | Description | Accounts Default | Cards Default | Loans Default | Config Server Default | Eureka Server Default |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `DB_HOST` | Database Hostname | `localhost` | `localhost` | `localhost` | N/A | N/A |
+| `DB_PORT` | PostgreSQL Host Port | `5423` | `5424` | `5425` | N/A | N/A |
+| `DB_NAME` | PostgreSQL DB Name | `accounts` | `cards` | `loans` | N/A | N/A |
+| `DB_USERNAME` | Database User | `postgres` | `postgres` | `postgres` | N/A | N/A |
+| `DB_PASSWORD` | Database Password | `postgres` | `postgres` | `postgres` | N/A | N/A |
+| `CONFIG_SERVER_URL` | Config Server Endpoint | `http://localhost:8071/` | `http://localhost:8071/` | `http://localhost:8071/` | N/A | `http://localhost:8071/` |
+| `EUREKA_DEFAULT_ZONE` | Eureka Default Zone URL | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | N/A | `http://localhost:8070/eureka/` |
+| `RABBITMQ_HOST` | RabbitMQ Broker Host | `localhost` | `localhost` | `localhost` | `localhost` | N/A |
+| `RABBITMQ_PORT` | RabbitMQ AMQP Port | `5672` | `5672` | `5672` | `5672` | N/A |
 
 ---
 

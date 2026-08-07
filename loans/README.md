@@ -16,6 +16,7 @@ The **Loans Microservice** handles customer loans (home, personal, vehicle), rep
 ### Service Specifications
 - **Server Port**: `8093`
 - **Database**: PostgreSQL 18 on port `5425` (`loans`)
+- **Eureka Registration**: `http://localhost:8070/eureka/` (Dashboard: [http://localhost:8070](http://localhost:8070))
 - **Swagger UI**: [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html)
 - **Actuator Health**: [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health)
 

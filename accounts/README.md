@@ -16,6 +16,7 @@ The **Accounts Microservice** handles customer onboarding, profile metadata, and
 ### Service Specifications
 - **Server Port**: `8091`
 - **Database**: PostgreSQL 18 on port `5423` (`accounts`)
+- **Eureka Registration**: `http://localhost:8070/eureka/` (Dashboard: [http://localhost:8070](http://localhost:8070))
 - **Swagger UI**: [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html)
 - **Actuator Health**: [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health)
 

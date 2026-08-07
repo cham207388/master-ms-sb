@@ -6,7 +6,7 @@ Welcome to the **Spring Cloud Config Server** codebase (Domain: Centralized Conf
 
 ## 🏛 Domain Boundaries & Architecture
 
-The **Config Server** serves centralized, version-controlled environment configuration to all microservices in the banking platform (`accounts`, `cards`, `loans`) and manages Spring Cloud Bus AMQP configuration refresh events via RabbitMQ.
+The **Config Server** serves centralized, version-controlled environment configuration to all microservices in the banking platform (`accounts`, `cards`, `loans`, `eureka-server`) and manages Spring Cloud Bus AMQP configuration refresh events via RabbitMQ.
 
 - **Service Port**: `8071`
 - **Package Base**: `com.abcham.configserver`
@@ -15,6 +15,7 @@ The **Config Server** serves centralized, version-controlled environment configu
   - `http://localhost:8071/accounts/default`
   - `http://localhost:8071/cards/default`
   - `http://localhost:8071/loans/default`
+  - `http://localhost:8071/eureka-server/default`
 - **Event Bus Integration**:
   - Connected to RabbitMQ (`5672`) for broadcasting `/actuator/busrefresh` events to refresh application properties without restarting services.
 

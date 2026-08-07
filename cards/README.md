@@ -16,6 +16,7 @@ The **Cards Microservice** handles credit and debit card issuance, limit trackin
 ### Service Specifications
 - **Server Port**: `8092`
 - **Database**: PostgreSQL 18 on port `5424` (`cards`)
+- **Eureka Registration**: `http://localhost:8070/eureka/` (Dashboard: [http://localhost:8070](http://localhost:8070))
 - **Swagger UI**: [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html)
 - **Actuator Health**: [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health)
 

@@ -31,6 +31,7 @@ event-driven configuration refreshes (`Spring Cloud Bus`).
 | **Accounts** | `default` | [http://localhost:8071/accounts/default](http://localhost:8071/accounts/default) |
 | **Cards**    | `default` | [http://localhost:8071/cards/default](http://localhost:8071/cards/default)       |
 | **Loans**    | `default` | [http://localhost:8071/loans/default](http://localhost:8071/loans/default)       |
+| **Eureka**   | `default` | [http://localhost:8071/eureka-server/default](http://localhost:8071/eureka-server/default) |
 
 ### Management & Bus Endpoints
 

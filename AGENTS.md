@@ -27,7 +27,11 @@ The application is structured as a domain-driven microservices architecture comp
    - **Server Port**: `8071`
    - **Domain**: Centralized configuration management backed by Git (`https://github.com/cham207388/config-server-sb-sc-ms.git`).
 
-5. **RabbitMQ Event Bus**
+5. **Spring Cloud Netflix Eureka Server** ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server))
+   - **Server Port**: `8070`
+   - **Domain**: Service registration & discovery server (Dashboard: `http://localhost:8070`, endpoint: `http://eureka-server:8070/eureka/`).
+
+6. **RabbitMQ Event Bus**
    - **AMQP Port**: `5672` (Management UI: `15672`)
    - **Domain**: Provides Spring Cloud Bus AMQP for dynamic configuration refresh (`/actuator/busrefresh`).
 
@@ -37,7 +41,7 @@ The application is structured as a domain-driven microservices architecture comp
 
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` configured in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Spring Data JPA, Actuator, Flyway).
-- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-bus-amqp`).
+- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
 - **Dependency Management**: Spring Dependency Management `1.1.7`.
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
 - **Database Migration**: Flyway (`org.flywaydb:flyway-database-postgresql`), with scripts located at `src/main/resources/db/migration/V1__init.sql`.
@@ -46,7 +50,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Build System**: Independent Gradle wrapper scripts (`./gradlew`) inside each microservice directory, managed globally via the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile).
 - **Containerization & Orchestration**:
   - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root user `producer:producer`.
-  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all microservices (`accounts`, `cards`, `loans`, `config-server`, `rabbit-mq`, and DBs) via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
+  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all microservices (`accounts`, `cards`, `loans`, `config-server`, `eureka-server`, `rabbit-mq`, and DBs) via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
 
 ---
 
@@ -60,17 +64,19 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Cards: `cd cards && ./gradlew clean build`
      - Loans: `cd loans && ./gradlew clean build`
      - Config Server: `cd config-server && ./gradlew clean build`
+     - Eureka Server: `cd eureka-server && ./gradlew clean build`
 
 2. **Makefile Commands**:
    - Use the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) targets for multi-service operations:
-     - Build: `make accounts-build`, `make cards-build`, `make loans-build`
+     - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make eureka-server-build`
      - Databases: `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
      - Service Stacks: `make accounts`, `make cards`, `make loans`
      - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`
      - Config Server & RabbitMQ: `make rabbit-mq-up`, `make config-server-up`, `make config-all-up`, `make config-all-down`
+     - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
 
 3. **Orchestration with Root Compose**:
-   - To bring up the entire platform (all DBs, Config Server, RabbitMQ, and APIs) on the `securedbank` network:
+   - To bring up the entire platform (all DBs, Config Server, Eureka Server, RabbitMQ, and APIs) on the `securedbank` network:
      - `docker compose up -d`
      - `docker compose down -v`
 
@@ -78,6 +84,7 @@ When building, testing, or executing commands in this workspace, always adhere t
    - Settings in `application.yaml` use the environment variables:
      - Database: `DB_HOST` (`localhost` or container name), `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
      - Config Server: `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://config-server:8071/`)
+     - Eureka Server: `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
      - Event Bus / RabbitMQ: `RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `RABBITMQ_PORT` (`5672`), `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`
 
 ---
