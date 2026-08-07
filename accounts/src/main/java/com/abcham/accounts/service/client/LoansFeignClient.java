@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "loans", url = "${loans.service.base.path}")
+@FeignClient(name = "loans", path = "/api/loans")
 public interface LoansFeignClient {
 
     @GetMapping(value = "/fetch", consumes = "application/json")
