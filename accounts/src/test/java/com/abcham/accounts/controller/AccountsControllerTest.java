@@ -50,7 +50,7 @@ class AccountsControllerTest {
     void createAccount_Success() throws Exception {
         doNothing().when(iAccountsService).createAccount(any(CustomerDto.class));
 
-        mockMvc.perform(post("/api/create")
+        mockMvc.perform(post("/api/accounts/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isCreated())
@@ -62,7 +62,7 @@ class AccountsControllerTest {
     void createAccount_ValidationError_InvalidEmail() throws Exception {
         customerDto.setEmail("invalid-email");
 
-        mockMvc.perform(post("/api/create")
+        mockMvc.perform(post("/api/accounts/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isBadRequest());
@@ -72,7 +72,7 @@ class AccountsControllerTest {
     void fetchAccountDetails_Success() throws Exception {
         when(iAccountsService.fetchAccount("1234567890")).thenReturn(customerDto);
 
-        mockMvc.perform(get("/api/fetch")
+        mockMvc.perform(get("/api/accounts/fetch")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("John Doe"))
@@ -85,7 +85,7 @@ class AccountsControllerTest {
     void updateAccountDetails_Success() throws Exception {
         when(iAccountsService.updateAccount(any(CustomerDto.class))).thenReturn(true);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/accounts/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isOk())
@@ -97,7 +97,7 @@ class AccountsControllerTest {
     void updateAccountDetails_Failed() throws Exception {
         when(iAccountsService.updateAccount(any(CustomerDto.class))).thenReturn(false);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/accounts/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDto)))
                 .andExpect(status().isExpectationFailed())
@@ -108,7 +108,7 @@ class AccountsControllerTest {
     void deleteAccountDetails_Success() throws Exception {
         when(iAccountsService.deleteAccount("1234567890")).thenReturn(true);
 
-        mockMvc.perform(delete("/api/delete")
+        mockMvc.perform(delete("/api/accounts/delete")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(AccountsConstants.STATUS_200))
@@ -119,7 +119,7 @@ class AccountsControllerTest {
     void deleteAccountDetails_Failed() throws Exception {
         when(iAccountsService.deleteAccount("1234567890")).thenReturn(false);
 
-        mockMvc.perform(delete("/api/delete")
+        mockMvc.perform(delete("/api/accounts/delete")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isExpectationFailed())
                 .andExpect(jsonPath("$.statusCode").value(AccountsConstants.STATUS_417));

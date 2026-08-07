@@ -37,7 +37,7 @@ cards-db-down:
 	docker compose -f cards/compose.yml down cards-db -v
 
 cards-api-run:
-	docker compose -f cards/compose.yml up cards-api -d
+	docker compose -f cards/compose.yml up cards-api -d --build
 
 cards:
 	docker compose -f cards/compose.yml up -d
@@ -59,7 +59,7 @@ loans-db-down:
 	docker compose -f loans/compose.yml down loans-db -v
 
 loans-api:
-	docker compose -f loans/compose.yml up loans-api -d
+	docker compose -f loans/compose.yml up loans-api -d --build
 
 loans:
 	docker compose -f loans/compose.yml up -d
@@ -105,3 +105,6 @@ config-all-down:
 # ==============================================================================
 dbs-down: accounts-db-down cards-db-down loans-db-down
 	@echo "all dbs are down"
+
+api-up: accounts-api-run cards-api-run loans-api
+	@echo "restart apis"

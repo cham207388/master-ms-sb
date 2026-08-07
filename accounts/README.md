@@ -7,7 +7,7 @@
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-The **Accounts Microservice** handles customer onboarding, profile metadata, and core bank account lifecycle operations for the EazyBank platform.
+The **Accounts Microservice** handles customer onboarding, profile metadata, and core bank account lifecycle operations for the SecuredBank platform.
 
 ---
 

@@ -46,7 +46,7 @@ class CardsControllerTest {
     void createCard_Success() throws Exception {
         doNothing().when(iCardsService).createCard("1234567890");
 
-        mockMvc.perform(post("/api/create")
+        mockMvc.perform(post("/api/cards/create")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.statusCode").value(CardsConstants.STATUS_201))
@@ -57,7 +57,7 @@ class CardsControllerTest {
     void fetchCardDetails_Success() throws Exception {
         when(iCardsService.fetchCard("1234567890")).thenReturn(cardsDto);
 
-        mockMvc.perform(get("/api/fetch")
+        mockMvc.perform(get("/api/cards/fetch")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))
@@ -68,7 +68,7 @@ class CardsControllerTest {
     void updateCardDetails_Success() throws Exception {
         when(iCardsService.updateCard(any(CardsDto.class))).thenReturn(true);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/cards/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cardsDto)))
                 .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class CardsControllerTest {
     void updateCardDetails_Failed() throws Exception {
         when(iCardsService.updateCard(any(CardsDto.class))).thenReturn(false);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/cards/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cardsDto)))
                 .andExpect(status().isExpectationFailed())
@@ -90,7 +90,7 @@ class CardsControllerTest {
     void deleteCardDetails_Success() throws Exception {
         when(iCardsService.deleteCard("1234567890")).thenReturn(true);
 
-        mockMvc.perform(delete("/api/delete")
+        mockMvc.perform(delete("/api/cards/delete")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(CardsConstants.STATUS_200));

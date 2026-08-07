@@ -46,7 +46,7 @@ class LoansControllerTest {
     void createLoan_Success() throws Exception {
         doNothing().when(iLoansService).createLoan("1234567890");
 
-        mockMvc.perform(post("/api/create")
+        mockMvc.perform(post("/api/loans/create")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_201))
@@ -57,7 +57,7 @@ class LoansControllerTest {
     void fetchLoanDetails_Success() throws Exception {
         when(iLoansService.fetchLoan("1234567890")).thenReturn(loansDto);
 
-        mockMvc.perform(get("/api/fetch")
+        mockMvc.perform(get("/api/loans/fetch")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))
@@ -68,7 +68,7 @@ class LoansControllerTest {
     void updateLoanDetails_Success() throws Exception {
         when(iLoansService.updateLoan(any(LoansDto.class))).thenReturn(true);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/loans/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loansDto)))
                 .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class LoansControllerTest {
     void updateLoanDetails_Failed() throws Exception {
         when(iLoansService.updateLoan(any(LoansDto.class))).thenReturn(false);
 
-        mockMvc.perform(put("/api/update")
+        mockMvc.perform(put("/api/loans/update")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loansDto)))
                 .andExpect(status().isExpectationFailed())
@@ -90,7 +90,7 @@ class LoansControllerTest {
     void deleteLoanDetails_Success() throws Exception {
         when(iLoansService.deleteLoan("1234567890")).thenReturn(true);
 
-        mockMvc.perform(delete("/api/delete")
+        mockMvc.perform(delete("/api/loans/delete")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_200));
