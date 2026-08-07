@@ -68,21 +68,12 @@ services:
       DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      CONFIG_SERVER_URL: http://config-server:8071/
-      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
     depends_on:
       accounts-db:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 700m
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-with-config-server
 
   cards-db:
     image: 'postgres:18-alpine'
@@ -121,22 +112,12 @@ services:
       DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      CONFIG_SERVER_URL: http://config-server:8071/
-      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
     depends_on:
       cards-db:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 700m
-    networks:
-      - securedbank
-
+    extends:
+      file: common-docker-config.yml
+      service: microservice-with-config-server
   loans-db:
     image: 'postgres:18-alpine'
     container_name: loans-db
@@ -170,21 +151,12 @@ services:
       DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      CONFIG_SERVER_URL: http://config-server:8071/
-      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
     depends_on:
       loans-db:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 700m
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-with-config-server
 
 volumes:
   accounts-pg-volume:

@@ -9,10 +9,15 @@ services:
       resources:
         limits:
           memory: 700m
-  microservice-config-server:
+  microservice-with-config-server:
     extends: 
       service: microservices-base
     environment:
-      SPRING_CONFIG_IMPORT: configserver:http://host.docker.internal:8071
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      CONFIG_SERVER_URL: configserver:http://config-server:8071
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      
