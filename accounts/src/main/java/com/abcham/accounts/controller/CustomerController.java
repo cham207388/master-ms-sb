@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(path = "/api/customer", produces = {MediaType.APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/customers", produces = {MediaType.APPLICATION_JSON_VALUE})
 public class CustomerController {
 
     private final ICustomersService iCustomersService;
