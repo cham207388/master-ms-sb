@@ -1,13 +1,16 @@
-.PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
-        cards cards-build cards-db-up cards-db-down cards-api-run \
-        loans loans-build loans-db-up loans-db-down loans-api \
-        eureka-server-build eureka-server-up eureka-server-down dbs-down
+.PHONY: accounts accounts-build accounts-native-build accounts-db-up accounts-db-down accounts-api-run \
+        cards cards-build cards-native-build cards-db-up cards-db-down cards-api-run \
+        loans loans-build loans-native-build loans-db-up loans-db-down loans-api \
+        eureka-server-build eureka-server-native-build eureka-server-up eureka-server-down dbs-down
 
 # ==============================================================================
 # Accounts Service
 # ==============================================================================
 accounts-build:
 	cd accounts && ./gradlew clean build
+
+accounts-native-build:
+	cd accounts && ./gradlew clean nativeCompile
 
 accounts-db-up:
 	docker compose up accounts-db -d
@@ -29,6 +32,9 @@ accounts-down:
 # ==============================================================================
 cards-build:
 	cd cards && ./gradlew clean build
+
+cards-native-build:
+	cd cards && ./gradlew clean nativeCompile
 
 cards-db-up:
 	docker compose up cards-db -d
@@ -52,6 +58,9 @@ cards-down:
 loans-build:
 	cd loans && ./gradlew clean build
 
+loans-native-build:
+	cd loans && ./gradlew clean nativeCompile
+
 loans-db-up:
 	docker compose up loans-db -d
 
@@ -72,6 +81,9 @@ loans-down:
 # ==============================================================================
 eureka-server-build:
 	cd eureka-server && ./gradlew clean build
+
+eureka-server-native-build:
+	cd eureka-server && ./gradlew clean nativeCompile
 
 eureka-server-up:
 	docker compose up eureka-server -d

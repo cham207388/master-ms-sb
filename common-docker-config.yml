@@ -2,7 +2,7 @@ services:
   shared-network:
     networks:
       - securedbank
-  microservices-base:
+  microservice-base:
     extends:
       service: shared-network
     deploy:
@@ -11,13 +11,19 @@ services:
           memory: 700m
   microservice-with-config-server:
     extends: 
-      service: microservices-base
+      service: microservice-base
     environment:
       CONFIG_SERVER_URL: configserver:http://config-server:8071
-      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
     depends_on:
       config-server:
         condition: service_healthy
+
+  microservice-with-config-eureka:
+    extends: 
+      service: microservice-with-config-server
+    environment:
+      EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
+    depends_on:
       eureka-server:
         condition: service_healthy
       
