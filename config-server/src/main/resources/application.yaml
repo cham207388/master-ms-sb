@@ -5,25 +5,16 @@ spring:
     name: config-server
   profiles:
     active:
-      #      - native # for classpath and file system config server
       - git # for git config server
   cloud:
     config:
       server:
-        #        native:
-        #          search-locations: classpath:/config
-        #          search-locations: file:///Users/Document/config
         git:
           uri: https://github.com/cham207388/config-server-sb-sc-ms.git
           default-label: main
           timeout: 5
           clone-on-start: true
           force-pull: true
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
 
 management:
   endpoints:

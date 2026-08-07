@@ -10,7 +10,7 @@
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) backed by centralized configuration management (Config Server) and dynamic event-driven refresh (RabbitMQ & Spring Cloud Bus).
+An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)) and dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**).
 
 ---
 
@@ -19,8 +19,11 @@ An enterprise-grade, domain-driven banking microservices platform built with **S
 ```mermaid
 graph TD
     Client[HTTP Client / API Consumer]
-    ConfigServer[Spring Cloud Config Server<br/>Port: 8071]
-    RabbitMQ[RabbitMQ Event Bus<br/>Port: 5672]
+
+    subgraph Infrastructure [Shared Network: securedbank]
+        ConfigServer[Spring Cloud Config Server<br/>Port: 8071]
+        RabbitMQ[RabbitMQ Event Bus<br/>Port: 5672]
+    end
 
     subgraph Accounts Microservice [Port 8091]
         AccountsApp[Accounts API]
@@ -47,6 +50,7 @@ graph TD
     AccountsApp <==>|Spring Cloud Bus| RabbitMQ
     CardsApp <==>|Spring Cloud Bus| RabbitMQ
     LoansApp <==>|Spring Cloud Bus| RabbitMQ
+    ConfigServer <==>|Spring Cloud Bus| RabbitMQ
 
     Client -->|REST / HTTP| AccountsApp
     Client -->|REST / HTTP| CardsApp
@@ -62,8 +66,8 @@ graph TD
 | :--- | :--- | :--- |
 | **Language** | Java 25 | Latest Java Toolchain standard (`JavaLanguageVersion.of(25)`) |
 | **Framework** | Spring Boot 4.1.0 | Core microservice framework (Spring Web MVC, Data JPA, Actuator) |
-| **Central Config** | Spring Cloud Config 2025.1.2 | Centralized configuration management (`spring-cloud-starter-config`) |
-| **Event Bus** | Spring Cloud Bus AMQP | Event-driven dynamic configuration refresh via RabbitMQ |
+| **Central Config** | Spring Cloud Config 2025.1.2 | Centralized configuration management ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)) |
+| **Event Bus** | Spring Cloud Bus AMQP | Event-driven dynamic configuration refresh via RabbitMQ (`/actuator/busrefresh`) |
 | **Build Tool** | Gradle | Independent wrapper scripts (`./gradlew`) for each service |
 | **Database** | PostgreSQL 18 Alpine | Containerized relational database per microservice (`postgres:18-alpine`) |
 | **Database Migration**| Flyway (`org.flywaydb:flyway-database-postgresql`) | Versioned SQL database migrations (`db/migration/V1__init.sql`) |
@@ -81,13 +85,13 @@ graph TD
 
 ### Service Port & Infrastructure Allocation
 
-| Microservice / Component | Server Port | Database Name | Host DB Port | Swagger UI Endpoint | Actuator Health |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Accounts** | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) |
-| **Cards** | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) |
-| **Loans** | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) |
-| **Config Server** | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) |
-| **RabbitMQ** | `5672` (Management: `15672`) | N/A | N/A | N/A | N/A |
+| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Swagger UI Endpoint | Actuator Health |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) |
+| **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) |
+| **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) |
+| **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) |
+| **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | N/A | N/A |
 
 ---
 
@@ -156,6 +160,16 @@ graph TD
 
 </details>
 
+---
+
+<details>
+<summary><strong>4. Spring Cloud Config Server</strong></summary>
+
+- **Path**: [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)
+- **Description**: Centralized configuration management backed by Git repository ([`config-server-sb-sc-ms.git`](https://github.com/cham207388/config-server-sb-sc-ms.git)) exposing `/accounts/default`, `/cards/default`, and `/loans/default`.
+
+</details>
+
 </details>
 
 ---
@@ -165,32 +179,27 @@ graph TD
 ### Prerequisites
 - **JDK 25** installed & configured in environment path.
 - **Docker & Docker Compose** installed and running.
-- **Gradle** (or use bundled `./gradlew` wrapper in each microservice directory).
+- **Gradle** (or use bundled `./gradlew` wrapper in each directory).
 
 ---
 
-### 1. Provisioning Infrastructure & Services
+### 1. Provisioning Platform via Docker Compose
 
-You can launch infrastructure and services using either the unified root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) or the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile):
+To launch the full architecture (Config Server, RabbitMQ, 3 Databases, and 3 Microservice APIs) on the shared `securedbank` network:
 
 ```bash
-# 1. Start Config Server & RabbitMQ
-make config-all-up
-
-# 2. Launch all microservices & databases via root Docker Compose
+# Launch entire platform
 docker compose up -d
 
-# Or bring up individual microservices via Makefile
-make accounts
-make cards
-make loans
+# Stop platform and clean volumes
+docker compose down -v
 ```
 
 ---
 
-### 2. Building the Microservices
+### 2. Building the Services
 
-Compile and package individual services using the [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) or Gradle directly:
+Compile and package services using the [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) or Gradle directly:
 
 ```bash
 # Clean & build microservices via Makefile
@@ -202,15 +211,19 @@ make loans-build
 cd accounts && ./gradlew clean build
 cd ../cards && ./gradlew clean build
 cd ../loans && ./gradlew clean build
+cd ../config-server && ./gradlew clean build
 ```
 
 ---
 
 ### 3. Running Applications Locally (IDE / CLI)
 
-Navigate into the respective microservice folder and launch via the Gradle wrapper:
+Navigate into the respective service folder and launch via the Gradle wrapper:
 
 ```bash
+# Launch Config Server (Port 8071)
+cd config-server && ./gradlew bootRun
+
 # Launch Accounts Service (Port 8091)
 cd accounts && ./gradlew bootRun
 
@@ -227,27 +240,27 @@ cd loans && ./gradlew bootRun
 
 Each microservice relies on configurable environment variables in its `application.yaml` file:
 
-| Environment Variable | Description | Accounts Default | Cards Default | Loans Default |
-| :--- | :--- | :--- | :--- | :--- |
-| `DB_HOST` | Database Hostname / Service Name | `localhost` | `localhost` | `localhost` |
-| `DB_PORT` | PostgreSQL Host Port | `5423` | `5424` | `5425` |
-| `DB_NAME` | PostgreSQL Database Name | `accounts` | `cards` | `loans` |
-| `DB_USERNAME` | Database User | `postgres` | `postgres` | `postgres` |
-| `DB_PASSWORD` | Database Password | `postgres` | `postgres` | `postgres` |
-| `CONFIG_SERVER_URL` | Config Server Endpoint | `http://localhost:8071/` | `http://localhost:8071/` | `http://localhost:8071/` |
-| `RABBITMQ_HOST` | RabbitMQ Message Broker Host | `localhost` | `localhost` | `localhost` |
-| `RABBITMQ_PORT` | RabbitMQ AMQP Port | `5672` | `5672` | `5672` |
+| Environment Variable | Description | Accounts Default | Cards Default | Loans Default | Config Server Default |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `DB_HOST` | Database Hostname | `localhost` | `localhost` | `localhost` | N/A |
+| `DB_PORT` | PostgreSQL Host Port | `5423` | `5424` | `5425` | N/A |
+| `DB_NAME` | PostgreSQL DB Name | `accounts` | `cards` | `loans` | N/A |
+| `DB_USERNAME` | Database User | `postgres` | `postgres` | `postgres` | N/A |
+| `DB_PASSWORD` | Database Password | `postgres` | `postgres` | `postgres` | N/A |
+| `CONFIG_SERVER_URL` | Config Server Endpoint | `http://localhost:8071/` | `http://localhost:8071/` | `http://localhost:8071/` | N/A |
+| `RABBITMQ_HOST` | RabbitMQ Broker Host | `localhost` | `localhost` | `localhost` | `localhost` |
+| `RABBITMQ_PORT` | RabbitMQ AMQP Port | `5672` | `5672` | `5672` | `5672` |
 
 ---
 
 ## 🐳 Docker & Multi-Stage Containerization
 
-Each microservice includes a multi-stage `Dockerfile` optimized for security and minimal image size:
+Each service includes a multi-stage `Dockerfile` optimized for security and minimal image size:
 
 1. **Stage 1 (`build`)**: Uses `eclipse-temurin:25-jdk-alpine` to compile and package the Spring Boot executable JAR.
-2. **Stage 2 (`runtime`)**: Uses `eclipse-temurin:25-jre-alpine`, configures a non-root system user (`producer:producer`), copies the built JAR, and exposes the respective service port (`8091`, `8092`, or `8093`).
+2. **Stage 2 (`runtime`)**: Uses `eclipse-temurin:25-jre-alpine`, configures a non-root system user (`producer:producer`), copies the built JAR, and exposes the respective port.
 
-The consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connects all microservices and database containers on a shared bridge network (`securedbank`) with memory resource limits set to 700MB per container.
+The consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connects all services on a shared bridge network (`securedbank`) with memory resource limits set to 700MB per container.
 
 ---
 

@@ -1,19 +1,4 @@
 services:
-  rabbit-mq:
-    image: 'rabbitmq:3.12-management'
-    container_name: rabbit-mq
-    ports:
-      - '5672:5672'
-      - '15672:15672'
-    healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-    networks:
-      - securedbank
-
   config-server:
     build:
       context: ./config-server
@@ -21,14 +6,6 @@ services:
     container_name: config-server
     ports:
       - '8071:8071'
-    environment:
-      RABBITMQ_HOST: rabbit-mq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
-    depends_on:
-      rabbit-mq:
-        condition: service_healthy
     healthcheck:
       test: "wget -q --spider http://localhost:8071/actuator/health/readiness || exit 1"
       interval: 10s
@@ -72,10 +49,6 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
-      RABBITMQ_HOST: rabbit-mq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
     depends_on:
       accounts-db:
         condition: service_healthy
@@ -126,10 +99,6 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
-      RABBITMQ_HOST: rabbit-mq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
     depends_on:
       cards-db:
         condition: service_healthy
@@ -176,10 +145,6 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://config-server:8071/
-      RABBITMQ_HOST: rabbit-mq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
     depends_on:
       loans-db:
         condition: service_healthy

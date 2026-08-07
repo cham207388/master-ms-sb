@@ -32,9 +32,6 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       CONFIG_SERVER_URL: http://host.docker.internal:8071/
-      RABBITMQ_HOST: "host.docker.internal"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       loans-db:
         condition: service_healthy
