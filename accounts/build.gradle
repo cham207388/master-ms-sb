@@ -63,3 +63,7 @@ dependencyManagement {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('processAot') {
+	args('--eureka.client.refresh.enable=false')
+}
