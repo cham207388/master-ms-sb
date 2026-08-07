@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
         name = "REST API for Customers in SecuredBank",
         description = "REST APIs in SecuredBank to FETCH customer details"
 )
+@Slf4j
 @Validated
 @RestController
 @RequiredArgsConstructor
@@ -53,7 +55,9 @@ public class CustomerController {
     public ResponseEntity<CustomerDetailsDto> fetchCustomerDetails(@RequestParam
                                                                    @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")
                                                                    String mobileNumber) {
+        log.info("GET /api/accounts/customers/fetchCustomerDetails - Fetching aggregated details for mobileNumber: {}", mobileNumber);
         CustomerDetailsDto customerDetailsDto = iCustomersService.fetchCustomerDetails(mobileNumber);
+        log.info("GET /api/accounts/customers/fetchCustomerDetails - Successfully fetched aggregated details for mobileNumber: {}", mobileNumber);
         return ResponseEntity.ok(customerDetailsDto);
 
     }

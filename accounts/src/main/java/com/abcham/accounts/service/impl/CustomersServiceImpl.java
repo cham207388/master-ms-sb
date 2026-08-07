@@ -15,9 +15,11 @@ import com.abcham.accounts.service.ICustomersService;
 import com.abcham.accounts.service.client.CardsFeignClient;
 import com.abcham.accounts.service.client.LoansFeignClient;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CustomersServiceImpl implements ICustomersService {
@@ -33,6 +35,7 @@ public class CustomersServiceImpl implements ICustomersService {
      */
     @Override
     public CustomerDetailsDto fetchCustomerDetails(String mobileNumber) {
+        log.debug("Fetching Customer record from Accounts DB for mobileNumber: {}", mobileNumber);
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
         );
@@ -43,11 +46,19 @@ public class CustomersServiceImpl implements ICustomersService {
         CustomerDetailsDto customerDetailsDto = CustomerMapper.mapToCustomerDetailsDto(customer, new CustomerDetailsDto());
         customerDetailsDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()));
 
+        log.debug("Calling Loans Microservice via Feign Client for mobileNumber: {}", mobileNumber);
         ResponseEntity<LoansDto> loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(mobileNumber);
-        customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
+        if (loansDtoResponseEntity != null && loansDtoResponseEntity.getBody() != null) {
+            customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
+            log.debug("Successfully received Loans details for mobileNumber: {}", mobileNumber);
+        }
 
+        log.debug("Calling Cards Microservice via Feign Client for mobileNumber: {}", mobileNumber);
         ResponseEntity<CardsDto> cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(mobileNumber);
-        customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
+        if (cardsDtoResponseEntity != null && cardsDtoResponseEntity.getBody() != null) {
+            customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());
+            log.debug("Successfully received Cards details for mobileNumber: {}", mobileNumber);
+        }
 
         return customerDetailsDto;
 

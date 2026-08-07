@@ -1,6 +1,7 @@
 package com.abcham.accounts.exception;
 
 import com.abcham.accounts.dto.ErrorResponseDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler  extends ResponseEntityExceptionHandler {
 
@@ -32,12 +34,14 @@ public class GlobalExceptionHandler  extends ResponseEntityExceptionHandler {
             String validationMsg = error.getDefaultMessage();
             validationErrors.put(fieldName, validationMsg);
         });
+        log.warn("Validation error occurred on path [{}]: {}", request.getDescription(false), validationErrors);
         return new ResponseEntity<>(validationErrors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGlobalException(Exception exception,
                                                                   WebRequest webRequest) {
+        log.error("Unhandled exception occurred on path [{}]: ", webRequest.getDescription(false), exception);
         ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
                 webRequest.getDescription(false),
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -50,6 +54,7 @@ public class GlobalExceptionHandler  extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResourceNotFoundException exception,
                                                                             WebRequest webRequest) {
+        log.warn("Resource not found on path [{}]: {}", webRequest.getDescription(false), exception.getMessage());
         ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
                 webRequest.getDescription(false),
                 HttpStatus.NOT_FOUND,
@@ -62,6 +67,7 @@ public class GlobalExceptionHandler  extends ResponseEntityExceptionHandler {
     @ExceptionHandler(CustomerAlreadyExistsException.class)
     public ResponseEntity<ErrorResponseDto> handleCustomerAlreadyExistsException(CustomerAlreadyExistsException exception,
                                                                                  WebRequest webRequest){
+        log.warn("Customer already exists on path [{}]: {}", webRequest.getDescription(false), exception.getMessage());
         ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
                 webRequest.getDescription(false),
                 HttpStatus.BAD_REQUEST,

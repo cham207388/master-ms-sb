@@ -9,11 +9,13 @@ import com.abcham.cards.mapper.CardsMapper;
 import com.abcham.cards.repository.CardsRepository;
 import com.abcham.cards.service.ICardsService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Random;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CardsServiceImpl implements ICardsService {
@@ -25,11 +27,14 @@ public class CardsServiceImpl implements ICardsService {
      */
     @Override
     public void createCard(String mobileNumber) {
+        log.debug("Checking if card already exists for mobileNumber: {}", mobileNumber);
         Optional<Cards> optionalCards= cardsRepository.findByMobileNumber(mobileNumber);
         if(optionalCards.isPresent()){
+            log.warn("Card creation failed - Card already exists for mobileNumber: {}", mobileNumber);
             throw new CardAlreadyExistsException("Card already registered with given mobileNumber "+mobileNumber);
         }
-        cardsRepository.save(createNewCard(mobileNumber));
+        Cards savedCard = cardsRepository.save(createNewCard(mobileNumber));
+        log.info("Successfully created card number: {} for mobileNumber: {}", savedCard.getCardNumber(), mobileNumber);
     }
 
     /**
@@ -55,9 +60,11 @@ public class CardsServiceImpl implements ICardsService {
      */
     @Override
     public CardsDto fetchCard(String mobileNumber) {
+        log.debug("Fetching card record from DB for mobileNumber: {}", mobileNumber);
         Cards cards = cardsRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "mobileNumber", mobileNumber)
         );
+        log.debug("Successfully found card number: {} for mobileNumber: {}", cards.getCardNumber(), mobileNumber);
         return CardsMapper.mapToCardsDto(cards, new CardsDto());
     }
 
@@ -68,10 +75,12 @@ public class CardsServiceImpl implements ICardsService {
      */
     @Override
     public boolean updateCard(CardsDto cardsDto) {
+        log.debug("Updating card details for card number: {}", cardsDto.getCardNumber());
         Cards cards = cardsRepository.findByCardNumber(cardsDto.getCardNumber()).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "CardNumber", cardsDto.getCardNumber()));
         CardsMapper.mapToCards(cardsDto, cards);
         cardsRepository.save(cards);
+        log.info("Successfully updated card number: {}", cardsDto.getCardNumber());
         return  true;
     }
 
@@ -81,10 +90,12 @@ public class CardsServiceImpl implements ICardsService {
      */
     @Override
     public boolean deleteCard(String mobileNumber) {
+        log.debug("Deleting card details for mobileNumber: {}", mobileNumber);
         Cards cards = cardsRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "mobileNumber", mobileNumber)
         );
         cardsRepository.deleteById(cards.getCardId());
+        log.info("Successfully deleted card ID: {} for mobileNumber: {}", cards.getCardId(), mobileNumber);
         return true;
     }
 

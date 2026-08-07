@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
         name = "CRUD REST APIs for Loans in EazyBank",
         description = "CRUD REST APIs in EazyBank to CREATE, UPDATE, FETCH AND DELETE loan details"
 )
+@Slf4j
 @RestController
 @RequestMapping(path = "/api/loans", produces = {MediaType.APPLICATION_JSON_VALUE})
 @AllArgsConstructor
@@ -58,7 +60,9 @@ public class LoansController {
     public ResponseEntity<ResponseDto> createLoan(@RequestParam
                                                   @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")
                                                   String mobileNumber) {
+        log.info("POST /api/loans/create - Request received for mobileNumber: {}", mobileNumber);
         iLoansService.createLoan(mobileNumber);
+        log.info("POST /api/loans/create - Loan successfully created for mobileNumber: {}", mobileNumber);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new ResponseDto(LoansConstants.STATUS_201, LoansConstants.MESSAGE_201));
@@ -86,7 +90,9 @@ public class LoansController {
     public ResponseEntity<LoansDto> fetchLoanDetails(@RequestParam
                                                      @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")
                                                      String mobileNumber) {
+        log.info("GET /api/loans/fetch - Request received for mobileNumber: {}", mobileNumber);
         LoansDto loansDto = iLoansService.fetchLoan(mobileNumber);
+        log.info("GET /api/loans/fetch - Successfully fetched loan details for mobileNumber: {}", mobileNumber);
         return ResponseEntity.status(HttpStatus.OK).body(loansDto);
     }
 
@@ -114,12 +120,15 @@ public class LoansController {
     )
     @PutMapping("/update")
     public ResponseEntity<ResponseDto> updateLoanDetails(@Valid @RequestBody LoansDto loansDto) {
+        log.info("PUT /api/loans/update - Request received for loan number: {}", loansDto.getLoanNumber());
         boolean isUpdated = iLoansService.updateLoan(loansDto);
         if (isUpdated) {
+            log.info("PUT /api/loans/update - Successfully updated loan number: {}", loansDto.getLoanNumber());
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(new ResponseDto(LoansConstants.STATUS_200, LoansConstants.MESSAGE_200));
         } else {
+            log.warn("PUT /api/loans/update - Failed to update loan number: {}", loansDto.getLoanNumber());
             return ResponseEntity
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDto(LoansConstants.STATUS_417, LoansConstants.MESSAGE_417_UPDATE));
@@ -152,12 +161,15 @@ public class LoansController {
     public ResponseEntity<ResponseDto> deleteLoanDetails(@RequestParam
                                                          @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")
                                                          String mobileNumber) {
+        log.info("DELETE /api/loans/delete - Request received for mobileNumber: {}", mobileNumber);
         boolean isDeleted = iLoansService.deleteLoan(mobileNumber);
         if (isDeleted) {
+            log.info("DELETE /api/loans/delete - Successfully deleted loan for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(new ResponseDto(LoansConstants.STATUS_200, LoansConstants.MESSAGE_200));
         } else {
+            log.warn("DELETE /api/loans/delete - Failed to delete loan for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDto(LoansConstants.STATUS_417, LoansConstants.MESSAGE_417_DELETE));

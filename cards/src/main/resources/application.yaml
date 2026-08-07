@@ -45,6 +45,8 @@ eureka:
     status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
     health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
   client:
+    refresh:
+      enable: false
     register-with-eureka: true
     fetch-registry: true
     service-url:
