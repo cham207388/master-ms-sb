@@ -57,7 +57,7 @@ Run all build and execution commands within the `accounts` directory:
    - `DB_NAME` (default: `accounts`)
    - `DB_USERNAME` (default: `postgres`)
    - `DB_PASSWORD` (default: `postgres`)
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/`)
+   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/` or `http://config-server:8071/`)
    - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
    - `RABBITMQ_HOST` (default: `localhost` or `host.docker.internal`)
    - `RABBITMQ_PORT` (default: `5672`)
@@ -66,12 +66,12 @@ Run all build and execution commands within the `accounts` directory:
 
 ## 📐 REST API & Code Conventions
 
-1. **Routing**: Base path `@RequestMapping(path = "/api", produces = {MediaType.APPLICATION_JSON_VALUE})`.
+1. **Routing**: Base path `@RequestMapping(path = "/api/accounts", produces = {MediaType.APPLICATION_JSON_VALUE})`.
 2. **Endpoints**:
-   - `POST /api/create` - Onboard new customer and open account
-   - `GET /api/fetch` - Fetch customer & account details by `mobileNumber`
-   - `PUT /api/update` - Update customer & account details
-   - `DELETE /api/delete` - Delete customer & account by `mobileNumber`
+   - `POST /api/accounts/create` - Onboard new customer and open account
+   - `GET /api/accounts/fetch` - Fetch customer & account details by `mobileNumber`
+   - `PUT /api/accounts/update` - Update customer & account details
+   - `DELETE /api/accounts/delete` - Delete customer & account by `mobileNumber`
 3. **DTO & Validation**:
    - Request payloads must use `@Valid`.
    - Mobile numbers validated via `@Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")`.

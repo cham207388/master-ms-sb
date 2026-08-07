@@ -56,7 +56,7 @@ Run all build and execution commands within the `loans` directory:
    - `DB_NAME` (default: `loans`)
    - `DB_USERNAME` (default: `postgres`)
    - `DB_PASSWORD` (default: `postgres`)
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/`)
+   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/` or `http://config-server:8071/`)
    - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
    - `RABBITMQ_HOST` (default: `localhost` or `host.docker.internal`)
    - `RABBITMQ_PORT` (default: `5672`)
@@ -65,12 +65,12 @@ Run all build and execution commands within the `loans` directory:
 
 ## 📐 REST API & Code Conventions
 
-1. **Routing**: Base path `@RequestMapping(path = "/api", produces = {MediaType.APPLICATION_JSON_VALUE})`.
+1. **Routing**: Base path `@RequestMapping(path = "/api/loans", produces = {MediaType.APPLICATION_JSON_VALUE})`.
 2. **Endpoints**:
-   - `POST /api/create` - Create a new loan for a customer by `mobileNumber`
-   - `GET /api/fetch` - Fetch loan details by `mobileNumber`
-   - `PUT /api/update` - Update loan details and repayments
-   - `DELETE /api/delete` - Delete loan details by `mobileNumber`
+   - `POST /api/loans/create` - Create a new loan for a customer by `mobileNumber`
+   - `GET /api/loans/fetch` - Fetch loan details by `mobileNumber`
+   - `PUT /api/loans/update` - Update loan details and repayments
+   - `DELETE /api/loans/delete` - Delete loan details by `mobileNumber`
 3. **DTO & Validation**:
    - Request payloads must use `@Valid`.
    - Mobile numbers validated via `@Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")`.

@@ -56,7 +56,7 @@ Run all build and execution commands within the `cards` directory:
    - `DB_NAME` (default: `cards`)
    - `DB_USERNAME` (default: `postgres`)
    - `DB_PASSWORD` (default: `postgres`)
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/`)
+   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/` or `http://config-server:8071/`)
    - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
    - `RABBITMQ_HOST` (default: `localhost` or `host.docker.internal`)
    - `RABBITMQ_PORT` (default: `5672`)
@@ -65,12 +65,12 @@ Run all build and execution commands within the `cards` directory:
 
 ## 📐 REST API & Code Conventions
 
-1. **Routing**: Base path `@RequestMapping(path = "/api", produces = {MediaType.APPLICATION_JSON_VALUE})`.
+1. **Routing**: Base path `@RequestMapping(path = "/api/cards", produces = {MediaType.APPLICATION_JSON_VALUE})`.
 2. **Endpoints**:
-   - `POST /api/create` - Issue a new card for a customer by `mobileNumber`
-   - `GET /api/fetch` - Fetch card details by `mobileNumber`
-   - `PUT /api/update` - Update card limits and details
-   - `DELETE /api/delete` - Delete card details by `mobileNumber`
+   - `POST /api/cards/create` - Issue a new card for a customer by `mobileNumber`
+   - `GET /api/cards/fetch` - Fetch card details by `mobileNumber`
+   - `PUT /api/cards/update` - Update card limits and details
+   - `DELETE /api/cards/delete` - Delete card details by `mobileNumber`
 3. **DTO & Validation**:
    - Request payloads must use `@Valid`.
    - Mobile numbers validated via `@Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")`.

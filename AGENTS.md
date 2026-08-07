@@ -1,6 +1,6 @@
-# Project Context & AI Agent Guidelines: EazyBank Microservices
+# Project Context & AI Agent Guidelines: Securedbank Microservices
 
-Welcome to the **EazyBank Microservices Platform** codebase. This file provides authoritative context, architectural rules, and technical conventions for AI agents operating within this workspace.
+Welcome to the **Securedbank Microservices Platform** codebase. This file provides authoritative context, architectural rules, and technical conventions for AI agents operating within this workspace.
 
 ---
 
