@@ -16,7 +16,7 @@ accounts-db-down:
 	docker compose down accounts-db -v
 
 accounts-api-run:
-	docker compose up accounts-api -d --build
+	docker compose up accounts-api -d --build --no-deps
 
 accounts:
 	docker compose up accounts-db accounts-api -d
@@ -37,7 +37,7 @@ cards-db-down:
 	docker compose down cards-db -v
 
 cards-api-run:
-	docker compose up cards-api -d --build
+	docker compose up cards-api -d --build --no-deps
 
 cards:
 	docker compose up cards-db cards-api -d
@@ -59,7 +59,7 @@ loans-db-down:
 	docker compose down loans-db -v
 
 loans-api:
-	docker compose up loans-api -d --build
+	docker compose up loans-api -d --build --no-deps
 
 loans:
 	docker compose up loans-db loans-api -d

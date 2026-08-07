@@ -12,8 +12,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
   eureka-server:
     build:
       context: ./eureka-server
@@ -29,8 +30,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-with-config-server
     depends_on:
       config-server:
         condition: service_healthy
@@ -52,8 +54,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
 
   accounts-api:
     build:
@@ -92,12 +95,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 700m
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
 
   cards-api:
     build:
@@ -135,8 +135,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    networks:
-      - securedbank
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
 
   loans-api:
     build:
