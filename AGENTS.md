@@ -87,6 +87,10 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Eureka Server: `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
      - Event Bus / RabbitMQ: `RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `RABBITMQ_PORT` (`5672`), `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`
 
+5. **Docker Container Networking & Eureka Dashboard Status Links**:
+   - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.
+   - **Status & Health Page URLs**: Microservices explicitly define `eureka.instance.status-page-url: http://localhost:${server.port}/actuator/info` and `eureka.instance.health-check-url: http://localhost:${server.port}/actuator/health` so clicking status links on the Eureka Dashboard (`http://localhost:8070`) routes through published host ports (`8091`, `8092`, `8093`) while inter-service communication remains containerized.
+
 ---
 
 ## 📐 REST API & Code Conventions

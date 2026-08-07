@@ -274,6 +274,19 @@ Each microservice relies on configurable environment variables in its `applicati
 | `RABBITMQ_HOST` | RabbitMQ Broker Host | `localhost` | `localhost` | `localhost` | `localhost` | N/A |
 | `RABBITMQ_PORT` | RabbitMQ AMQP Port | `5672` | `5672` | `5672` | `5672` | N/A |
 
+### 🌐 Docker Container Networking & Eureka Status Links Note
+When microservices run inside Docker Desktop (macOS/Windows), their internal container IP addresses (e.g. `172.19.x.x`) are isolated within Docker's Linux VM network bridge. 
+
+To ensure status page links clicked on the Eureka Dashboard ([http://localhost:8070](http://localhost:8070)) load correctly in host browsers while maintaining inter-container discovery, each microservice defines:
+```yaml
+eureka:
+  instance:
+    prefer-ip-address: true
+    status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
+    health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
+```
+This routes host browser link navigation through published host ports (`8091`, `8092`, `8093`) while inter-service communication remains containerized.
+
 ---
 
 ## 🐳 Docker & Multi-Stage Containerization

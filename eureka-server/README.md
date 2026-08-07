@@ -29,6 +29,26 @@ The **Spring Cloud Netflix Eureka Server** provides centralized service registra
 
 ---
 
+## 🌐 Docker Networking & Dashboard Status Page Routing
+
+When microservices run containerized inside Docker Desktop (macOS/Windows), their internal bridge network IP addresses (`172.19.x.x`) are not routable from host web browsers.
+
+To ensure clicking service status links on the Eureka Dashboard ([http://localhost:8070](http://localhost:8070)) opens successfully in your host browser, registered client services configure explicit status and health page URLs:
+
+```yaml
+eureka:
+  instance:
+    prefer-ip-address: true
+    status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
+    health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
+```
+
+This allows:
+1. **Container Inter-Communication**: Microservices discover and call each other using internal container IPs (`172.19.x.x`) or container hostnames.
+2. **Host Browser Dashboard Links**: Host developers clicking status links on the Eureka Dashboard navigate via published host ports (`localhost:8091/actuator/info`, `localhost:8092/actuator/info`, `localhost:8093/actuator/info`).
+
+---
+
 ## 🛠 Management & Health Check Endpoints
 
 - **Eureka Dashboard**: [http://localhost:8070](http://localhost:8070)
