@@ -124,3 +124,9 @@ all-up:
 
 all-down:
 	docker compose down -v
+
+gateway-up:
+	docker compose up gateway-server -d --build --no-deps
+
+gateway-down:
+	docker compose down gateway-server -v
