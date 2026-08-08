@@ -6,7 +6,7 @@
 ![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 
-The **Spring Cloud Netflix Eureka Server** provides centralized service registration and discovery for all EazyBank microservices (`accounts`, `cards`, `loans`). It exposes a live management dashboard and REST registration endpoints for microservices inside the `securedbank` network.
+The **Spring Cloud Netflix Eureka Server** provides centralized service registration and discovery for all SecuredBank microservices (`accounts`, `cards`, `loans`). It exposes a live management dashboard and REST registration endpoints for microservices inside the `securedbank` network.
 
 ---
 
@@ -21,11 +21,11 @@ The **Spring Cloud Netflix Eureka Server** provides centralized service registra
 
 ## 🚀 Registered Microservices & Endpoints
 
-| Microservice | Default Port | Default Eureka Client Zone |
-| :--- | :--- | :--- |
-| **Accounts** | `8091` | `http://eureka-server:8070/eureka/` |
-| **Cards** | `8092` | `http://eureka-server:8070/eureka/` |
-| **Loans** | `8093` | `http://eureka-server:8070/eureka/` |
+| Microservice | Default Port | Default Eureka Client Zone          |
+| :----------- | :----------- | :---------------------------------- |
+| **Accounts** | `8091`       | `http://eureka-server:8070/eureka/` |
+| **Cards**    | `8092`       | `http://eureka-server:8070/eureka/` |
+| **Loans**    | `8093`       | `http://eureka-server:8070/eureka/` |
 
 ---
 

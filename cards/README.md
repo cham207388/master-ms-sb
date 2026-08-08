@@ -7,7 +7,7 @@
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-The **Cards Microservice** handles credit and debit card issuance, limit tracking, available balance management, and card metrics for the EazyBank platform.
+The **Cards Microservice** handles credit and debit card issuance, limit tracking, available balance management, and card metrics for the SecuredBank platform.
 
 ---
 
@@ -27,12 +27,12 @@ The **Cards Microservice** handles credit and debit card issuance, limit trackin
 
 ## 🚀 REST API Endpoints
 
-| Method | Endpoint | Description | Request Body / Params | Status Codes |
-| :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/api/create` | Issue New Card | `mobileNumber` (Query Param, 10 digits) | `201 Created`, `500` |
-| `GET` | `/api/fetch` | Fetch Card Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `500` |
-| `PUT` | `/api/update` | Update Card Details | `CardsDto` (JSON) | `200 OK`, `417 Expectation Failed`, `500` |
-| `DELETE`| `/api/delete` | Delete Card Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `417 Expectation Failed`, `500` |
+| Method   | Endpoint      | Description         | Request Body / Params                   | Status Codes                              |
+| :------- | :------------ | :------------------ | :-------------------------------------- | :---------------------------------------- |
+| `POST`   | `/api/create` | Issue New Card      | `mobileNumber` (Query Param, 10 digits) | `201 Created`, `500`                      |
+| `GET`    | `/api/fetch`  | Fetch Card Details  | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `500`                           |
+| `PUT`    | `/api/update` | Update Card Details | `CardsDto` (JSON)                       | `200 OK`, `417 Expectation Failed`, `500` |
+| `DELETE` | `/api/delete` | Delete Card Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `417 Expectation Failed`, `500` |
 
 ---
 

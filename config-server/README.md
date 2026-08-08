@@ -6,7 +6,7 @@
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Bus-ff6600.svg)
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 
-The **Spring Cloud Config Server** provides centralized, externalized configuration management for all EazyBank
+The **Spring Cloud Config Server** provides centralized, externalized configuration management for all SecuredBank
 microservices (`accounts`, `cards`, `loans`) backed by a Git repository and integrated with **RabbitMQ** for dynamic
 event-driven configuration refreshes (`Spring Cloud Bus`).
 
@@ -26,11 +26,11 @@ event-driven configuration refreshes (`Spring Cloud Bus`).
 
 ### Exposed Configuration Profiles
 
-| Microservice | Profile   | Config Server Endpoint                                                           |
-|:-------------|:----------|:---------------------------------------------------------------------------------|
-| **Accounts** | `default` | [http://localhost:8071/accounts/default](http://localhost:8071/accounts/default) |
-| **Cards**    | `default` | [http://localhost:8071/cards/default](http://localhost:8071/cards/default)       |
-| **Loans**    | `default` | [http://localhost:8071/loans/default](http://localhost:8071/loans/default)       |
+| Microservice | Profile   | Config Server Endpoint                                                                     |
+| :----------- | :-------- | :----------------------------------------------------------------------------------------- |
+| **Accounts** | `default` | [http://localhost:8071/accounts/default](http://localhost:8071/accounts/default)           |
+| **Cards**    | `default` | [http://localhost:8071/cards/default](http://localhost:8071/cards/default)                 |
+| **Loans**    | `default` | [http://localhost:8071/loans/default](http://localhost:8071/loans/default)                 |
 | **Eureka**   | `default` | [http://localhost:8071/eureka-server/default](http://localhost:8071/eureka-server/default) |
 
 ### Management & Bus Endpoints
