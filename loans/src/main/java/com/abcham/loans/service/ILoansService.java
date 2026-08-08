@@ -5,7 +5,7 @@ import com.abcham.loans.dto.LoansDto;
 public interface ILoansService {
     void createLoan(String mobileNumber);
 
-    LoansDto fetchLoan(String mobileNumber);
+    LoansDto fetchLoan(String correlationId, String mobileNumber);
 
     boolean updateLoan(LoansDto loansDto);
 

@@ -11,5 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface LoansFeignClient {
 
     @GetMapping(value = "/fetch", consumes = "application/json")
-    ResponseEntity<LoansDto> fetchLoanDetails(@RequestParam String mobileNumber);
+    ResponseEntity<LoansDto> fetchLoanDetails(@RequestParam String correlationId,
+            @RequestParam String mobileNumber);
 }

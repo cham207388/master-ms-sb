@@ -55,7 +55,7 @@ class LoansControllerTest {
 
     @Test
     void fetchLoanDetails_Success() throws Exception {
-        when(iLoansService.fetchLoan("1234567890")).thenReturn(loansDto);
+        when(iLoansService.fetchLoan("sas8-129s-aqwq-qwq12","1234567890")).thenReturn(loansDto);
 
         mockMvc.perform(get("/api/loans/fetch")
                         .param("mobileNumber", "1234567890"))

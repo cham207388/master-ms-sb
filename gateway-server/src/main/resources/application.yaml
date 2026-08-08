@@ -18,8 +18,9 @@ spring:
 
 logging:
   level:
-    org.springframework.amqp.rabbit.listener.BlockingQueueConsumer: ERROR
-    org.springframework.amqp.rabbit.connection.CachingConnectionFactory: ERROR
+    com:
+      abcham:
+        gatewayserver: DEBUG
 
 management:
   endpoints:
