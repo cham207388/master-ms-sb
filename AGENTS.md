@@ -31,7 +31,11 @@ The application is structured as a domain-driven microservices architecture comp
    - **Server Port**: `8070`
    - **Domain**: Service registration & discovery server (Dashboard: `http://localhost:8070`, endpoint: `http://eureka-server:8070/eureka/`).
 
-6. **RabbitMQ Event Bus**
+6. **Spring Cloud Gateway Server** ([`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server))
+   - **Server Port**: `8072`
+   - **Domain**: Edge API routing, reactive load balancing (`lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS`), dynamic path rewriting (`/ACCOUNTS/**` -> `/api/accounts/**`), and Gateway Actuator metrics (`/actuator/gateway/routes`).
+
+7. **RabbitMQ Event Bus**
    - **AMQP Port**: `5672` (Management UI: `15672`)
    - **Domain**: Provides Spring Cloud Bus AMQP for dynamic configuration refresh (`/actuator/busrefresh`).
 
@@ -41,7 +45,7 @@ The application is structured as a domain-driven microservices architecture comp
 
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` configured in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Spring Data JPA, Actuator, Flyway).
-- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
+- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-gateway-server-webflux`, `spring-cloud-starter-loadbalancer`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
 - **Dependency Management**: Spring Dependency Management `1.1.7`.
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
 - **Database Migration**: Flyway (`org.flywaydb:flyway-database-postgresql`), with scripts located at `src/main/resources/db/migration/V1__init.sql`.
@@ -49,8 +53,8 @@ The application is structured as a domain-driven microservices architecture comp
 - **Testing & Testcontainers**: Spring Boot Testcontainers (`org.springframework.boot:spring-boot-testcontainers`), Testcontainers PostgreSQL (`org.testcontainers:postgresql:1.20.4`), and JUnit 5 integration (`org.testcontainers:junit-jupiter:1.20.4`) with `@ServiceConnection` for isolated containerized integration testing.
 - **Build System**: Independent Gradle wrapper scripts (`./gradlew`) inside each microservice directory, managed globally via the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile).
 - **Containerization & Orchestration**:
-  - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root user `producer:producer`.
-  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all microservices (`accounts`, `cards`, `loans`, `config-server`, `eureka-server`, `rabbit-mq`, and DBs) via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
+  - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root users (`producer:producer`, `gateway:gateway`).
+  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all microservices (`accounts`, `cards`, `loans`, `config-server`, `eureka-server`, `gateway-server`, `rabbit-mq`, and DBs) via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
 
 ---
 
@@ -65,19 +69,20 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Loans: `cd loans && ./gradlew clean build`
      - Config Server: `cd config-server && ./gradlew clean build`
      - Eureka Server: `cd eureka-server && ./gradlew clean build`
+     - Gateway Server: `cd gateway-server && ./gradlew clean build`
 
 2. **Makefile Commands**:
    - Use the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) targets for multi-service operations:
-     - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make eureka-server-build`
+     - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make eureka-server-build`, `make gateway-server-build`
      - Databases: `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
-     - Service Stacks: `make accounts`, `make cards`, `make loans`
+     - Service Stacks: `make accounts`, `make cards`, `make loans`, `make gateway-up`, `make gateway-down`, `make all-up`, `make all-down`
      - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`
      - Config Server & RabbitMQ: `make rabbit-mq-up`, `make config-server-up`, `make config-all-up`, `make config-all-down`
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
 
 3. **Orchestration with Root Compose**:
-   - To bring up the entire platform (all DBs, Config Server, Eureka Server, RabbitMQ, and APIs) on the `securedbank` network:
-     - `docker compose up -d`
+   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, RabbitMQ, and APIs) on the `securedbank` network:
+     - `make all-up` or `docker compose up -d`
      - `docker compose down -v`
 
 4. **Environment Configuration**:
@@ -89,7 +94,7 @@ When building, testing, or executing commands in this workspace, always adhere t
 
 5. **Docker Container Networking & Eureka Dashboard Status Links**:
    - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.
-   - **Status & Health Page URLs**: Microservices explicitly define `eureka.instance.status-page-url: http://localhost:${server.port}/actuator/info` and `eureka.instance.health-check-url: http://localhost:${server.port}/actuator/health` so clicking status links on the Eureka Dashboard (`http://localhost:8070`) routes through published host ports (`8091`, `8092`, `8093`) while inter-service communication remains containerized.
+   - **Status & Health Page URLs**: Microservices explicitly define `eureka.instance.status-page-url: http://localhost:${server.port}/actuator/info` and `eureka.instance.health-check-url: http://localhost:${server.port}/actuator/health` so clicking status links on the Eureka Dashboard (`http://localhost:8070`) routes through published host ports (`8091`, `8092`, `8093`, `8072`) while inter-service communication remains containerized.
 
 ---
 
