@@ -10,17 +10,15 @@ import org.springframework.context.annotation.Bean;
 public class GatewayServerApplication {
 
     public static void main(String[] args) {
-
         SpringApplication.run(GatewayServerApplication.class, args);
     }
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder routeLocatorBuilder) {
-
         return routeLocatorBuilder.routes()
                 .route(p -> p
-                        .path("/ACCOUNTS/**")
-                        .filters(f -> f.rewritePath("/ACCOUNTS/(?<segment>.*)", "/${segment}")
+                        .path("/accounts/**", "/ACCOUNTS/**")
+                        .filters(f -> f.rewritePath("(?i)/accounts/(?<segment>.*)", "/${segment}")
                                 .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
                                 .circuitBreaker(config -> config
                                         .setName("accountsCircuitBreaker")
@@ -29,35 +27,16 @@ public class GatewayServerApplication {
                         )
                         .uri("lb://ACCOUNTS"))
                 .route(p -> p
-                        .path("/accounts/**")
-                        .filters(f -> f.rewritePath("/accounts/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
-                                .circuitBreaker(config -> config
-                                        .setName("accountsCircuitBreaker")
-                                        .setFallbackUri("forward:/accounts-fallback")
-                                )
-                        )
-                        .uri("lb://ACCOUNTS"))
-                .route(p -> p
-                        .path("/CARDS/**")
-                        .filters(f -> f.rewritePath("/CARDS/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis())))
-                        .uri("lb://CARDS"))
-                .route(p -> p
-                        .path("/cards/**")
-                        .filters(f -> f.rewritePath("/cards/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis())))
-                        .uri("lb://CARDS"))
-                .route(p -> p
-                        .path("/LOANS/**")
-                        .filters(f -> f.rewritePath("/LOANS/(?<segment>.*)", "/${segment}")
+                        .path("/cards/**", "/CARDS/**")
+                        .filters(f -> f.rewritePath("(?i)/cards/(?<segment>.*)", "/${segment}")
                                 .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
                         )
-                        .uri("lb://LOANS"))
+                        .uri("lb://CARDS"))
                 .route(p -> p
-                        .path("/loans/**")
-                        .filters(f -> f.rewritePath("/loans/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis())))
+                        .path("/loans/**", "/LOANS/**")
+                        .filters(f -> f.rewritePath("(?i)/loans/(?<segment>.*)", "/${segment}")
+                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
+                        )
                         .uri("lb://LOANS"))
                 .build();
     }
