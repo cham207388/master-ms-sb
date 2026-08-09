@@ -12,5 +12,6 @@ public interface CardsFeignClient {
 
     @GetMapping(value = "/fetch", consumes = "application/json")
     ResponseEntity<CardsDto> fetchCardDetails(@RequestParam String correlationId,
-            @RequestParam String mobileNumber);
+                                              @RequestParam String mobileNumber);
+
 }

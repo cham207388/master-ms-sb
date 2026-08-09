@@ -27,12 +27,9 @@ public class CustomersServiceImpl implements ICustomersService {
     private CardsFeignClient cardsFeignClient;
     private LoansFeignClient loansFeignClient;
 
-    /**
-     * @param mobileNumber - Input Mobile Number
-     * @return Customer Details based on a given mobileNumber
-     */
     @Override
     public CustomerDetailsDto fetchCustomerDetails(String correlationId, String mobileNumber) {
+
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
         );
@@ -52,4 +49,5 @@ public class CustomersServiceImpl implements ICustomersService {
         return customerDetailsDto;
 
     }
+
 }

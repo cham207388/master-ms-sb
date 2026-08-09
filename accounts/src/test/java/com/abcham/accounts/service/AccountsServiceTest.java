@@ -41,6 +41,7 @@ class AccountsServiceTest {
 
     @BeforeEach
     void setUp() {
+
         AccountsDto accountsDto = new AccountsDto();
         accountsDto.setAccountNumber(1234567890L);
         accountsDto.setAccountType(AccountsConstants.SAVINGS);
@@ -67,6 +68,7 @@ class AccountsServiceTest {
 
     @Test
     void createAccount_Success() {
+
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
         when(customerRepository.save(any(Customer.class))).thenReturn(customer);
         when(accountsRepository.save(any(Accounts.class))).thenReturn(accounts);
@@ -79,6 +81,7 @@ class AccountsServiceTest {
 
     @Test
     void createAccount_ThrowsCustomerAlreadyExistsException() {
+
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(customer));
 
         assertThrows(CustomerAlreadyExistsException.class, () -> accountsService.createAccount(customerDto));
@@ -89,6 +92,7 @@ class AccountsServiceTest {
 
     @Test
     void fetchAccount_Success() {
+
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(customer));
         when(accountsRepository.findByCustomerId(1L)).thenReturn(Optional.of(accounts));
 
@@ -103,6 +107,7 @@ class AccountsServiceTest {
 
     @Test
     void fetchAccount_ThrowsResourceNotFoundException_WhenCustomerNotFound() {
+
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> accountsService.fetchAccount("1234567890"));
@@ -110,6 +115,7 @@ class AccountsServiceTest {
 
     @Test
     void updateAccount_Success() {
+
         when(accountsRepository.findById(1234567890L)).thenReturn(Optional.of(accounts));
         when(accountsRepository.save(any(Accounts.class))).thenReturn(accounts);
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
@@ -124,6 +130,7 @@ class AccountsServiceTest {
 
     @Test
     void updateAccount_ReturnsFalse_WhenAccountsDtoIsNull() {
+
         customerDto.setAccountsDto(null);
 
         boolean isUpdated = accountsService.updateAccount(customerDto);
@@ -134,6 +141,7 @@ class AccountsServiceTest {
 
     @Test
     void deleteAccount_Success() {
+
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(customer));
 
         boolean isDeleted = accountsService.deleteAccount("1234567890");
@@ -142,4 +150,5 @@ class AccountsServiceTest {
         verify(accountsRepository, times(1)).deleteByCustomerId(1L);
         verify(customerRepository, times(1)).deleteById(1L);
     }
+
 }

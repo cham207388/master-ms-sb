@@ -14,7 +14,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -32,6 +33,7 @@ class CustomerRepositoryTest {
 
     @BeforeEach
     void setUp() {
+
         customer = new Customer();
         customer.setName("Alice Smith");
         customer.setEmail("alice@example.com");
@@ -42,6 +44,7 @@ class CustomerRepositoryTest {
 
     @Test
     void findByMobileNumber_ReturnsCustomer_WhenExists() {
+
         customerRepository.save(customer);
 
         Optional<Customer> result = customerRepository.findByMobileNumber("9876543210");
@@ -52,8 +55,10 @@ class CustomerRepositoryTest {
 
     @Test
     void findByMobileNumber_ReturnsEmpty_WhenNotExists() {
+
         Optional<Customer> result = customerRepository.findByMobileNumber("0000000000");
 
         assertTrue(result.isEmpty());
     }
+
 }

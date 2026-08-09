@@ -17,16 +17,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AccountsController.class)
 class AccountsControllerTest {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired
     private MockMvc mockMvc;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @MockitoBean
     private IAccountsService iAccountsService;
 
@@ -34,6 +33,7 @@ class AccountsControllerTest {
 
     @BeforeEach
     void setUp() {
+
         AccountsDto accountsDto = new AccountsDto();
         accountsDto.setAccountNumber(1234567890L);
         accountsDto.setAccountType(AccountsConstants.SAVINGS);
@@ -48,6 +48,7 @@ class AccountsControllerTest {
 
     @Test
     void createAccount_Success() throws Exception {
+
         doNothing().when(iAccountsService).createAccount(any(CustomerDto.class));
 
         mockMvc.perform(post("/api/accounts/create")
@@ -60,6 +61,7 @@ class AccountsControllerTest {
 
     @Test
     void createAccount_ValidationError_InvalidEmail() throws Exception {
+
         customerDto.setEmail("invalid-email");
 
         mockMvc.perform(post("/api/accounts/create")
@@ -70,6 +72,7 @@ class AccountsControllerTest {
 
     @Test
     void fetchAccountDetails_Success() throws Exception {
+
         when(iAccountsService.fetchAccount("1234567890")).thenReturn(customerDto);
 
         mockMvc.perform(get("/api/accounts/fetch")
@@ -83,6 +86,7 @@ class AccountsControllerTest {
 
     @Test
     void updateAccountDetails_Success() throws Exception {
+
         when(iAccountsService.updateAccount(any(CustomerDto.class))).thenReturn(true);
 
         mockMvc.perform(put("/api/accounts/update")
@@ -95,6 +99,7 @@ class AccountsControllerTest {
 
     @Test
     void updateAccountDetails_Failed() throws Exception {
+
         when(iAccountsService.updateAccount(any(CustomerDto.class))).thenReturn(false);
 
         mockMvc.perform(put("/api/accounts/update")
@@ -106,6 +111,7 @@ class AccountsControllerTest {
 
     @Test
     void deleteAccountDetails_Success() throws Exception {
+
         when(iAccountsService.deleteAccount("1234567890")).thenReturn(true);
 
         mockMvc.perform(delete("/api/accounts/delete")
@@ -117,6 +123,7 @@ class AccountsControllerTest {
 
     @Test
     void deleteAccountDetails_Failed() throws Exception {
+
         when(iAccountsService.deleteAccount("1234567890")).thenReturn(false);
 
         mockMvc.perform(delete("/api/accounts/delete")
@@ -124,4 +131,5 @@ class AccountsControllerTest {
                 .andExpect(status().isExpectationFailed())
                 .andExpect(jsonPath("$.statusCode").value(AccountsConstants.STATUS_417));
     }
+
 }

@@ -16,7 +16,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -38,6 +39,7 @@ class AccountsRepositoryTest {
 
     @BeforeEach
     void setUp() {
+
         Customer customer = new Customer();
         customer.setName("Bob Jones");
         customer.setEmail("bob@example.com");
@@ -57,6 +59,7 @@ class AccountsRepositoryTest {
 
     @Test
     void findByCustomerId_ReturnsAccounts_WhenExists() {
+
         accountsRepository.save(accounts);
 
         Optional<Accounts> result = accountsRepository.findByCustomerId(savedCustomer.getCustomerId());
@@ -67,6 +70,7 @@ class AccountsRepositoryTest {
 
     @Test
     void deleteByCustomerId_DeletesAccountSuccessfully() {
+
         accountsRepository.save(accounts);
 
         accountsRepository.deleteByCustomerId(savedCustomer.getCustomerId());
@@ -74,4 +78,5 @@ class AccountsRepositoryTest {
         Optional<Accounts> result = accountsRepository.findByCustomerId(savedCustomer.getCustomerId());
         assertTrue(result.isEmpty());
     }
+
 }

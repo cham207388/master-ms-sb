@@ -18,6 +18,10 @@ spring:
     out-of-order: false
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8071/}"
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
 
 logging:
   level:
@@ -68,3 +72,12 @@ loans:
     name: "loans"
     base:
       path: "/api/loans"
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
