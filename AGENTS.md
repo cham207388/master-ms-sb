@@ -122,3 +122,31 @@ When adding or updating endpoints, models, or database schemas:
 4. **Flyway Migrations**:
    - Never modify existing, already-applied Flyway SQL scripts.
    - Add versioned migration files following the naming pattern: `V<Version>__<Description>.sql` (e.g., `V2__add_column.sql`).
+
+---
+
+## 🛡️ Resilience & Monitoring (Circuit Breaker & Actuator)
+
+When configuring circuit breakers, retries, or monitoring endpoints:
+
+1. **Spring Cloud Gateway Resilience**:
+   - Gateway routes employ Resilience4j CircuitBreaker filters (`accountsCircuitBreaker`, `cardsCircuitBreaker`, `loansCircuitBreaker`).
+   - Fallback endpoints are handled in `FallbackController.java`:
+     - `/accounts-fallback`: Handles Accounts service circuit breaker fallbacks.
+     - `/cards-fallback`: Handles Cards service circuit breaker fallbacks.
+     - `/loans-fallback`: Handles Loans service circuit breaker fallbacks.
+   - Gateway Actuator Monitoring Paths:
+     - Routes: `http://localhost:8072/actuator/gateway/routes`
+     - Circuit Breakers: `http://localhost:8072/actuator/circuitbreakers`
+     - Circuit Breaker Events: `http://localhost:8072/actuator/circuitbreakerevents`
+     - Health Status: `http://localhost:8072/actuator/health`
+
+2. **Accounts Microservice Resilience**:
+   - OpenFeign circuit breaker is enabled via `spring.cloud.openfeign.circuitbreaker.enabled: true`.
+   - `CardsFeignClient` uses `fallback = CardsFallback.class`.
+   - `LoansFeignClient` uses `fallback = LoansFallback.class`.
+   - Accounts Actuator Monitoring Paths:
+     - Health & Circuit Breaker Status: `http://localhost:8091/actuator/health`
+     - Circuit Breakers: `http://localhost:8091/actuator/circuitbreakers`
+     - Circuit Breaker Events: `http://localhost:8091/actuator/circuitbreakerevents`
+

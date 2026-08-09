@@ -100,15 +100,27 @@ graph TD
 
 ### Service Port & Infrastructure Allocation
 
-| Microservice / Component | Path                                                                                         | Server Port            | Database Name | Host DB Port | Swagger UI / Dashboard Endpoint                                                                | Actuator Health                                                                |
-| :----------------------- | :------------------------------------------------------------------------------------------- | :--------------------- | :------------ | :----------- | :--------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
-| **Gateway Server**       | [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server) | `8072`                 | N/A           | N/A          | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) |
-| **Accounts**             | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts)             | `8091`                 | `accounts`    | `5423`       | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html)     | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) |
-| **Cards**                | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards)                   | `8092`                 | `cards`       | `5424`       | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html)     | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) |
-| **Loans**                | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans)                   | `8093`                 | `loans`       | `5425`       | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html)     | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) |
-| **Config Server**        | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)   | `8071`                 | N/A           | N/A          | N/A                                                                                            | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) |
-| **Eureka Server**        | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)   | `8070`                 | N/A           | N/A          | [http://localhost:8070](http://localhost:8070)                                                 | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) |
-| **RabbitMQ**             | N/A                                                                                          | `5672` (Mgmt: `15672`) | N/A           | N/A          | N/A                                                                                            | N/A                                                                            |
+| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Swagger UI / Dashboard Endpoint | Actuator Health | Circuit Breaker Endpoint |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gateway Server** | [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server) | `8072` | N/A | N/A | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) |
+| **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) |
+| **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) | N/A |
+| **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) | N/A |
+| **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) | N/A |
+| **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) | N/A |
+| **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | N/A | N/A | N/A |
+
+### 🛡️ Actuator & Circuit Breaker Monitoring Endpoints
+
+| Service / Component | Feature / Metric | Actuator Monitoring Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Gateway Server** (`8072`) | Gateway Routes | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | List active gateway routes, predicates, and filters |
+| **Gateway Server** (`8072`) | Circuit Breakers Status | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) | State of Gateway circuit breakers (`accountsCircuitBreaker`, `cardsCircuitBreaker`, `loansCircuitBreaker`) |
+| **Gateway Server** (`8072`) | Circuit Breaker Events | [http://localhost:8072/actuator/circuitbreakerevents](http://localhost:8072/actuator/circuitbreakerevents) | Event logs for state transitions, error rates, and fallbacks |
+| **Gateway Server** (`8072`) | Health Indicator | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | Health status including Resilience4j health indicators |
+| **Accounts Service** (`8091`) | Circuit Breakers Status | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) | OpenFeign Resilience4j circuit breaker state (`cards`, `loans`) |
+| **Accounts Service** (`8091`) | Circuit Breaker Events | [http://localhost:8091/actuator/circuitbreakerevents](http://localhost:8091/actuator/circuitbreakerevents) | Feign client fallback execution events |
+| **Accounts Service** (`8091`) | Health Indicator | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | Comprehensive service and database health status |
 
 ---
 
@@ -117,18 +129,18 @@ graph TD
 
 - **Path**: [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server)
 - **Port**: `8072`
-- **Description**: Edge routing engine built on Spring Cloud Gateway WebFlux. Configured via Java `@Bean RouteLocator` with dynamic path rewriting filters.
+- **Description**: Edge routing engine built on Spring Cloud Gateway WebFlux. Configured via Java `@Bean RouteLocator` with dynamic path rewriting, Resilience4j Circuit Breakers, and fallback handling.
 
-#### Configured Gateway Routes & Rewrite Rules
+#### Configured Gateway Routes & Fallback Rules
 
-| Route ID         | Matching Path Pattern | Rewrite Filter            | Target Service URI | Sample API Gateway URL                                    |
-| :--------------- | :-------------------- | :------------------------ | :----------------- | :-------------------------------------------------------- |
-| `accounts-upper` | `/ACCOUNTS/**`        | `/ACCOUNTS/(.*)` -> `/$1` | `lb://ACCOUNTS`    | `POST http://localhost:8072/ACCOUNTS/api/accounts/create` |
-| `accounts-lower` | `/accounts/**`        | `/accounts/(.*)` -> `/$1` | `lb://ACCOUNTS`    | `POST http://localhost:8072/accounts/api/accounts/create` |
-| `cards-upper`    | `/CARDS/**`           | `/CARDS/(.*)` -> `/$1`    | `lb://CARDS`       | `POST http://localhost:8072/CARDS/api/cards/create`       |
-| `cards-lower`    | `/cards/**`           | `/cards/(.*)` -> `/$1`    | `lb://CARDS`       | `POST http://localhost:8072/cards/api/cards/create`       |
-| `loans-upper`    | `/LOANS/**`           | `/LOANS/(.*)` -> `/$1`    | `lb://LOANS`       | `POST http://localhost:8072/LOANS/api/loans/create`       |
-| `loans-lower`    | `/loans/**`           | `/loans/(.*)` -> `/$1`    | `lb://LOANS`       | `POST http://localhost:8072/loans/api/loans/create`       |
+| Route ID | Matching Path Pattern | Rewrite Filter | Circuit Breaker & Fallback | Target Service URI | Sample API Gateway URL |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `accounts-upper` | `/ACCOUNTS/**` | `/ACCOUNTS/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/ACCOUNTS/api/accounts/create` |
+| `accounts-lower` | `/accounts/**` | `/accounts/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/accounts/api/accounts/create` |
+| `cards-upper` | `/CARDS/**` | `/CARDS/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/CARDS/api/cards/create` |
+| `cards-lower` | `/cards/**` | `/cards/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/cards/api/cards/create` |
+| `loans-upper` | `/LOANS/**` | `/LOANS/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/LOANS/api/loans/create` |
+| `loans-lower` | `/loans/**` | `/loans/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/loans/api/loans/create` |
 
 </details>
 
