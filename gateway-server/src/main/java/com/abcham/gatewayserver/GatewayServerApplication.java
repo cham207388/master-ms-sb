@@ -16,49 +16,4 @@ public class GatewayServerApplication {
 
         SpringApplication.run(GatewayServerApplication.class, args);
     }
-
-    @Bean
-    public RouteLocator customRouteLocator(RouteLocatorBuilder routeLocatorBuilder) {
-
-        return routeLocatorBuilder.routes()
-                .route(p -> p
-                        .path("/accounts/**", "/ACCOUNTS/**")
-                        .filters(f -> f.rewritePath("(?i)/accounts/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
-                                .circuitBreaker(config -> config
-                                        .setName("accountsCircuitBreaker")
-                                        .setFallbackUri("forward:/accounts-fallback")
-                                )
-                                .retry(retryConfig -> retryConfig
-                                        .setRetries(3)
-                                        .setMethods(HttpMethod.GET)
-                                        .setBackoff(Duration.ofMillis(100L), Duration.ofSeconds(1), 2, true)
-                                )
-                        )
-                        .uri("lb://ACCOUNTS"))
-                .route(p -> p
-                        .path("/cards/**", "/CARDS/**")
-                        .filters(f -> f.rewritePath("(?i)/cards/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
-                                .retry(retryConfig -> retryConfig
-                                        .setRetries(3)
-                                        .setMethods(HttpMethod.GET)
-                                        .setBackoff(Duration.ofMillis(100L), Duration.ofSeconds(1), 2, true)
-                                )
-                        )
-                        .uri("lb://CARDS"))
-                .route(p -> p
-                        .path("/loans/**", "/LOANS/**")
-                        .filters(f -> f.rewritePath("(?i)/loans/(?<segment>.*)", "/${segment}")
-                                .addResponseHeader("X-Response-Time", String.valueOf(System.currentTimeMillis()))
-                                .retry(retryConfig -> retryConfig
-                                        .setRetries(3)
-                                        .setMethods(HttpMethod.GET)
-                                        .setBackoff(Duration.ofMillis(100L), Duration.ofSeconds(1), 2, true)
-                                )
-                        )
-                        .uri("lb://LOANS"))
-                .build();
-    }
-
 }
