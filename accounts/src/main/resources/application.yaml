@@ -94,3 +94,9 @@ resilience4j:
 #        retryExeptions: when defined,
 #          - java.io.IOException
 #          - org.springframework.web.client.HttpServerErrorException
+  ratelimiter:
+    configs:
+      default:
+        limitForPeriod: 1
+        limitRefreshPeriod: 5000
+        timeoutDuration: 1000
