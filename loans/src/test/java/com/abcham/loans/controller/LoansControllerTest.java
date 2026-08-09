@@ -47,7 +47,7 @@ class LoansControllerTest {
         doNothing().when(iLoansService).createLoan("1234567890");
 
         mockMvc.perform(post("/api/loans/create")
-                        .param("mobileNumber", "1234567890"))
+                .param("mobileNumber", "1234567890"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_201))
                 .andExpect(jsonPath("$.statusMsg").value(LoansConstants.MESSAGE_201));
@@ -55,10 +55,11 @@ class LoansControllerTest {
 
     @Test
     void fetchLoanDetails_Success() throws Exception {
-        when(iLoansService.fetchLoan("sas8-129s-aqwq-qwq12","1234567890")).thenReturn(loansDto);
+        when(iLoansService.fetchLoan("sas8-129s-aqwq-qwq12", "1234567890")).thenReturn(loansDto);
 
         mockMvc.perform(get("/api/loans/fetch")
-                        .param("mobileNumber", "1234567890"))
+                .param("mobileNumber", "1234567890")
+                .param("correlationId", "sas8-129s-aqwq-qwq12"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))
                 .andExpect(jsonPath("$.loanNumber").value("548732457654"));
@@ -69,8 +70,8 @@ class LoansControllerTest {
         when(iLoansService.updateLoan(any(LoansDto.class))).thenReturn(true);
 
         mockMvc.perform(put("/api/loans/update")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loansDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loansDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_200));
     }
@@ -80,8 +81,8 @@ class LoansControllerTest {
         when(iLoansService.updateLoan(any(LoansDto.class))).thenReturn(false);
 
         mockMvc.perform(put("/api/loans/update")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loansDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loansDto)))
                 .andExpect(status().isExpectationFailed())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_417));
     }
@@ -91,7 +92,7 @@ class LoansControllerTest {
         when(iLoansService.deleteLoan("1234567890")).thenReturn(true);
 
         mockMvc.perform(delete("/api/loans/delete")
-                        .param("mobileNumber", "1234567890"))
+                .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(LoansConstants.STATUS_200));
     }
