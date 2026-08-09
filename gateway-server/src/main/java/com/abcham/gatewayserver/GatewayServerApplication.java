@@ -20,8 +20,8 @@ public class GatewayServerApplication {
                         .path("/ACCOUNTS/**")
                         .filters(f -> f.rewritePath("/ACCOUNTS/(?<segment>.*)", "/${segment}")
 								.circuitBreaker(config -> config
-										.setName("accounts-circuit-breaker")
-										.setFallbackUri("forward:/accounts-fallback")
+										.setName("accountsCircuitBreaker")
+//										.setFallbackUri("forward:/accounts-fallback")
 								)
 						)
                         .uri("lb://ACCOUNTS"))

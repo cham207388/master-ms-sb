@@ -52,9 +52,10 @@ info:
     version: ${APP_VERSION:1.0.0}
 
 resilience4j:
-  configs:
-    default:
-      sliding-window-size: 10
-      permitted-number-of-calls-in-half-open-state: 5
-      wait-duration-in-open-state: 10s
-      failure-rate-threshold: 50
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
