@@ -1,7 +1,8 @@
 .PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
         cards cards-build cards-db-up cards-db-down cards-api-run \
         loans loans-build loans-db-up loans-db-down loans-api \
-        eureka-server-build eureka-server-up eureka-server-down dbs-down
+        eureka-server-build eureka-server-up eureka-server-down dbs-down \
+        watch watch-accounts watch-cards watch-loans watch-gateway
 
 # ==============================================================================
 # Accounts Service
@@ -125,8 +126,24 @@ all-up:
 all-down:
 	docker compose down -v
 
-gateway-up:
-	docker compose up gateway-server -d --build --no-deps
-
 gateway-down:
 	docker compose down gateway-server -v
+
+# ==============================================================================
+# Live Sync & Watch
+# ==============================================================================
+watch:
+	docker compose watch
+
+watch-accounts:
+	docker compose watch accounts-api
+
+watch-cards:
+	docker compose watch cards-api
+
+watch-loans:
+	docker compose watch loans-api
+
+watch-gateway:
+	docker compose watch gateway-server
+
