@@ -3,6 +3,7 @@ package com.abcham.loans.service;
 import com.abcham.loans.dto.LoansDto;
 
 public interface ILoansService {
+
     void createLoan(String mobileNumber);
 
     LoansDto fetchLoan(String correlationId, String mobileNumber);
@@ -10,4 +11,5 @@ public interface ILoansService {
     boolean updateLoan(LoansDto loansDto);
 
     boolean deleteLoan(String mobileNumber);
+
 }

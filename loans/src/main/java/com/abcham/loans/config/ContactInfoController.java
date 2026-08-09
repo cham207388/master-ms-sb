@@ -17,6 +17,8 @@ public class ContactInfoController {
 
     @GetMapping("/api/loans/contact-info")
     public ResponseEntity<ContactInfo> getContactInfo() {
+
         return ResponseEntity.ok(contactInfo);
     }
+
 }

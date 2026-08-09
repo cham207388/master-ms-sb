@@ -2,9 +2,6 @@ package com.abcham.gatewayserver.filter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -23,6 +20,7 @@ public class RequestTraceFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
         HttpHeaders requestHeaders = exchange.getRequest().getHeaders();
         if (isCorrelationIdPresent(requestHeaders)) {
             log.debug("securedbank-correlation-id found in RequestTraceFilter : {}",
@@ -36,10 +34,12 @@ public class RequestTraceFilter implements GlobalFilter {
     }
 
     private boolean isCorrelationIdPresent(HttpHeaders requestHeaders) {
+
         return filterUtility.getCorrelationId(requestHeaders) != null;
     }
 
     private String generateCorrelationId() {
+
         return java.util.UUID.randomUUID().toString();
     }
 

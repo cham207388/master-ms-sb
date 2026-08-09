@@ -9,6 +9,8 @@ public class FallbackController {
 
     @GetMapping("/accounts-fallback")
     public Mono<String> accountsServiceFallback() {
+
         return Mono.just("Accounts service is currently unavailable. Please try again later.");
     }
+
 }

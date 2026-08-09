@@ -89,3 +89,8 @@ resilience4j:
         waitDuration: 2s
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2
+        ignoreExceptions: # not required when retryExeptions is defined
+          - java.lang.NullPointerException
+#        retryExeptions: when defined,
+#          - java.io.IOException
+#          - org.springframework.web.client.HttpServerErrorException
