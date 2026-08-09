@@ -1,6 +1,6 @@
 package com.abcham.accounts;
 
-import com.abcham.accounts.config.AppInfo;
+import com.abcham.accounts.config.ContactInfo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @EnableDiscoveryClient
 @SpringBootApplication
-@EnableConfigurationProperties(value = {AppInfo.class})
+@EnableConfigurationProperties(value = {ContactInfo.class})
 public class AccountsApplication {
 
 	public static void main(String[] args) {

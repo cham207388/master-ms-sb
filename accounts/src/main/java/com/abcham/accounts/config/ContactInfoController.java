@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Setter
 @RestController
 @RequiredArgsConstructor
-public class AppInfoController {
+public class ContactInfoController {
 
-    private final AppInfo appInfo;
+    private final ContactInfo contactInfo;
 
-    @GetMapping("/api/app/info")
-    public ResponseEntity<AppInfo> getAppInfo() {
-        return ResponseEntity.ok(appInfo);
+    @GetMapping("/api/accounts/contact-info")
+    public ResponseEntity<ContactInfo> getContactInfo() {
+        return ResponseEntity.ok(contactInfo);
     }
 }

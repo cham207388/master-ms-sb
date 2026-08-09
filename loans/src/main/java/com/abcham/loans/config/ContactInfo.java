@@ -1,4 +1,4 @@
-package com.abcham.accounts.config;
+package com.abcham.loans.config;
 
 
 import lombok.Getter;
@@ -10,8 +10,8 @@ import java.util.Map;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "accounts")
-public class AppInfo {
+@ConfigurationProperties(prefix = "loans")
+public class ContactInfo {
 
     private String message;
     private Map<String, String> contactDetails;
