@@ -59,7 +59,7 @@ class LoansControllerTest {
 
         mockMvc.perform(get("/api/loans/fetch")
                 .param("mobileNumber", "1234567890")
-                .param("correlationId", "sas8-129s-aqwq-qwq12"))
+                .header("securedbank-correlation-id", "sas8-129s-aqwq-qwq12"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))
                 .andExpect(jsonPath("$.loanNumber").value("548732457654"));
