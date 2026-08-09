@@ -29,13 +29,21 @@ public class InfoController {
         return ResponseEntity.ok(contactInfo);
     }
 
+    @GetMapping("/name-info")
+    public ResponseEntity<String> getNameInfo() {
+
+        return ResponseEntity.ok("Alhagie Bai Cham");
+    }
+
     @GetMapping("/build-info")
-    @Retry(name = "getBuildInfo",fallbackMethod = "getBuildInfoFallback")
+    @Retry(name = "getBuildInfo", fallbackMethod = "getBuildInfoFallback")
     public ResponseEntity<String> getCustomerDetailsDto() {
+
         return ResponseEntity.ok("buildVersion");
     }
 
     public ResponseEntity<String> getBuildInfoFallback(Throwable throwable) {
+
         log.debug("getBuildInfoFallback() method Invoked");
         return ResponseEntity.ok("0.9");
     }
@@ -43,11 +51,14 @@ public class InfoController {
     @GetMapping("/java-version")
     @RateLimiter(name = "getJavaVersion", fallbackMethod = "getJavaVersionFallback")
     public ResponseEntity<String> getJavaVersion() {
+
         return ResponseEntity.ok(environment.getProperty("JAVA_HOME"));
     }
 
     public ResponseEntity<String> getJavaVersionFallback(Throwable throwable) {
+
         log.debug("getJavaVersionFallback() method Invoked");
         return ResponseEntity.ok("25");
     }
+
 }

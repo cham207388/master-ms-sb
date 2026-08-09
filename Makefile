@@ -135,6 +135,9 @@ gateway-down:
 watch:
 	docker compose watch
 
+watch-all-up: all-up watch
+	@echo "start all and watch"
+
 watch-accounts:
 	docker compose watch accounts-api
 
