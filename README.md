@@ -5,6 +5,10 @@
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.2-blue.svg)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud-Gateway%20WebFlux-green.svg)
 ![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-blue.svg)
+![Grafana](https://img.shields.io/badge/Grafana-11.5.2-orange.svg)
+![Loki](https://img.shields.io/badge/Loki-3.4.2-blue.svg)
+![Alloy](https://img.shields.io/badge/Grafana%20Alloy-1.7.1-red.svg)
+![MinIO](https://img.shields.io/badge/MinIO-S3%20Store-pink.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Bus-ff6600.svg)
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
@@ -12,7 +16,7 @@
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) accessible via an edge API Gateway ([**Gateway Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server)), backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)), service registration & discovery ([**Eureka Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)), and dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**).
+An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) accessible via an edge API Gateway ([**Gateway Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server)), backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)), service registration & discovery ([**Eureka Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)), dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**), and a full observability stack (**Grafana**, **Loki**, **Grafana Alloy**, and **MinIO**).
 
 ---
 
@@ -47,6 +51,17 @@ graph TD
         LoansApp --> LoansDB
     end
 
+    subgraph Telemetry & Observability [Network: loki / securedbank]
+        Alloy[Grafana Alloy Log Collector<br/>Port: 12345]
+        DockerSock[("/var/run/docker.sock")]
+        LokiGateway[Loki Nginx Gateway<br/>Port: 3100]
+        LokiWrite[Loki Write Target<br/>Port: 3102]
+        LokiRead[Loki Read Target<br/>Port: 3101]
+        LokiBackend[Loki Backend Target]
+        MinIO[(MinIO S3 Storage<br/>Buckets: loki-data, loki-ruler<br/>Ports: 9000 / 9001)]
+        GrafanaUI[Grafana Dashboards & Explore<br/>Port: 3000]
+    end
+
     AccountsApp -.->|Fetch Config| ConfigServer
     CardsApp -.->|Fetch Config| ConfigServer
     LoansApp -.->|Fetch Config| ConfigServer
@@ -67,6 +82,16 @@ graph TD
     ConfigServer <==>|Spring Cloud Bus| RabbitMQ
 
     Client -->|REST / HTTP| GatewayServer
+
+    %% Observability Connections
+    DockerSock ==>|Harvest Stdout/Stderr| Alloy
+    Alloy ==>|Push Logs / tenant1| LokiGateway
+    LokiGateway -->|Write Stream| LokiWrite
+    LokiGateway -->|Read Queries| LokiRead
+    LokiWrite -->|Store Chunks| MinIO
+    LokiRead -->|Query Chunks| MinIO
+    LokiBackend -->|Compact & Retention| MinIO
+    GrafanaUI ==>|Query Loki Datasource| LokiGateway
 ```
 
 ---
@@ -83,24 +108,28 @@ graph TD
 | **Central Config**     | Spring Cloud Config 2025.1.2                       | Centralized configuration management ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))               |
 | **Service Discovery**  | Spring Cloud Netflix Eureka                        | Service registration server & management dashboard ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)) |
 | **Event Bus**          | Spring Cloud Bus AMQP                              | Event-driven dynamic configuration refresh via RabbitMQ (`/actuator/busrefresh`)                                                                |
+| **Observability UI**   | Grafana 11.5.2                                     | Telemetry dashboard & log analytics UI with pre-configured Loki datasource (`tenant1`)                                                          |
+| **Log Storage Engine** | Grafana Loki 3.4.2                                 | Microservices decoupled log engine (`read`, `write`, `backend` targets)                                                                         |
+| **Log Collector**     | Grafana Alloy v1.7.1                               | Next-gen OpenTelemetry & Prometheus telemetry collector harvesting Docker logs via `/var/run/docker.sock`                                      |
+| **Object Storage**     | MinIO (RELEASE.2024-12-18)                         | High-performance S3-compatible object storage backing Loki index & chunk storage                                                               |
+| **Loki Edge Proxy**    | Nginx 1.27.4-alpine                                | Reverse proxy routing push requests to `write` target and query requests to `read` target                                                        |
 | **Build Tool**         | Gradle                                             | Independent wrapper scripts (`./gradlew`) for each service                                                                                      |
 | **Database**           | PostgreSQL 18 Alpine                               | Containerized relational database per microservice (`postgres:18-alpine`)                                                                       |
 | **Database Migration** | Flyway (`org.flywaydb:flyway-database-postgresql`) | Versioned SQL database migrations (`db/migration/V1__init.sql`)                                                                                 |
 | **API Documentation**  | SpringDoc OpenAPI 3.0 (`3.0.2`)                    | Automated Swagger UI (`/swagger-ui/index.html`) & OpenAPI specs                                                                                 |
 | **Testing**            | Spring Boot Testcontainers                         | Ephemeral PostgreSQL containers (`@ServiceConnection`) for integration tests                                                                    |
-| **Containerization**   | Docker & Docker Compose                            | Multi-stage container builds & unified orchestration (`securedbank` network)                                                                    |
-| **Utilities**          | Project Lombok, Jakarta Validation                 | Boilerplate reduction & declarative bean validation (`@Valid`, `@Pattern`)                                                                      |
+| **Containerization**   | Docker & Docker Compose                            | Multi-stage container builds & unified modular orchestration (`compose.yml` with `include:`)                                                   |
 
 </details>
 
 ---
 
 <details open>
-<summary><strong>⚙️ Microservice Architecture & API Specs</strong></summary>
+<summary><strong>⚙️ Infrastructure, Ports & API Allocation</strong></summary>
 
 ### Service Port & Infrastructure Allocation
 
-| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Swagger UI / Dashboard Endpoint | Actuator Health | Circuit Breaker Endpoint |
+| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Dashboard / UI Endpoint | Actuator Health | Circuit Breaker / Status Endpoint |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gateway Server** | [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server) | `8072` | N/A | N/A | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) |
 | **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) |
@@ -108,130 +137,72 @@ graph TD
 | **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) | N/A |
 | **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) | N/A |
 | **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) | N/A |
-| **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | N/A | N/A | N/A |
-
-### 🛡️ Actuator & Circuit Breaker Monitoring Endpoints
-
-| Service / Component | Feature / Metric | Actuator Monitoring Endpoint | Description |
-| :--- | :--- | :--- | :--- |
-| **Gateway Server** (`8072`) | Gateway Routes | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | List active gateway routes, predicates, and filters |
-| **Gateway Server** (`8072`) | Circuit Breakers Status | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) | State of Gateway circuit breakers (`accountsCircuitBreaker`, `cardsCircuitBreaker`, `loansCircuitBreaker`) |
-| **Gateway Server** (`8072`) | Circuit Breaker Events | [http://localhost:8072/actuator/circuitbreakerevents](http://localhost:8072/actuator/circuitbreakerevents) | Event logs for state transitions, error rates, and fallbacks |
-| **Gateway Server** (`8072`) | Health Indicator | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | Health status including Resilience4j health indicators |
-| **Accounts Service** (`8091`) | Circuit Breakers Status | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) | OpenFeign Resilience4j circuit breaker state (`cards`, `loans`) |
-| **Accounts Service** (`8091`) | Circuit Breaker Events | [http://localhost:8091/actuator/circuitbreakerevents](http://localhost:8091/actuator/circuitbreakerevents) | Feign client fallback execution events |
-| **Accounts Service** (`8091`) | Health Indicator | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | Comprehensive service and database health status |
-
----
-
-<details>
-<summary><strong>1. Spring Cloud Gateway Server</strong></summary>
-
-- **Path**: [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server)
-- **Port**: `8072`
-- **Description**: Edge routing engine built on Spring Cloud Gateway WebFlux. Configured via Java `@Bean RouteLocator` with dynamic path rewriting, Resilience4j Circuit Breakers, and fallback handling.
-
-#### Configured Gateway Routes & Fallback Rules
-
-| Route ID | Matching Path Pattern | Rewrite Filter | Circuit Breaker & Fallback | Target Service URI | Sample API Gateway URL |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `accounts-upper` | `/ACCOUNTS/**` | `/ACCOUNTS/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/ACCOUNTS/api/accounts/create` |
-| `accounts-lower` | `/accounts/**` | `/accounts/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/accounts/api/accounts/create` |
-| `cards-upper` | `/CARDS/**` | `/CARDS/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/CARDS/api/cards/create` |
-| `cards-lower` | `/cards/**` | `/cards/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/cards/api/cards/create` |
-| `loans-upper` | `/LOANS/**` | `/LOANS/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/LOANS/api/loans/create` |
-| `loans-lower` | `/loans/**` | `/loans/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/loans/api/loans/create` |
+| **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | [http://localhost:15672](http://localhost:15672) | N/A | N/A |
+| **Grafana UI** | [`/observability/grafana`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/grafana) | `3000` | N/A | N/A | [http://localhost:3000](http://localhost:3000) | [http://localhost:3000/api/health](http://localhost:3000/api/health) | N/A |
+| **Loki Gateway** | [`/observability/loki`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/loki) | `3100` | N/A | N/A | [http://localhost:3100](http://localhost:3100) | N/A | N/A |
+| **Loki Read Target** | N/A | `3101` | N/A | N/A | N/A | [http://localhost:3101/ready](http://localhost:3101/ready) | N/A |
+| **Loki Write Target** | N/A | `3102` | N/A | N/A | N/A | [http://localhost:3102/ready](http://localhost:3102/ready) | N/A |
+| **MinIO Console** | N/A | `9001` (API: `9000`) | N/A | N/A | [http://localhost:9001](http://localhost:9001) | [http://localhost:9000/minio/health/live](http://localhost:9000/minio/health/live) | N/A |
+| **Grafana Alloy** | [`/observability/alloy`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/alloy) | `12345` | N/A | N/A | [http://localhost:12345](http://localhost:12345) | N/A | N/A |
 
 </details>
 
 ---
 
-<details>
-<summary><strong>2. Accounts Microservice</strong></summary>
+## 🔭 Observability & Log Telemetry Architecture
 
-- **Path**: [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts)
-- **Description**: Manages customer onboarding, profile metadata, and core bank account details.
+The platform features an automated, zero-code-change log telemetry pipeline powered by **Grafana Alloy**, **Grafana Loki**, and **Grafana**:
 
-#### Database Schema (`customer` & `accounts`)
-- `customer`: `customer_id` (PK, Identity), `name`, `email`, `mobile_number`, audit fields (`created_at`, `created_by`, `updated_at`, `updated_by`).
-- `accounts`: `account_number` (PK), `customer_id` (FK -> `customer.customer_id`), `account_type`, `branch_address`, audit fields.
+```
+[ Docker Socket /var/run/docker.sock ] 
+            │
+            ▼ (Harvest stdout/stderr logs)
+[ Grafana Alloy Collector (Port 12345) ]
+            │
+            ▼ (HTTP Push / tenant1)
+[ Loki Nginx Gateway (Port 3100) ]
+       ├───► Write Target (Port 3102) ───► MinIO S3 (Buckets: loki-data, loki-ruler)
+       └───► Read Target (Port 3101)  ◄─── MinIO S3
+            ▲
+            │ (LogQL Query)
+[ Grafana UI (Port 3000) ]
+```
 
-#### REST API Endpoints
+### 1. How Log Collection Works (Grafana Alloy)
+- **Zero Instrument overhead**: Microservices don't need dedicated log appenders. Alloy mounts `/var/run/docker.sock` to discover every running container.
+- **Relabeling Rules**: Alloy extracts the raw Docker container name (e.g., `accounts-api`, `cards-api`, `gateway-server`) and attaches it as a searchable stream label `container`.
+- **Multi-Tenant Push**: Alloy pushes collected log streams to `http://gateway:3100/loki/api/v1/push` tagged with header `X-Scope-OrgID: tenant1`.
 
-| Method   | Endpoint               | Description                       | Request Body / Params                   | Status Codes                              |
-| :------- | :--------------------- | :-------------------------------- | :-------------------------------------- | :---------------------------------------- |
-| `POST`   | `/api/accounts/create` | Create Customer & Account         | `CustomerDto` (JSON Body)               | `201 Created`, `500 Internal Error`       |
-| `GET`    | `/api/accounts/fetch`  | Fetch Customer & Account Details  | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `500 Internal Error`            |
-| `PUT`    | `/api/accounts/update` | Update Customer & Account Details | `CustomerDto` (JSON Body)               | `200 OK`, `417 Expectation Failed`, `500` |
-| `DELETE` | `/api/accounts/delete` | Delete Customer & Account Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `417 Expectation Failed`, `500` |
+### 2. Loki Decoupled Microservices Architecture
+- **Read Target (`grafana/loki:3.4.2`)**: Dedicated query processing engine listening on port `3101`.
+- **Write Target (`grafana/loki:3.4.2`)**: High-throughput log ingestion engine listening on port `3102`.
+- **Backend Target (`grafana/loki:3.4.2`)**: Compactor, retention enforcer, and ruler manager.
+- **MinIO Object Store**: S3-compatible backend hosting index files (`index_*`) and compressed log chunks (`loki-data`).
 
-</details>
+### 3. LogQL Learning & Query Guide
+When accessing Grafana at **http://localhost:3000**, navigate to **Explore** and select the **Loki** datasource.
 
----
-
-<details>
-<summary><strong>3. Cards Microservice</strong></summary>
-
-- **Path**: [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards)
-- **Description**: Manages credit and debit card issuance, limit tracking, and usage metrics per customer mobile number.
-
-#### Database Schema (`cards`)
-- `cards`: `card_id` (PK, Identity), `mobile_number`, `card_number` (Unique), `card_type`, `total_limit`, `amount_used`, `available_amount`, audit fields (`created_at`, `created_by`, `updated_at`, `updated_by`).
-
-#### REST API Endpoints
-
-| Method   | Endpoint            | Description         | Request Body / Params                   | Status Codes                              |
-| :------- | :------------------ | :------------------ | :-------------------------------------- | :---------------------------------------- |
-| `POST`   | `/api/cards/create` | Issue New Card      | `mobileNumber` (Query Param, 10 digits) | `201 Created`, `500 Internal Error`       |
-| `GET`    | `/api/cards/fetch`  | Fetch Card Details  | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `500 Internal Error`            |
-| `PUT`    | `/api/cards/update` | Update Card Details | `CardsDto` (JSON Body)                  | `200 OK`, `417 Expectation Failed`, `500` |
-| `DELETE` | `/api/cards/delete` | Delete Card Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `417 Expectation Failed`, `500` |
-
-</details>
-
----
-
-<details>
-<summary><strong>4. Loans Microservice</strong></summary>
-
-- **Path**: [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans)
-- **Description**: Manages customer loans (home, personal, vehicle), total loan amounts, repayments, and outstanding balances.
-
-#### Database Schema (`loans`)
-- `loans`: `loan_id` (PK, Identity), `mobile_number`, `loan_number`, `loan_type`, `total_loan`, `amount_paid`, `outstanding_amount`, audit fields (`created_at`, `created_by`, `updated_at`, `updated_by`).
-
-#### REST API Endpoints
-
-| Method   | Endpoint            | Description         | Request Body / Params                   | Status Codes                              |
-| :------- | :------------------ | :------------------ | :-------------------------------------- | :---------------------------------------- |
-| `POST`   | `/api/loans/create` | Create New Loan     | `mobileNumber` (Query Param, 10 digits) | `201 Created`, `500 Internal Error`       |
-| `GET`    | `/api/loans/fetch`  | Fetch Loan Details  | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `500 Internal Error`            |
-| `PUT`    | `/api/loans/update` | Update Loan Details | `LoansDto` (JSON Body)                  | `200 OK`, `417 Expectation Failed`, `500` |
-| `DELETE` | `/api/loans/delete` | Delete Loan Details | `mobileNumber` (Query Param, 10 digits) | `200 OK`, `417 Expectation Failed`, `500` |
-
-</details>
-
----
-
-<details>
-<summary><strong>5. Spring Cloud Config Server</strong></summary>
-
-- **Path**: [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)
-- **Description**: Centralized configuration management backed by Git repository ([`config-server-sb-sc-ms.git`](https://github.com/cham207388/config-server-sb-sc-ms.git)) exposing `/accounts/default`, `/cards/default`, and `/loans/default`.
-
-</details>
-
----
-
-<details>
-<summary><strong>6. Spring Cloud Eureka Server</strong></summary>
-
-- **Path**: [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)
-- **Description**: Centralized Netflix Eureka service discovery server providing microservice registration (`/eureka/apps/{APP_NAME}`) and web management dashboard at [http://localhost:8070](http://localhost:8070).
-
-</details>
-
-</details>
+#### Essential LogQL Examples:
+- **Stream all logs for a specific microservice**:
+  ```logql
+  {container="accounts-api"}
+  ```
+- **Filter logs containing explicit errors**:
+  ```logql
+  {container="accounts-api"} |= "ERROR"
+  ```
+- **Filter and parse JSON log payloads**:
+  ```logql
+  {container="gateway-server"} | json | level="error"
+  ```
+- **Exclude noise (e.g., actuator health checks)**:
+  ```logql
+  {container="accounts-api"} != "/actuator/health"
+  ```
+- **Calculate log entry rate per minute across services**:
+  ```logql
+  sum by (container) (rate({container=~".+"}[1m]))
+  ```
 
 ---
 
@@ -246,14 +217,17 @@ graph TD
 
 ### 1. Provisioning Platform via Docker Compose
 
-To launch the full architecture (Config Server, Eureka Server, Gateway Server, RabbitMQ, 3 Databases, and 3 Microservice APIs) on the shared `securedbank` network:
+To launch the full architecture (Config Server, Eureka Server, Gateway Server, RabbitMQ, Databases, Microservice APIs, Loki, MinIO, Alloy, Grafana) on the network stack:
 
 ```bash
-# Launch entire platform via Makefile
+# Launch entire platform via Makefile (Includes Observability)
 make all-up
 
 # Or via Docker Compose directly
 docker compose up -d
+
+# Provision standalone Observability stack only
+docker compose -f docker-compose-observability.yml up -d
 
 # Stop platform and clean volumes
 make all-down
@@ -325,30 +299,6 @@ Each microservice relies on configurable environment variables in its `applicati
 | `EUREKA_DEFAULT_ZONE` | Eureka Default Zone URL | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | N/A                   | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` |
 | `RABBITMQ_HOST`       | RabbitMQ Broker Host    | `localhost`                     | `localhost`                     | `localhost`                     | `localhost`           | N/A                             | N/A                             |
 | `RABBITMQ_PORT`       | RabbitMQ AMQP Port      | `5672`                          | `5672`                          | `5672`                          | `5672`                | N/A                             | N/A                             |
-
-### 🌐 Docker Container Networking & Eureka Status Links Note
-When microservices run inside Docker Desktop (macOS/Windows), their internal container IP addresses (e.g. `172.19.x.x`) are isolated within Docker's Linux VM network bridge. 
-
-To ensure status page links clicked on the Eureka Dashboard ([http://localhost:8070](http://localhost:8070)) load correctly in host browsers while maintaining inter-container discovery, each microservice defines:
-```yaml
-eureka:
-  instance:
-    prefer-ip-address: true
-    status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
-    health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
-```
-This routes host browser link navigation through published host ports (`8091`, `8092`, `8093`, `8072`) while inter-service communication remains containerized.
-
----
-
-## 🐳 Docker & Multi-Stage Containerization
-
-Each service includes a multi-stage `Dockerfile` optimized for security and minimal image size:
-
-1. **Stage 1 (`build`)**: Uses `eclipse-temurin:25-jdk-alpine` to compile and package the Spring Boot executable JAR.
-2. **Stage 2 (`runtime`)**: Uses `eclipse-temurin:25-jre-alpine`, configures a non-root system user (`producer:producer` / `gateway:gateway`), copies the built JAR, and exposes the respective port.
-
-The consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connects all services on a shared bridge network (`securedbank`) with memory resource limits set to 700MB per container.
 
 ---
 

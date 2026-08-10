@@ -6,7 +6,7 @@ Welcome to the **Securedbank Microservices Platform** codebase. This file provid
 
 ## 🏛 Architecture & Domain Boundaries
 
-The application is structured as a domain-driven microservices architecture composed of independent, decoupled Spring Boot services alongside centralized Spring Cloud infrastructure located within subdirectories:
+The application is structured as a domain-driven microservices architecture composed of independent, decoupled Spring Boot services alongside centralized Spring Cloud infrastructure and telemetry systems located within subdirectories:
 
 1. **Accounts Microservice** ([`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts))
    - **Server Port**: `8091`
@@ -39,6 +39,13 @@ The application is structured as a domain-driven microservices architecture comp
    - **AMQP Port**: `5672` (Management UI: `15672`)
    - **Domain**: Provides Spring Cloud Bus AMQP for dynamic configuration refresh (`/actuator/busrefresh`).
 
+8. **Observability Telemetry Stack** ([`docker-compose-observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose-observability.yml), [`/observability`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability))
+   - **Grafana UI Port**: `3000`
+   - **Loki Gateway Port**: `3100` (Read target: `3101`, Write target: `3102`)
+   - **MinIO S3 Store Ports**: `9000` (API) / `9001` (Console)
+   - **Grafana Alloy Port**: `12345`
+   - **Domain**: Centralized log harvesting and visualization. Grafana Alloy collects stdout/stderr logs from all Docker containers via `/var/run/docker.sock` and pushes them to Loki gateway (`tenant1`), backed by MinIO object storage.
+
 ---
 
 ## ⚙️ Tech Stack & Toolchain Standards
@@ -46,6 +53,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` configured in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Spring Data JPA, Actuator, Flyway).
 - **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-gateway-server-webflux`, `spring-cloud-starter-loadbalancer`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
+- **Observability & Telemetry**: Grafana `11.5.2`, Grafana Loki `3.4.2` (Microservices target architecture: Read, Write, Backend), Grafana Alloy `v1.7.1` log collector, MinIO `RELEASE.2024-12-18T13-15-44Z` S3 storage, Nginx `1.27.4-alpine` Loki edge proxy gateway.
 - **Dependency Management**: Spring Dependency Management `1.1.7`.
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
 - **Database Migration**: Flyway (`org.flywaydb:flyway-database-postgresql`), with scripts located at `src/main/resources/db/migration/V1__init.sql`.
@@ -54,7 +62,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Build System**: Independent Gradle wrapper scripts (`./gradlew`) inside each microservice directory, managed globally via the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile).
 - **Containerization & Orchestration**:
   - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root users (`producer:producer`, `gateway:gateway`).
-  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) connecting all microservices (`accounts`, `cards`, `loans`, `config-server`, `eureka-server`, `gateway-server`, `rabbit-mq`, and DBs) via a shared bridge network (`securedbank`) with 700MB memory deployment limits.
+  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) with `include:` directives pulling in infrastructure, observability (`docker-compose-observability.yml`), config-server, eureka-server, and microservices via shared bridge networks (`securedbank`, `loki`).
 
 ---
 
@@ -81,9 +89,10 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
 
 3. **Orchestration with Root Compose**:
-   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, RabbitMQ, and APIs) on the `securedbank` network:
+   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, RabbitMQ, APIs, Loki, Alloy, MinIO, Grafana) on the network stack:
      - `make all-up` or `docker compose up -d`
-     - `docker compose down -v`
+     - Standalone Observability: `docker compose -f docker-compose-observability.yml up -d`
+     - Teardown: `docker compose down -v`
 
 4. **Environment Configuration**:
    - Settings in `application.yaml` use the environment variables:
@@ -126,7 +135,7 @@ When adding or updating endpoints, models, or database schemas:
 
 ---
 
-## 🛡️ Resilience & Monitoring (Circuit Breaker & Actuator)
+## 🛡️ Resilience & Monitoring (Circuit Breaker & Telemetry)
 
 When configuring circuit breakers, retries, or monitoring endpoints:
 
@@ -151,3 +160,8 @@ When configuring circuit breakers, retries, or monitoring endpoints:
      - Circuit Breakers: `http://localhost:8091/actuator/circuitbreakers`
      - Circuit Breaker Events: `http://localhost:8091/actuator/circuitbreakerevents`
 
+3. **Observability & Log Telemetry (Grafana, Loki & Alloy)**:
+   - Grafana Explorer UI: `http://localhost:3000` (Pre-configured Loki Datasource `tenant1`).
+   - Loki Edge Nginx Gateway: `http://localhost:3100` (Push endpoint: `/loki/api/v1/push`).
+   - MinIO Storage Console: `http://localhost:9001` (Credentials: `loki` / `supersecret`).
+   - Grafana Alloy Monitoring: `http://localhost:12345`.
