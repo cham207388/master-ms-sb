@@ -1,7 +1,6 @@
 package com.abcham.accounts.service;
 
 import com.abcham.accounts.constants.AccountsConstants;
-import com.abcham.accounts.dto.AccountsDto;
 import com.abcham.accounts.dto.CardsDto;
 import com.abcham.accounts.dto.CustomerDetailsDto;
 import com.abcham.accounts.dto.LoansDto;
