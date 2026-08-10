@@ -29,6 +29,10 @@ management:
     web:
       exposure:
         include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
   info:
     env:
       enabled: true

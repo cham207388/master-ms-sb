@@ -336,3 +336,44 @@ Each microservice relies on configurable environment variables in its `applicati
 | `config-all-up`        | `docker compose -f ../master-ms-sb-config-server/compose.yml up -d`                 | Starts Config Server & RabbitMQ stack     |
 | `config-all-down`      | `docker compose -f ../master-ms-sb-config-server/compose.yml down -v`               | Stops Config Server & RabbitMQ stack      |
 | `dbs-down`             | `accounts-db-down cards-db-down loans-db-down`                                      | Stops all databases and cleans volumes    |
+
+
+## Observability Resources
+
+### Micrometer
+
+Spring Boot Actuator provides a MicrometerFacade for Spring Boot applications to integrate with Micrometer.
+
+- [micrometer](https://micrometer.io/)
+
+**Path**
+
+- `service-name/actuator/metrics`
+
+### Prometheus
+
+Collects metrics from individual services and stores them in a single location
+
+- [prometheus](https://prometheus.io/)
+
+**Path**
+
+- `service-name/actuator/prometheus`
+
+### Grafana
+
+Provides a visualization layer on top of Prometheus, Loki, and Tempo.
+
+- [grafana](https://grafana.com/)
+
+### Loki
+
+Collects logs from individual services and stores them in a single location
+
+- [loki](https://grafana.com/docs/loki/latest/)
+
+### Tempo
+
+Collects traces from individual services and stores them in a single location
+
+- [tempo](https://grafana.com/docs/tempo/latest/)
