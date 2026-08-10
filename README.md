@@ -340,6 +340,8 @@ Each microservice relies on configurable environment variables in its `applicati
 
 ## Observability Resources
 
+For full details on the observability and monitoring platform architecture, data flow, component breakdown, and quickstart commands, see the dedicated [Observability README](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/README.md).
+
 ### Micrometer
 
 Spring Boot Actuator provides a MicrometerFacade for Spring Boot applications to integrate with Micrometer.
