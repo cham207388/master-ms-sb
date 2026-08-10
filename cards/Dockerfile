@@ -24,7 +24,7 @@ RUN addgroup -S -g 1000 producer && \
     mkdir -p /app/libs && \
     chown -R producer:producer /app
 
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent-2.30.0.jar
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent.jar
 
 USER producer
 

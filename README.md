@@ -111,6 +111,7 @@ graph TD
 | **Observability UI**   | Grafana 11.5.2                                     | Telemetry dashboard & log analytics UI with pre-configured Loki datasource (`tenant1`)                                                          |
 | **Log Storage Engine** | Grafana Loki 3.4.2                                 | Microservices decoupled log engine (`read`, `write`, `backend` targets)                                                                         |
 | **Log Collector**     | Grafana Alloy v1.7.1                               | Next-gen OpenTelemetry & Prometheus telemetry collector harvesting Docker logs via `/var/run/docker.sock`                                      |
+| **Distributed Tracing** | Grafana Tempo 2.9.0 / OpenTelemetry Agent          | OTLP tracing collector (`4317` gRPC / `4318` HTTP) with automatic JVM bytecode instrumentation                                                 |
 | **Object Storage**     | MinIO (RELEASE.2024-12-18)                         | High-performance S3-compatible object storage backing Loki index & chunk storage                                                               |
 | **Loki Edge Proxy**    | Nginx 1.27.4-alpine                                | Reverse proxy routing push requests to `write` target and query requests to `read` target                                                        |
 | **Build Tool**         | Gradle                                             | Independent wrapper scripts (`./gradlew`) for each service                                                                                      |
@@ -139,6 +140,7 @@ graph TD
 | **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) | N/A |
 | **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | [http://localhost:15672](http://localhost:15672) | N/A | N/A |
 | **Grafana UI** | [`/observability/grafana`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/grafana) | `3000` | N/A | N/A | [http://localhost:3000](http://localhost:3000) | [http://localhost:3000/api/health](http://localhost:3000/api/health) | N/A |
+| **Grafana Tempo** | [`/observability/tempo`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/tempo) | `3110` (OTLP: `4317`/`4318`) | N/A | N/A | N/A | N/A | N/A |
 | **Loki Gateway** | [`/observability/loki`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/loki) | `3100` | N/A | N/A | [http://localhost:3100](http://localhost:3100) | N/A | N/A |
 | **Loki Read Target** | N/A | `3101` | N/A | N/A | N/A | [http://localhost:3101/ready](http://localhost:3101/ready) | N/A |
 | **Loki Write Target** | N/A | `3102` | N/A | N/A | N/A | [http://localhost:3102/ready](http://localhost:3102/ready) | N/A |
@@ -179,8 +181,21 @@ The platform features an automated, zero-code-change log telemetry pipeline powe
 - **Backend Target (`grafana/loki:3.4.2`)**: Compactor, retention enforcer, and ruler manager.
 - **MinIO Object Store**: S3-compatible backend hosting index files (`index_*`) and compressed log chunks (`loki-data`).
 
-### 3. LogQL Learning & Query Guide
-When accessing Grafana at **http://localhost:3000**, navigate to **Explore** and select the **Loki** datasource.
+### 3. Distributed Tracing Pipeline (OpenTelemetry & Grafana Tempo)
+- **Automatic JVM Bytecode Instrumentation**: Each Spring Boot container image downloads the OpenTelemetry Java Agent at build time:
+  ```dockerfile
+  ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent.jar
+  ```
+- **JVM Configuration**: Configured centrally in `common-docker-config.yml`:
+  ```yaml
+  JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+  ```
+- **Service Name Identification**: Each service specifies `OTEL_SERVICE_NAME` in its compose environment (`accounts`, `cards`, `loans`, `gateway-server`, `eureka-server`, `config-server`).
+- **Grafana & Loki Correlation**: Grafana Tempo (`http://tempo:3100`, OTLP ports `4317` gRPC / `4318` HTTP) receives trace spans and correlates them with Loki log streams via `TraceID` derived fields.
+
+### 4. LogQL Learning & Query Guide
+When accessing Grafana at **http://localhost:3000**, navigate to **Explore** and select the **Loki** or **Tempo** datasource.
 
 #### Essential LogQL Examples:
 - **Stream all logs for a specific microservice**:
