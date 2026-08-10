@@ -48,8 +48,8 @@ public class LoansServiceImpl implements ILoansService {
     }
 
     @Override
-    public LoansDto fetchLoan(String correlationId, String mobileNumber) {
-        log.info("Fetching loan details for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
+    public LoansDto fetchLoan(String mobileNumber) {
+        log.info("Fetching loan details for mobileNumber: {}", mobileNumber);
 
         Loans loans = loansRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Loan", "mobileNumber", mobileNumber));

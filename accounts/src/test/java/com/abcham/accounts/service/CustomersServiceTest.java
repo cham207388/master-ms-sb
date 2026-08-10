@@ -77,10 +77,10 @@ class CustomersServiceTest {
     void fetchCustomerDetails_Success() {
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(customer));
         when(accountsRepository.findByCustomerId(1L)).thenReturn(Optional.of(accounts));
-        when(loansFeignClient.fetchLoanDetails("corr-123", "1234567890")).thenReturn(ResponseEntity.ok(loansDto));
-        when(cardsFeignClient.fetchCardDetails("corr-123", "1234567890")).thenReturn(ResponseEntity.ok(cardsDto));
+        when(loansFeignClient.fetchLoanDetails("1234567890")).thenReturn(ResponseEntity.ok(loansDto));
+        when(cardsFeignClient.fetchCardDetails("1234567890")).thenReturn(ResponseEntity.ok(cardsDto));
 
-        CustomerDetailsDto result = customersService.fetchCustomerDetails("corr-123", "1234567890");
+        CustomerDetailsDto result = customersService.fetchCustomerDetails("1234567890");
 
         assertNotNull(result);
         assertEquals("John Doe", result.getName());
@@ -92,18 +92,18 @@ class CustomersServiceTest {
         assertNotNull(result.getCardsDto());
         assertEquals("123456789012", result.getCardsDto().getCardNumber());
 
-        verify(loansFeignClient, times(1)).fetchLoanDetails("corr-123", "1234567890");
-        verify(cardsFeignClient, times(1)).fetchCardDetails("corr-123", "1234567890");
+        verify(loansFeignClient, times(1)).fetchLoanDetails("1234567890");
+        verify(cardsFeignClient, times(1)).fetchCardDetails("1234567890");
     }
 
     @Test
     void fetchCustomerDetails_FallbackHandling_WhenCardsAndLoansReturnNull() {
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(customer));
         when(accountsRepository.findByCustomerId(1L)).thenReturn(Optional.of(accounts));
-        when(loansFeignClient.fetchLoanDetails("corr-123", "1234567890")).thenReturn(null);
-        when(cardsFeignClient.fetchCardDetails("corr-123", "1234567890")).thenReturn(null);
+        when(loansFeignClient.fetchLoanDetails("1234567890")).thenReturn(null);
+        when(cardsFeignClient.fetchCardDetails("1234567890")).thenReturn(null);
 
-        CustomerDetailsDto result = customersService.fetchCustomerDetails("corr-123", "1234567890");
+        CustomerDetailsDto result = customersService.fetchCustomerDetails("1234567890");
 
         assertNotNull(result);
         assertEquals("John Doe", result.getName());
@@ -115,6 +115,6 @@ class CustomersServiceTest {
     void fetchCustomerDetails_ThrowsResourceNotFoundException_WhenCustomerNotFound() {
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> customersService.fetchCustomerDetails("corr-123", "1234567890"));
+        assertThrows(ResourceNotFoundException.class, () -> customersService.fetchCustomerDetails("1234567890"));
     }
 }

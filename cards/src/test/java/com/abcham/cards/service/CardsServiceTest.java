@@ -31,7 +31,6 @@ class CardsServiceTest {
 
     private Cards cards;
     private CardsDto cardsDto;
-    private String correlationId = "123-abc";
 
     @BeforeEach
     void setUp() {
@@ -75,7 +74,7 @@ class CardsServiceTest {
     void fetchCard_Success() {
         when(cardsRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(cards));
 
-        CardsDto result = cardsService.fetchCard(correlationId,"1234567890");
+        CardsDto result = cardsService.fetchCard("1234567890");
 
         assertNotNull(result);
         assertEquals("1234567890", result.getMobileNumber());
@@ -86,7 +85,7 @@ class CardsServiceTest {
     void fetchCard_ThrowsResourceNotFoundException() {
         when(cardsRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> cardsService.fetchCard(correlationId, "1234567890"));
+        assertThrows(ResourceNotFoundException.class, () -> cardsService.fetchCard("1234567890"));
     }
 
     @Test

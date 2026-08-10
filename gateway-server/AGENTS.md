@@ -15,9 +15,7 @@ The **Gateway Server** acts as the central reactive edge API gateway for the Sec
   - `/ACCOUNTS/**` & `/accounts/**` -> rewrites path and load balances to `lb://ACCOUNTS`
   - `/CARDS/**` & `/cards/**` -> rewrites path and load balances to `lb://CARDS`
   - `/LOANS/**` & `/loans/**` -> rewrites path and load balances to `lb://LOANS`
-- **Global Filters** (`filter` package):
-  - `RequestTraceFilter` (`@Order(1)`): Inspects or generates UUID `securedbank-correlation-id` for request tracing.
-  - `ResponseTraceFilter`: Propagates correlation ID into outbound HTTP response headers.
+- **Distributed Tracing**: Managed automatically via `opentelemetry-javaagent` runtime agent for cross-service W3C `traceparent` context propagation.
 - **Fault Tolerance & Fallback** (`controller` package):
   - Resilience4j CircuitBreaker filters (`accountsCircuitBreaker`, `cardsCircuitBreaker`, `loansCircuitBreaker`).
   - `FallbackController`: Handles `/accounts-fallback`, `/cards-fallback`, and `/loans-fallback` when downstream microservices time out or fail.

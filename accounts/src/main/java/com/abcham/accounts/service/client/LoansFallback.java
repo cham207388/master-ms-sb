@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 public class LoansFallback implements LoansFeignClient {
 
     @Override
-    public ResponseEntity<LoansDto> fetchLoanDetails(String correlationId, String mobileNumber) {
-        log.warn("LoansFallback triggered for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
+    public ResponseEntity<LoansDto> fetchLoanDetails(String mobileNumber) {
+        log.warn("LoansFallback triggered for mobileNumber: {}", mobileNumber);
         return null;
     }
 

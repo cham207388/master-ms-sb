@@ -48,8 +48,8 @@ public class CardsServiceImpl implements ICardsService {
     }
 
     @Override
-    public CardsDto fetchCard(String correlationId, String mobileNumber) {
-        log.info("Fetching card details for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
+    public CardsDto fetchCard(String mobileNumber) {
+        log.info("Fetching card details for mobileNumber: {}", mobileNumber);
 
         Cards cards = cardsRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "mobileNumber", mobileNumber)

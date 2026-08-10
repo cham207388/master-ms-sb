@@ -55,10 +55,9 @@ class CardsControllerTest {
 
     @Test
     void fetchCardDetails_Success() throws Exception {
-        when(iCardsService.fetchCard("as12","1234567890")).thenReturn(cardsDto);
+        when(iCardsService.fetchCard("1234567890")).thenReturn(cardsDto);
 
         mockMvc.perform(get("/api/cards/fetch")
-                        .header("securedbank-correlation-id", "sas8-129s-aqwq-qwq12")
                         .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))

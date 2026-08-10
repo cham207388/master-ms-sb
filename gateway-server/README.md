@@ -44,13 +44,9 @@ When downstream services are unreachable, experiencing high latency, or returnin
 
 ---
 
-## 🔍 Global Filters & Correlation Tracing
+## 🔍 OpenTelemetry Distributed Tracing
 
-1. **`RequestTraceFilter`** (`@Order(1)`):
-   - Checks incoming HTTP headers for `securedbank-correlation-id`.
-   - If missing, generates a unique UUID `securedbank-correlation-id` and attaches it to the request exchange.
-2. **`ResponseTraceFilter`**:
-   - Captures the correlation ID and adds `securedbank-correlation-id` to the outbound HTTP response headers for end-to-end distributed tracing.
+Distributed tracing and cross-service correlation context (`traceparent`, `tracestate`) are automatically managed by the `opentelemetry-javaagent` runtime dependency without requiring manual header injection filters.
 
 ---
 

@@ -55,11 +55,10 @@ class LoansControllerTest {
 
     @Test
     void fetchLoanDetails_Success() throws Exception {
-        when(iLoansService.fetchLoan("sas8-129s-aqwq-qwq12", "1234567890")).thenReturn(loansDto);
+        when(iLoansService.fetchLoan("1234567890")).thenReturn(loansDto);
 
         mockMvc.perform(get("/api/loans/fetch")
-                .param("mobileNumber", "1234567890")
-                .header("securedbank-correlation-id", "sas8-129s-aqwq-qwq12"))
+                .param("mobileNumber", "1234567890"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mobileNumber").value("1234567890"))
                 .andExpect(jsonPath("$.loanNumber").value("548732457654"));

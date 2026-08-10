@@ -30,8 +30,8 @@ public class CustomersServiceImpl implements ICustomersService {
     private LoansFeignClient loansFeignClient;
 
     @Override
-    public CustomerDetailsDto fetchCustomerDetails(String correlationId, String mobileNumber) {
-        log.info("Fetching customer details for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
+    public CustomerDetailsDto fetchCustomerDetails(String mobileNumber) {
+        log.info("Fetching customer details for mobileNumber: {}", mobileNumber);
 
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
@@ -46,8 +46,8 @@ public class CustomersServiceImpl implements ICustomersService {
         CustomerDetailsDto customerDetailsDto = CustomerMapper.mapToCustomerDetailsDto(customer, new CustomerDetailsDto());
         customerDetailsDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()));
 
-        log.info("Calling Loans microservice for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
-        ResponseEntity<LoansDto> loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(correlationId, mobileNumber);
+        log.info("Calling Loans microservice for mobileNumber: {}", mobileNumber);
+        ResponseEntity<LoansDto> loansDtoResponseEntity = loansFeignClient.fetchLoanDetails(mobileNumber);
         if (null != loansDtoResponseEntity && null != loansDtoResponseEntity.getBody()) {
             log.info("Successfully fetched loan details for mobileNumber: {}", mobileNumber);
             customerDetailsDto.setLoansDto(loansDtoResponseEntity.getBody());
@@ -55,8 +55,8 @@ public class CustomersServiceImpl implements ICustomersService {
             log.warn("Loan details response is null or body empty for mobileNumber: {}", mobileNumber);
         }
 
-        log.info("Calling Cards microservice for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
-        ResponseEntity<CardsDto> cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(correlationId, mobileNumber);
+        log.info("Calling Cards microservice for mobileNumber: {}", mobileNumber);
+        ResponseEntity<CardsDto> cardsDtoResponseEntity = cardsFeignClient.fetchCardDetails(mobileNumber);
         if (null != cardsDtoResponseEntity && null != cardsDtoResponseEntity.getBody()) {
             log.info("Successfully fetched card details for mobileNumber: {}", mobileNumber);
             customerDetailsDto.setCardsDto(cardsDtoResponseEntity.getBody());

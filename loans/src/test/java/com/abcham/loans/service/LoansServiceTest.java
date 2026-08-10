@@ -74,7 +74,7 @@ class LoansServiceTest {
     void fetchLoan_Success() {
         when(loansRepository.findByMobileNumber("1234567890")).thenReturn(Optional.of(loans));
 
-        LoansDto result = loansService.fetchLoan("123-1ads", "1234567890");
+        LoansDto result = loansService.fetchLoan("1234567890");
 
         assertNotNull(result);
         assertEquals("1234567890", result.getMobileNumber());
@@ -85,7 +85,7 @@ class LoansServiceTest {
     void fetchLoan_ThrowsResourceNotFoundException() {
         when(loansRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> loansService.fetchLoan("123-1ads", "1234567890"));
+        assertThrows(ResourceNotFoundException.class, () -> loansService.fetchLoan("1234567890"));
     }
 
     @Test
