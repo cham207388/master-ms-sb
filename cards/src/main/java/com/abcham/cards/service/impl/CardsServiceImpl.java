@@ -9,36 +9,33 @@ import com.abcham.cards.mapper.CardsMapper;
 import com.abcham.cards.repository.CardsRepository;
 import com.abcham.cards.service.ICardsService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Random;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CardsServiceImpl implements ICardsService {
 
     private CardsRepository cardsRepository;
-
-    /**
-     * @param mobileNumber - Mobile Number of the Customer
-     */
+    
     @Override
     public void createCard(String mobileNumber) {
+        log.info("Creating card for mobileNumber: {}", mobileNumber);
 
         Optional<Cards> optionalCards = cardsRepository.findByMobileNumber(mobileNumber);
         if (optionalCards.isPresent()) {
+            log.warn("Card already registered with mobileNumber: {}", mobileNumber);
             throw new CardAlreadyExistsException("Card already registered with given mobileNumber " + mobileNumber);
         }
-        cardsRepository.save(createNewCard(mobileNumber));
+        Cards savedCard = cardsRepository.save(createNewCard(mobileNumber));
+        log.info("Card created successfully with cardNumber: {} for mobileNumber: {}", savedCard.getCardNumber(), mobileNumber);
     }
 
-    /**
-     * @param mobileNumber - Mobile Number of the Customer
-     * @return the new card details
-     */
     private Cards createNewCard(String mobileNumber) {
-
         Cards newCard = new Cards();
         long randomCardNumber = 100000000000L + new Random().nextInt(900000000);
         newCard.setCardNumber(Long.toString(randomCardNumber));
@@ -50,48 +47,39 @@ public class CardsServiceImpl implements ICardsService {
         return newCard;
     }
 
-    /**
-     *
-     * @param mobileNumber - Input mobile Number
-     * @return Card Details based on a given mobileNumber
-     */
     @Override
-    public CardsDto fetchCard(String mobileNumber) {
+    public CardsDto fetchCard(String correlationId, String mobileNumber) {
+        log.info("Fetching card details for correlationId: {}, mobileNumber: {}", correlationId, mobileNumber);
 
         Cards cards = cardsRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "mobileNumber", mobileNumber)
         );
+        log.debug("Found card number: {} for mobileNumber: {}", cards.getCardNumber(), mobileNumber);
         return CardsMapper.mapToCardsDto(cards, new CardsDto());
     }
 
-    /**
-     *
-     * @param cardsDto - CardsDto Object
-     * @return boolean indicating if the update of card details is successful or not
-     */
     @Override
     public boolean updateCard(CardsDto cardsDto) {
+        log.info("Updating card for cardNumber: {}", cardsDto.getCardNumber());
 
         Cards cards = cardsRepository.findByCardNumber(cardsDto.getCardNumber()).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "CardNumber", cardsDto.getCardNumber()));
         CardsMapper.mapToCards(cardsDto, cards);
         cardsRepository.save(cards);
+        log.info("Successfully updated card details for cardNumber: {}", cardsDto.getCardNumber());
         return true;
     }
 
-    /**
-     * @param mobileNumber - Input MobileNumber
-     * @return boolean indicating if the delete of card details is successful or not
-     */
     @Override
     public boolean deleteCard(String mobileNumber) {
+        log.info("Deleting card for mobileNumber: {}", mobileNumber);
 
         Cards cards = cardsRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Card", "mobileNumber", mobileNumber)
         );
         cardsRepository.deleteById(cards.getCardId());
+        log.info("Successfully deleted card for mobileNumber: {}", mobileNumber);
         return true;
     }
-
 
 }

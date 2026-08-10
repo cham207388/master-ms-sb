@@ -1,13 +1,15 @@
 services:
-  config-server:
+  eureka-server:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: config-server
+    container_name: eureka-server
     ports:
-      - '8071:8071'
+      - '8070:8070'
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8071/
     healthcheck:
-      test: "wget -q --spider http://localhost:8071/actuator/health/readiness || exit 1"
+      test: "wget -q --spider http://localhost:8070/actuator/health/readiness || exit 1"
       interval: 10s
       timeout: 5s
       retries: 10
@@ -20,4 +22,7 @@ services:
           path: ./build.gradle
     extends:
       file: ../common-docker-config.yml
-      service: microservice-base
+      service: microservice-with-config-server
+    depends_on:
+      config-server:
+        condition: service_healthy

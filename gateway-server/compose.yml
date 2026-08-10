@@ -1,0 +1,27 @@
+services:
+  gateway-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway-server
+    ports:
+      - '8072:8072'
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+        - action: rebuild
+          path: ./build.gradle
+    depends_on:
+      - accounts-api
+      - cards-api
+      - loans-api
+      - redis
+    extends:
+      file: ../common-docker-config.yml
+      service: microservice-with-config-eureka

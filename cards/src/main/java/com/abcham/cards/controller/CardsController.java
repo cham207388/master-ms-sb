@@ -54,7 +54,7 @@ public class CardsController {
             @RequestHeader("securedbank-correlation-id") String correlationId,
             @RequestParam @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits") String mobileNumber) {
 
-        CardsDto cardsDto = iCardsService.fetchCard(mobileNumber);
+        CardsDto cardsDto = iCardsService.fetchCard(correlationId, mobileNumber);
         return ResponseEntity.status(HttpStatus.OK).body(cardsDto);
     }
 
