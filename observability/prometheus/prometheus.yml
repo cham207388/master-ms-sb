@@ -6,15 +6,15 @@ scrape_configs:
   - job_name: 'accounts'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: [ 'accounts:8091' ]
+      - targets: [ 'accounts-api:8091' ]
   - job_name: 'loans'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: [ 'loans:8093' ]
+      - targets: [ 'loans-api:8093' ]
   - job_name: 'cards'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: [ 'cards:8092' ]
+      - targets: [ 'cards-api:8092' ]
   - job_name: 'gateway-server'
     metrics_path: '/actuator/prometheus'
     static_configs:

@@ -90,6 +90,7 @@ services:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - loki
+      - securedbank
   grafana:
     image: grafana/grafana:11.5.2
     environment:
@@ -205,3 +206,4 @@ services:
 
 networks:
   loki:
+  securedbank:
