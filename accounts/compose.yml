@@ -33,6 +33,7 @@ services:
       DB_PORT: 5432
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
+      OTEL_SERVICE_NAME: accounts
     develop:
       watch:
         - action: rebuild

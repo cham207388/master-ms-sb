@@ -14,6 +14,7 @@ management:
     tags:
       application: ${spring.application.name}
 
+
   health:
     readiness-state:
       enabled: true
@@ -31,3 +32,6 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8070/eureka/}
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id}]"

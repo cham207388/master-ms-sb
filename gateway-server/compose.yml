@@ -11,6 +11,7 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      OTEL_SERVICE_NAME: gateway-server
     develop:
       watch:
         - action: rebuild

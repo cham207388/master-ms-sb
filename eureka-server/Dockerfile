@@ -21,8 +21,10 @@ FROM eclipse-temurin:25-jre-alpine
 
 RUN addgroup -S -g 1000 eureka && \
     adduser -S -u 1000 -G eureka eureka && \
-    mkdir -p /app && \
-    chown eureka:eureka /app
+    mkdir -p /app/libs && \
+    chown -R eureka:eureka /app
+
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent-2.30.0.jar
 
 USER eureka
 

@@ -9,11 +9,16 @@ services:
       resources:
         limits:
           memory: 700m
+    environment:
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_METRICS_EXPORTER: none
+      
   microservice-with-config-server:
     extends: 
       service: microservice-base
     environment:
-      CONFIG_SERVER_URL: configserver:http://config-server:8071
+      CONFIG_SERVER_URL: http://config-server:8071/
     depends_on:
       config-server:
         condition: service_healthy

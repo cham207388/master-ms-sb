@@ -21,8 +21,10 @@ FROM eclipse-temurin:25-jre-alpine
 
 RUN addgroup -S -g 1000 gateway && \
     adduser -S -u 1000 -G gateway gateway && \
-    mkdir -p /app && \
-    chown gateway:gateway /app
+    mkdir -p /app/libs && \
+    chown -R gateway:gateway /app
+
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent-2.30.0.jar
 
 USER gateway
 

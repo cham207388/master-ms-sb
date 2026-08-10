@@ -21,8 +21,10 @@ FROM eclipse-temurin:25-jre-alpine
 
 RUN addgroup -S -g 1000 producer && \
     adduser -S -u 1000 -G producer producer && \
-    mkdir -p /app && \
-    chown producer:producer /app
+    mkdir -p /app/libs && \
+    chown -R producer:producer /app
+
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent.jar
 
 USER producer
 
