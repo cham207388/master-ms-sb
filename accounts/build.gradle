@@ -5,6 +5,7 @@ plugins {
 }
 ext {
 	springCloudVersion = "2025.1.2"
+	otelVersion = "2.30.0"
 }
 
 group = 'com.abcham'
@@ -38,6 +39,7 @@ dependencies {
 //	implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
 	// PostgreSQL JDBC Driver (Compatible with PostgreSQL 18)
 	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly "io.opentelemetry.javaagent:opentelemetry-javaagent:${otelVersion}"
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
 //	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'

@@ -345,6 +345,7 @@ For full details on the observability and monitoring platform architecture, data
 ### Micrometer
 
 Spring Boot Actuator provides a MicrometerFacade for Spring Boot applications to integrate with Micrometer.
+For Java application to expose metrics 
 
 - [micrometer](https://micrometer.io/)
 
@@ -379,3 +380,10 @@ Collects logs from individual services and stores them in a single location
 Collects traces from individual services and stores them in a single location
 
 - [tempo](https://grafana.com/docs/tempo/latest/)
+
+### OpenTelemetry
+
+OpenTelemetry is a set of APIs, SDKs, and tools used to generate, collect, and export telemetry data (metrics, logs, and traces) from applications.
+
+- [OpenTelemetry](https://opentelemetry.io/)
+

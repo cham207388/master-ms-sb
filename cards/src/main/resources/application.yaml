@@ -22,6 +22,8 @@ logging:
   level:
     org.springframework.amqp.rabbit.listener.BlockingQueueConsumer: ERROR
     org.springframework.amqp.rabbit.connection.CachingConnectionFactory: ERROR
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id}]"
 
 management:
   endpoints:
