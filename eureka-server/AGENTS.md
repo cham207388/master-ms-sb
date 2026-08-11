@@ -45,9 +45,9 @@ Run all build and execution commands within the `eureka-server` directory:
    ```
 
 3. **Environment Configuration**:
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://config-server:8071/`)
-   - `EUREKA_HOSTNAME` (default: `localhost`)
-   - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/`)
+   - `SPRING_CONFIG_IMPORT` (default: `configserver:http://localhost:8071/` or `configserver:http://config-server:8071/`)
+   - `EUREKA_INSTANCE_HOSTNAME` (default: `localhost`)
+   - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/`)
 
 ---
 

@@ -95,12 +95,12 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Teardown: `docker compose down -v`
 
 4. **Environment Configuration**:
-   - Settings in `application.yaml` use the environment variables:
-     - Database: `DB_HOST` (`localhost` or container name), `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
-     - Config Server: `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://config-server:8071/`)
-     - Eureka Server: `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
-     - Event Bus / RabbitMQ: `RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `RABBITMQ_PORT` (`5672`), `RABBITMQ_USERNAME`, `RABBITMQ_PASSWORD`
-     - Redis Rate Limiter: `SPRING_DATA_REDIS_HOST` / `REDIS_HOST` (default: `localhost` or `redis`), `SPRING_DATA_REDIS_PORT` / `REDIS_PORT` (`6379`)
+   - Settings in `application.yaml` use standard Spring Boot relaxed binding environment variables:
+     - Database: `SPRING_DATASOURCE_URL` (e.g. `jdbc:postgresql://accounts-db:5432/accounts`), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+     - Config Server: `SPRING_CONFIG_IMPORT` (e.g. `optional:configserver:http://config-server:8071/`)
+     - Eureka Server: `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (e.g. `http://eureka-server:8070/eureka/`)
+     - Event Bus / RabbitMQ: `SPRING_RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `SPRING_RABBITMQ_PORT` (`5672`), `SPRING_RABBITMQ_USERNAME`, `SPRING_RABBITMQ_PASSWORD`
+     - Redis Rate Limiter: `SPRING_DATA_REDIS_HOST` (default: `localhost` or `redis`), `SPRING_DATA_REDIS_PORT` (`6379`)
 
 5. **Docker Container Networking & Eureka Dashboard Status Links**:
    - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.

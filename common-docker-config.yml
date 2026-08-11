@@ -12,7 +12,11 @@ services:
     environment:
       JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED: "false"
+      OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED: "false"
     healthcheck:
       interval: 20s
       timeout: 10s
@@ -24,6 +28,7 @@ services:
       service: microservice-base
     environment:
       CONFIG_SERVER_URL: http://config-server:8071/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8071/
     depends_on:
       config-server:
         condition: service_healthy
@@ -33,6 +38,7 @@ services:
       service: microservice-with-config-server
     environment:
       EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8070/eureka/
     depends_on:
       eureka-server:
         condition: service_healthy

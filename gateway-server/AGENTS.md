@@ -21,7 +21,7 @@ The **Gateway Server** acts as the central reactive edge API gateway for the Sec
   - `FallbackController`: Handles `/accounts-fallback`, `/cards-fallback`, and `/loans-fallback` when downstream microservices time out or fail.
 - **Central Infrastructure Dependencies**:
   - **Spring Cloud Config Server**: Port `8071` (`/gateway-server/default`)
-  - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_DEFAULT_ZONE: http://localhost:8070/eureka/`)
+  - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8070/eureka/`)
 
 ---
 
@@ -52,9 +52,10 @@ Run all build and execution commands within the `gateway-server` directory:
    ```
 
 3. **Environment Configuration**:
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://config-server:8071/`)
-   - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
-   - `APP_VERSION` (default: `1.0.0`)
+   - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)
+   - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
+   - `SPRING_DATA_REDIS_HOST` (default: `localhost` or `redis`)
+   - `SPRING_DATA_REDIS_PORT` (default: `6379`)
 
 ---
 

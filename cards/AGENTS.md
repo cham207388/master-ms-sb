@@ -15,7 +15,7 @@ The **Cards Microservice** manages credit and debit card issuance, limit allocat
   - `Cards`: `card_id` (PK, Identity), `mobile_number`, `card_number` (Unique), `card_type`, `total_limit`, `amount_used`, `available_amount`, audit fields.
 - **Central Infrastructure Dependencies**:
   - **Spring Cloud Config Server**: Port `8071` (`/cards/default`)
-  - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_DEFAULT_ZONE: http://localhost:8070/eureka/`)
+  - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8070/eureka/`)
   - **RabbitMQ Bus Broker**: Port `5672` (Event bus for dynamic refresh)
 
 ---
@@ -51,15 +51,13 @@ Run all build and execution commands within the `cards` directory:
    ```
 
 3. **Environment Configuration**:
-   - `DB_HOST` (default: `localhost` / `cards-db`)
-   - `DB_PORT` (default: `5424` / `5432`)
-   - `DB_NAME` (default: `cards`)
-   - `DB_USERNAME` (default: `postgres`)
-   - `DB_PASSWORD` (default: `postgres`)
-   - `CONFIG_SERVER_URL` (default: `http://localhost:8071/` or `http://host.docker.internal:8071/` or `http://config-server:8071/`)
-   - `EUREKA_DEFAULT_ZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
-   - `RABBITMQ_HOST` (default: `localhost` or `host.docker.internal`)
-   - `RABBITMQ_PORT` (default: `5672`)
+   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5424/cards` / `jdbc:postgresql://cards-db:5432/cards`)
+   - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
+   - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)
+   - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)
+   - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
+   - `SPRING_RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`)
+   - `SPRING_RABBITMQ_PORT` (default: `5672`)
 
 ---
 

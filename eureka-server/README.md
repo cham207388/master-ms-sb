@@ -15,7 +15,7 @@ The **Spring Cloud Netflix Eureka Server** provides centralized service registra
 - **Server Port**: `8070`
 - **Dashboard UI**: [http://localhost:8070](http://localhost:8070)
 - **Service Registration Endpoint**: `http://localhost:8070/eureka/`
-- **Config Server Integration**: Connects to Spring Cloud Config Server on port `8071` (`CONFIG_SERVER_URL`) for centralized property resolution.
+- **Config Server Integration**: Connects to Spring Cloud Config Server on port `8071` (`SPRING_CONFIG_IMPORT`) for centralized property resolution.
 
 ---
 
