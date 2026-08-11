@@ -9,11 +9,7 @@ services:
     environment:
       OTEL_SERVICE_NAME: config-server
     healthcheck:
-      test: "wget -q --spider http://localhost:8071/actuator/health/readiness || exit 1"
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8071/actuator/health/readiness || exit 1" ]
     develop:
       watch:
         - action: rebuild

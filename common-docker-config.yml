@@ -13,6 +13,11 @@ services:
       JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
       OTEL_METRICS_EXPORTER: none
+    healthcheck:
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
       
   microservice-with-config-server:
     extends: 
