@@ -4,7 +4,7 @@ spring:
   application:
     name: eureka-server
   config:
-    import: "configserver:${CONFIG_SERVER_URL:http://localhost:8071/}"
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8071/}"
 management:
   endpoints:
     web:

@@ -25,8 +25,6 @@ services:
     ports:
       - '8091:8091'
     environment:
-      DB_HOST: accounts-db
-      DB_PORT: 5432
       SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres

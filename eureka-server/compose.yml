@@ -8,7 +8,7 @@ services:
       - '8070:8070'
     environment:
       CONFIG_SERVER_URL: http://config-server:8071/
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8071/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8071/
       OTEL_SERVICE_NAME: eureka-server
     healthcheck:
       test: [ "CMD-SHELL", "wget -q --spider http://localhost:8070/actuator/health/readiness || exit 1" ]

@@ -6,9 +6,9 @@ spring:
     name: loans
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5425}/${DB_NAME:loans}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5425/loans
+    username: postgres
+    password: postgres
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -49,8 +49,8 @@ endpoints:
 eureka:
   instance:
     prefer-ip-address: true
-    status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
-    health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
+    status-page-url: http://localhost:${server.port}/actuator/info
+    health-check-url: http://localhost:${server.port}/actuator/health
   client:
     register-with-eureka: true
     fetch-registry: true

@@ -20,8 +20,8 @@ spring:
   data:
     redis:
       connect-timeout: 2s
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: localhost
+      port: 6379
       timeout: 1s
 
 
@@ -52,8 +52,8 @@ management:
 eureka:
   instance:
     prefer-ip-address: true
-    status-page-url: ${EUREKA_INSTANCE_STATUS_PAGE_URL:http://localhost:${server.port}/actuator/info}
-    health-check-url: ${EUREKA_INSTANCE_HEALTH_CHECK_URL:http://localhost:${server.port}/actuator/health}
+    status-page-url: http://localhost:${server.port}/actuator/info
+    health-check-url: http://localhost:${server.port}/actuator/health
   client:
     register-with-eureka: true
     fetch-registry: true

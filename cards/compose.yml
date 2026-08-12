@@ -25,8 +25,6 @@ services:
     ports:
       - '8092:8092'
     environment:
-      DB_HOST: cards-db
-      DB_PORT: 5432
       SPRING_DATASOURCE_URL: jdbc:postgresql://cards-db:5432/cards
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
