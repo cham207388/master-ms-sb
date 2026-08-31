@@ -1,5 +1,6 @@
 include:
   - docker-compose.infra.yml
+  - docker-compose.db.yml
   - docker-compose-observability.yml
   - config-server/compose.yml
   - eureka-server/compose.yml
@@ -9,9 +10,7 @@ include:
   - gateway-server/compose.yml
 
 volumes:
-  accounts-pg-volume:
-  cards-pg-volume:
-  loans-pg-volume:
+  bank-pg-volume:
 
 networks:
   securedbank:

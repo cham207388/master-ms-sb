@@ -1,0 +1,19 @@
+services:
+  bank-db:
+    image: 'postgres:18-alpine'
+    container_name: bank-db
+    environment:
+      POSTGRES_DB: bank
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5423:5432'
+    volumes:
+      - bank-pg-volume:/var/lib/postgresql
+      - ./db/init/01-create-schemas.sql:/docker-entrypoint-initdb.d/01-create-schemas.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d bank" ]
+      start_period: 30s
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base

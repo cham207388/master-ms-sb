@@ -9,7 +9,7 @@ Welcome to the **Loans Microservice** codebase (Domain: Loan Origination & Repay
 The **Loans Microservice** manages customer loans (home, personal, vehicle), repayment tracking, total borrowed limits, and outstanding balances.
 
 - **Service Port**: `8093`
-- **Database**: PostgreSQL 18 on host port `5425` (Database name: `loans`)
+- **Database**: Shared PostgreSQL 18 on host port `5423` (Database name: `bank`, Schema: `loans`)
 - **Package Base**: `com.abcham.loans`
 - **Entities**:
   - `Loans`: `loan_id` (PK, Identity), `mobile_number`, `loan_number`, `loan_type`, `total_loan`, `amount_paid`, `outstanding_amount`, audit fields.
@@ -51,7 +51,7 @@ Run all build and execution commands within the `loans` directory:
    ```
 
 3. **Environment Configuration**:
-   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5425/loans` / `jdbc:postgresql://loans-db:5432/loans`)
+   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5423/bank?currentSchema=loans` / `jdbc:postgresql://bank-db:5432/bank?currentSchema=loans`)
    - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)
    - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)

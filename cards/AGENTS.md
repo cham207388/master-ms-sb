@@ -9,7 +9,7 @@ Welcome to the **Cards Microservice** codebase (Domain: Credit/Debit Card Issuan
 The **Cards Microservice** manages credit and debit card issuance, limit allocation, available balance tracking, and usage metrics.
 
 - **Service Port**: `8092`
-- **Database**: PostgreSQL 18 on host port `5424` (Database name: `cards`)
+- **Database**: Shared PostgreSQL 18 on host port `5423` (Database name: `bank`, Schema: `cards`)
 - **Package Base**: `com.abcham.cards`
 - **Entities**:
   - `Cards`: `card_id` (PK, Identity), `mobile_number`, `card_number` (Unique), `card_type`, `total_limit`, `amount_used`, `available_amount`, audit fields.
@@ -51,7 +51,7 @@ Run all build and execution commands within the `cards` directory:
    ```
 
 3. **Environment Configuration**:
-   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5424/cards` / `jdbc:postgresql://cards-db:5432/cards`)
+   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5423/bank?currentSchema=cards` / `jdbc:postgresql://bank-db:5432/bank?currentSchema=cards`)
    - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)
    - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)

@@ -1,8 +1,18 @@
 .PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
         cards cards-build cards-db-up cards-db-down cards-api-run \
         loans loans-build loans-db-up loans-db-down loans-api \
+        bank-db-up bank-db-down \
         eureka-server-build eureka-server-up eureka-server-down dbs-down \
         watch watch-accounts watch-cards watch-loans watch-gateway
+
+# ==============================================================================
+# Database (Shared Bank PostgreSQL)
+# ==============================================================================
+bank-db-up:
+	docker compose up bank-db -d
+
+bank-db-down:
+	docker compose down bank-db -v
 
 # ==============================================================================
 # Accounts Service
@@ -10,20 +20,19 @@
 accounts-build:
 	cd accounts && ./gradlew clean build
 
-accounts-db-up:
-	docker compose up accounts-db -d
+accounts-db-up: bank-db-up
 
 accounts-db-down:
-	docker compose down accounts-db -v
+	@echo "Shared bank database is running. Use 'make dbs-down' to stop and wipe bank-db."
 
 accounts-api-run:
 	docker compose up accounts-api -d --build --no-deps
 
 accounts:
-	docker compose up accounts-db accounts-api -d
+	docker compose up bank-db accounts-api -d
 
 accounts-down:
-	docker compose down accounts-db accounts-api -v
+	docker compose stop accounts-api && docker compose rm -f accounts-api
 
 # ==============================================================================
 # Cards Service
@@ -31,20 +40,19 @@ accounts-down:
 cards-build:
 	cd cards && ./gradlew clean build
 
-cards-db-up:
-	docker compose up cards-db -d
+cards-db-up: bank-db-up
 
 cards-db-down:
-	docker compose down cards-db -v
+	@echo "Shared bank database is running. Use 'make dbs-down' to stop and wipe bank-db."
 
 cards-api-run:
 	docker compose up cards-api -d --build --no-deps
 
 cards:
-	docker compose up cards-db cards-api -d
+	docker compose up bank-db cards-api -d
 
 cards-down:
-	docker compose down cards-db cards-api -v
+	docker compose stop cards-api && docker compose rm -f cards-api
 
 
 # ==============================================================================
@@ -53,20 +61,19 @@ cards-down:
 loans-build:
 	cd loans && ./gradlew clean build
 
-loans-db-up:
-	docker compose up loans-db -d
+loans-db-up: bank-db-up
 
 loans-db-down:
-	docker compose down loans-db -v
+	@echo "Shared bank database is running. Use 'make dbs-down' to stop and wipe bank-db."
 
 loans-api:
 	docker compose up loans-api -d --build --no-deps
 
 loans:
-	docker compose up loans-db loans-api -d
+	docker compose up bank-db loans-api -d
 
 loans-down:
-	docker compose down loans-db loans-api -v
+	docker compose stop loans-api && docker compose rm -f loans-api
 
 # ==============================================================================
 # Eureka Server
@@ -98,8 +105,9 @@ config-server-down:
 # ==============================================================================
 # Global / Teardown
 # ==============================================================================
-dbs-down: accounts-db-down cards-db-down loans-db-down
-	@echo "all dbs are down"
+dbs-down:
+	docker compose down bank-db -v
+	@echo "Shared bank database is down"
 
 api-up: accounts-api-run cards-api-run loans-api
 	@echo "restart apis"
@@ -149,4 +157,3 @@ watch-loans:
 
 watch-gateway:
 	docker compose watch gateway-server
-

@@ -35,21 +35,23 @@ graph TD
 
     subgraph Accounts Microservice [Port 8091]
         AccountsApp[Accounts API]
-        AccountsDB[(PostgreSQL 18<br/>DB: accounts<br/>Port: 5423)]
-        AccountsApp --> AccountsDB
     end
 
     subgraph Cards Microservice [Port 8092]
         CardsApp[Cards API]
-        CardsDB[(PostgreSQL 18<br/>DB: cards<br/>Port: 5424)]
-        CardsApp --> CardsDB
     end
 
     subgraph Loans Microservice [Port 8093]
         LoansApp[Loans API]
-        LoansDB[(PostgreSQL 18<br/>DB: loans<br/>Port: 5425)]
-        LoansApp --> LoansDB
     end
+
+    subgraph Shared Database [Port 5423]
+        BankDB[(PostgreSQL 18<br/>DB: bank<br/>Schemas: accounts, cards, loans)]
+    end
+
+    AccountsApp -->|schema: accounts| BankDB
+    CardsApp -->|schema: cards| BankDB
+    LoansApp -->|schema: loans| BankDB
 
     subgraph Telemetry & Observability [Network: loki / securedbank]
         Alloy[Grafana Alloy Log Collector<br/>Port: 12345]
@@ -133,9 +135,10 @@ graph TD
 | Microservice / Component | Path | Server Port | Database Name | Host DB Port | Dashboard / UI Endpoint | Actuator Health | Circuit Breaker / Status Endpoint |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gateway Server** | [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server) | `8072` | N/A | N/A | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) |
-| **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) |
-| **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) | N/A |
-| **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) | N/A |
+| **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `bank` (schema: `accounts`) | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) |
+| **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `bank` (schema: `cards`) | `5423` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) | N/A |
+| **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `bank` (schema: `loans`) | `5423` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) | N/A |
+| **Shared Bank DB** | [`docker-compose.db.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose.db.yml) | N/A | `bank` | `5423` | N/A | N/A | N/A |
 | **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) | N/A |
 | **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) | N/A |
 | **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | [http://localhost:15672](http://localhost:15672) | N/A | N/A |
@@ -305,7 +308,7 @@ Each microservice relies on configurable environment variables in its `applicati
 
 | Environment Variable                   | Description                    | Accounts Default                | Cards Default                   | Loans Default                   | Config Server Default | Eureka Server Default           | Gateway Server Default          |
 | :------------------------------------- | :----------------------------- | :------------------------------ | :------------------------------ | :------------------------------ | :-------------------- | :------------------------------ | :------------------------------ |
-| `SPRING_DATASOURCE_URL`                | Database JDBC URL              | `jdbc:postgresql://...:5423/..` | `jdbc:postgresql://...:5424/..` | `jdbc:postgresql://...:5425/..` | N/A                   | N/A                             | N/A                             |
+| `SPRING_DATASOURCE_URL`                | Database JDBC URL              | `jdbc:postgresql://...:5423/bank?currentSchema=accounts` | `jdbc:postgresql://...:5423/bank?currentSchema=cards` | `jdbc:postgresql://...:5423/bank?currentSchema=loans` | N/A                   | N/A                             | N/A                             |
 | `SPRING_DATASOURCE_USERNAME`           | Database User                  | `postgres`                      | `postgres`                      | `postgres`                      | N/A                   | N/A                             | N/A                             |
 | `SPRING_DATASOURCE_PASSWORD`           | Database Password              | `postgres`                      | `postgres`                      | `postgres`                      | N/A                   | N/A                             | N/A                             |
 | `SPRING_CONFIG_IMPORT`                 | Config Server Import           | `optional:configserver:http://` | `optional:configserver:http://` | `optional:configserver:http://` | N/A                   | `configserver:http://...`       | `optional:configserver:http://` |
@@ -327,30 +330,26 @@ Each microservice relies on configurable environment variables in its `applicati
 | `gateway-up`           | `docker compose up gateway-server -d --build --no-deps`                             | Starts Gateway Server container           |
 | `gateway-down`         | `docker compose stop gateway-server`                                                | Stops Gateway Server container            |
 | `accounts-build`       | `cd accounts && ./gradlew clean build`                                              | Cleans & compiles Accounts service        |
-| `accounts-db-up`       | `cd accounts && docker compose up accounts-db -d`                                   | Starts Accounts PostgreSQL database       |
-| `accounts-db-down`     | `docker compose -f accounts/compose.yml down accounts-db -v`                        | Stops Accounts DB & removes volumes       |
-| `accounts-api-run`     | `docker compose -f accounts/compose.yml up accounts-api -d --build`                 | Rebuilds & starts Accounts API container  |
-| `accounts`             | `docker compose -f accounts/compose.yml up -d`                                      | Starts Accounts DB & API stack            |
-| `accounts-down`        | `docker compose -f accounts/compose.yml down -d`                                    | Stops Accounts DB & API stack             |
+| `accounts-db-up`       | `docker compose up bank-db -d`                                                      | Starts Shared PostgreSQL database         |
+| `accounts-db-down`     | `@echo (notice)`                                                                    | Notice: use `make dbs-down`               |
+| `accounts-api-run`     | `docker compose up accounts-api -d --build --no-deps`                               | Rebuilds & starts Accounts API container  |
+| `accounts`             | `docker compose up bank-db accounts-api -d`                                         | Starts Shared DB & Accounts API stack     |
+| `accounts-down`        | `docker compose stop accounts-api && docker compose rm -f accounts-api`             | Stops Accounts API container              |
 | `cards-build`          | `cd cards && ./gradlew clean build`                                                 | Cleans & compiles Cards service           |
-| `cards-db-up`          | `cd cards && docker compose up cards-db -d`                                         | Starts Cards PostgreSQL database          |
-| `cards-db-down`        | `docker compose -f cards/compose.yml down cards-db -v`                              | Stops Cards DB & removes volumes          |
-| `cards-api-run`        | `docker compose -f cards/compose.yml up cards-api -d`                               | Starts Cards API container                |
-| `cards`                | `docker compose -f cards/compose.yml up -d`                                         | Starts Cards DB & API stack               |
-| `cards-down`           | `docker compose -f cards/compose.yml down -d`                                       | Stops Cards DB & API stack                |
+| `cards-db-up`          | `docker compose up bank-db -d`                                                      | Starts Shared PostgreSQL database         |
+| `cards-db-down`        | `@echo (notice)`                                                                    | Notice: use `make dbs-down`               |
+| `cards-api-run`        | `docker compose up cards-api -d --build --no-deps`                                  | Starts Cards API container                |
+| `cards`                | `docker compose up bank-db cards-api -d`                                            | Starts Shared DB & Cards API stack        |
+| `cards-down`           | `docker compose stop cards-api && docker compose rm -f cards-api`                   | Stops Cards API container                 |
 | `loans-build`          | `cd loans && ./gradlew clean build`                                                 | Cleans & compiles Loans service           |
-| `loans-db-up`          | `cd loans && docker compose up loans-db -d`                                         | Starts Loans PostgreSQL database          |
-| `loans-db-down`        | `docker compose -f loans/compose.yml down loans-db -v`                              | Stops Loans DB & removes volumes          |
-| `loans-api`            | `docker compose -f loans/compose.yml up loans-api -d`                               | Starts Loans API container                |
-| `loans`                | `docker compose -f loans/compose.yml up -d`                                         | Starts Loans DB & API stack               |
-| `loans-down`           | `docker compose -f loans/compose.yml down -d`                                       | Stops Loans DB & API stack                |
-| `rabbit-mq-up`         | `docker compose -f ../master-ms-sb-config-server/compose.yml up rabbit-mq -d`       | Starts standalone RabbitMQ container      |
-| `rabbit-mq-down`       | `docker compose -f ../master-ms-sb-config-server/compose.yml down rabbit-mq -v`     | Stops RabbitMQ container & cleans volumes |
-| `config-server-up`     | `docker compose -f ../master-ms-sb-config-server/compose.yml up config-server -d`   | Starts Config Server container            |
-| `config-server-down`   | `docker compose -f ../master-ms-sb-config-server/compose.yml down config-server -v` | Stops Config Server container             |
-| `config-all-up`        | `docker compose -f ../master-ms-sb-config-server/compose.yml up -d`                 | Starts Config Server & RabbitMQ stack     |
-| `config-all-down`      | `docker compose -f ../master-ms-sb-config-server/compose.yml down -v`               | Stops Config Server & RabbitMQ stack      |
-| `dbs-down`             | `accounts-db-down cards-db-down loans-db-down`                                      | Stops all databases and cleans volumes    |
+| `loans-db-up`          | `docker compose up bank-db -d`                                                      | Starts Shared PostgreSQL database         |
+| `loans-db-down`        | `@echo (notice)`                                                                    | Notice: use `make dbs-down`               |
+| `loans-api`            | `docker compose up loans-api -d --build --no-deps`                                  | Starts Loans API container                |
+| `loans`                | `docker compose up bank-db loans-api -d`                                            | Starts Shared DB & Loans API stack        |
+| `loans-down`           | `docker compose stop loans-api && docker compose rm -f loans-api`                   | Stops Loans API container                 |
+| `bank-db-up`           | `docker compose up bank-db -d`                                                      | Starts Shared PostgreSQL database         |
+| `bank-db-down`         | `docker compose down bank-db -v`                                                    | Stops Shared DB & removes volume          |
+| `dbs-down`             | `docker compose down bank-db -v`                                                    | Stops Shared DB and cleans volume         |
 
 
 ## Observability Resources

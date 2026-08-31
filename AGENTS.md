@@ -10,17 +10,17 @@ The application is structured as a domain-driven microservices architecture comp
 
 1. **Accounts Microservice** ([`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts))
    - **Server Port**: `8091`
-   - **Database**: PostgreSQL 18 on host port `5423` (DB: `accounts`)
+   - **Database**: Shared PostgreSQL 18 on host port `5423` (DB: `bank`, Schema: `accounts`)
    - **Domain**: Customer onboarding, account lifecycle management, and profile metadata.
 
 2. **Cards Microservice** ([`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards))
    - **Server Port**: `8092`
-   - **Database**: PostgreSQL 18 on host port `5424` (DB: `cards`)
+   - **Database**: Shared PostgreSQL 18 on host port `5423` (DB: `bank`, Schema: `cards`)
    - **Domain**: Credit and debit card issuance, limit tracking, and usage metrics.
 
 3. **Loans Microservice** ([`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans))
    - **Server Port**: `8093`
-   - **Database**: PostgreSQL 18 on host port `5425` (DB: `loans`)
+   - **Database**: Shared PostgreSQL 18 on host port `5423` (DB: `bank`, Schema: `loans`)
    - **Domain**: Customer loan creation, repayment tracking, and outstanding balance management.
 
 4. **Spring Cloud Config Server** ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))
@@ -82,21 +82,21 @@ When building, testing, or executing commands in this workspace, always adhere t
 2. **Makefile Commands**:
    - Use the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) targets for multi-service operations:
      - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make eureka-server-build`, `make gateway-server-build`
-     - Databases: `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
+     - Databases: `make bank-db-up`, `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
      - Service Stacks: `make accounts`, `make cards`, `make loans`, `make gateway-up`, `make gateway-down`, `make all-up`, `make all-down`
      - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`
      - Config Server & RabbitMQ: `make rabbit-mq-up`, `make config-server-up`, `make config-all-up`, `make config-all-down`
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
 
 3. **Orchestration with Root Compose**:
-   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, RabbitMQ, APIs, Loki, Alloy, MinIO, Grafana) on the network stack:
+   - To bring up the entire platform (shared bank DB, Config Server, Eureka Server, Gateway Server, RabbitMQ, APIs, Loki, Alloy, MinIO, Grafana) on the network stack:
      - `make all-up` or `docker compose up -d`
      - Standalone Observability: `docker compose -f docker-compose-observability.yml up -d`
      - Teardown: `docker compose down -v`
 
 4. **Environment Configuration**:
    - Settings in `application.yaml` use standard Spring Boot relaxed binding environment variables:
-     - Database: `SPRING_DATASOURCE_URL` (e.g. `jdbc:postgresql://accounts-db:5432/accounts`), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
+     - Database: `SPRING_DATASOURCE_URL` (e.g. `jdbc:postgresql://bank-db:5432/bank?currentSchema=accounts`), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
      - Config Server: `SPRING_CONFIG_IMPORT` (e.g. `optional:configserver:http://config-server:8071/`)
      - Eureka Server: `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (e.g. `http://eureka-server:8070/eureka/`)
      - Event Bus / RabbitMQ: `SPRING_RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `SPRING_RABBITMQ_PORT` (`5672`), `SPRING_RABBITMQ_USERNAME`, `SPRING_RABBITMQ_PASSWORD`

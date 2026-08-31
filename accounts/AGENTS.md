@@ -9,7 +9,7 @@ Welcome to the **Accounts Microservice** codebase (Domain: Customer Onboarding &
 The **Accounts Microservice** manages customer registration, profile metadata, and bank account lifecycles.
 
 - **Service Port**: `8091`
-- **Database**: PostgreSQL 18 on host port `5423` (Database name: `accounts`)
+- **Database**: Shared PostgreSQL 18 on host port `5423` (Database name: `bank`, Schema: `accounts`)
 - **Package Base**: `com.abcham.accounts`
 - **Entities**:
   - `Customer`: `customer_id` (PK), `name`, `email`, `mobile_number`, audit fields.
@@ -52,7 +52,7 @@ Run all build and execution commands within the `accounts` directory:
    ```
 
 3. **Environment Configuration**:
-   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5423/accounts` / `jdbc:postgresql://accounts-db:5432/accounts`)
+   - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5423/bank?currentSchema=accounts` / `jdbc:postgresql://bank-db:5432/bank?currentSchema=accounts`)
    - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)
    - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)
