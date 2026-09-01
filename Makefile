@@ -2,7 +2,12 @@
         cards cards-build cards-db-up cards-db-down cards-api-run \
         loans loans-build loans-db-up loans-db-down loans-api \
         eureka-server-build eureka-server-up eureka-server-down dbs-down \
-        watch watch-accounts watch-cards watch-loans watch-gateway
+        watch watch-accounts watch-cards watch-loans watch-gateway \
+        infra infra-tfvars infra-init infra-fmt infra-validate \
+        infra-plan infra-apply infra-output infra-down
+
+INFRA_DIR := infra
+TOFU := tofu
 
 # ==============================================================================
 # Accounts Service
@@ -149,4 +154,45 @@ watch-loans:
 
 watch-gateway:
 	docker compose watch gateway-server
+
+# ==============================================================================
+# OpenTofu (Keycloak realm, clients, users)
+# ==============================================================================
+# Requires OpenTofu (tofu) on PATH and a reachable Keycloak at keycloak_url.
+# Copy infra/terraform.tfvars.example to infra/terraform.tfvars on first use.
+
+keycloak-up:
+	docker compose -f docker-compose.keycloak.yml up -d
+
+keycloak-down:
+	docker compose -f docker-compose.keycloak.yml down -v
+
+infra-tfvars:
+	@if [ ! -f $(INFRA_DIR)/terraform.tfvars ]; then \
+		cp $(INFRA_DIR)/terraform.tfvars.example $(INFRA_DIR)/terraform.tfvars; \
+		echo "Created $(INFRA_DIR)/terraform.tfvars from example. Edit secrets before applying."; \
+	fi
+
+infra-init: infra-tfvars
+	cd $(INFRA_DIR) && $(TOFU) init -upgrade
+
+infra-fmt:
+	cd $(INFRA_DIR) && $(TOFU) fmt -recursive
+
+infra-validate: infra-init
+	cd $(INFRA_DIR) && $(TOFU) validate
+
+infra-plan: infra-init
+	cd $(INFRA_DIR) && $(TOFU) plan
+
+infra-apply: infra-init
+	cd $(INFRA_DIR) && $(TOFU) apply -auto-approve
+
+infra: infra-apply
+
+infra-output:
+	cd $(INFRA_DIR) && $(TOFU) output
+
+infra-down:
+	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
 

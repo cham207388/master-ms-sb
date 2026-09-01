@@ -1,0 +1,44 @@
+services:
+  keycloak-db:
+    image: postgres:18-alpine
+    container_name: securedbank-keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak-db-password
+    volumes:
+      - keycloak-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.0
+    container_name: securedbank-keycloak
+    command: start
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak-db-password
+
+      # Suitable for local development, not a public deployment.
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: http://localhost:7080
+    ports:
+      - "127.0.0.1:7080:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg-volume:
+  keycloak-pg-volume:
