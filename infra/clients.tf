@@ -116,7 +116,7 @@ resource "keycloak_openid_client" "pkce_ui_type" {
   full_scope_allowed = false
 }
 
-# Assign USER and ADMIN to the securedbank-api service-account user.
+# Assign USER and ADMIN to the securedbank-cc service-account user.
 resource "keycloak_openid_client_service_account_realm_role" "service_account" {
   for_each = keycloak_role.service_account
 
