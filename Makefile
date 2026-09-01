@@ -3,6 +3,7 @@
         loans loans-build loans-db-up loans-db-down loans-api \
         eureka-server-build eureka-server-up eureka-server-down dbs-down \
         watch watch-accounts watch-cards watch-loans watch-gateway \
+        gateway-up gateway-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
         infra-plan infra-apply infra-output infra-down
 
@@ -130,6 +131,9 @@ all-up:
 
 all-down:
 	docker compose down -v
+
+gateway-up:
+	docker compose up gateway-server -d --build
 
 gateway-down:
 	docker compose down gateway-server -v

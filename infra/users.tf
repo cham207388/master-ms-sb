@@ -46,26 +46,21 @@ resource "keycloak_user" "john_doe" {
   depends_on = [keycloak_required_action.configure_totp]
 }
 
+locals {
+  user_role_ids = concat(
+    [for role in keycloak_role.service_account : role.id],
+    [data.keycloak_role.account_view_profile.id],
+  )
+}
+
 resource "keycloak_user_roles" "happy_camper" {
   realm_id = keycloak_realm.main.id
   user_id  = keycloak_user.happy_camper.id
-
-  role_ids = [
-    keycloak_role.service_account["ACCOUNTS"].id,
-    keycloak_role.service_account["CARDS"].id,
-    keycloak_role.service_account["LOANS"].id,
-    data.keycloak_role.account_view_profile.id,
-  ]
+  role_ids = local.user_role_ids
 }
 
 resource "keycloak_user_roles" "john_doe" {
   realm_id = keycloak_realm.main.id
   user_id  = keycloak_user.john_doe.id
-
-  role_ids = [
-    keycloak_role.service_account["ACCOUNTS"].id,
-    keycloak_role.service_account["CARDS"].id,
-    keycloak_role.service_account["LOANS"].id,
-    data.keycloak_role.account_view_profile.id,
-  ]
+  role_ids = local.user_role_ids
 }

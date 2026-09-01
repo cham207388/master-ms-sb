@@ -38,8 +38,8 @@ locals {
   # Shared realm roles used by the M2M service account and human users.
   realm_roles = toset([
     "ACCOUNTS",
-    "CARDS",
-    "LOANS",
+    # "CARDS",
+    # "LOANS",
   ])
 }
 
