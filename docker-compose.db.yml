@@ -10,7 +10,6 @@ services:
       - '5423:5432'
     volumes:
       - bank-pg-volume:/var/lib/postgresql
-      - ./db/init/01-create-schemas.sql:/docker-entrypoint-initdb.d/01-create-schemas.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d bank" ]
       start_period: 30s
