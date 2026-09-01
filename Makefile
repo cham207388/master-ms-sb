@@ -4,11 +4,19 @@
         eureka-server-build eureka-server-up eureka-server-down dbs-down \
         watch watch-accounts watch-cards watch-loans watch-gateway \
         gateway-up gateway-down \
+        accounts-image-build cards-image-build loans-image-build \
+        accounts-image-push cards-image-push loans-image-push \
+        images-build images-push images-build-push images-pull \
+        accounts-image-up cards-image-up loans-image-up \
+        services-image-up all-image-up \
         infra infra-tfvars infra-init infra-fmt infra-validate \
         infra-plan infra-apply infra-output infra-down
 
 INFRA_DIR := infra
 TOFU := tofu
+DOCKERHUB_USER := baicham
+IMAGE_TAG := latest
+COMPOSE_IMAGE := docker compose -f compose.image.yml
 
 # ==============================================================================
 # Accounts Service
@@ -137,6 +145,51 @@ gateway-up:
 
 gateway-down:
 	docker compose down gateway-server -v
+
+# ==============================================================================
+# Docker Hub images (run without a local Dockerfile build)
+# ==============================================================================
+accounts-image-build:
+	docker build -t $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG) ./accounts
+
+cards-image-build:
+	docker build -t $(DOCKERHUB_USER)/cards-api:$(IMAGE_TAG) ./cards
+
+loans-image-build:
+	docker build -t $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG) ./loans
+
+images-build: accounts-image-build cards-image-build loans-image-build
+
+accounts-image-push:
+	docker push $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG)
+
+cards-image-push:
+	docker push $(DOCKERHUB_USER)/cards-api:$(IMAGE_TAG)
+
+loans-image-push:
+	docker push $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG)
+
+images-push: accounts-image-push cards-image-push loans-image-push
+
+images-build-push: images-build images-push
+
+images-pull:
+	$(COMPOSE_IMAGE) pull accounts-api cards-api loans-api
+
+accounts-image-up:
+	$(COMPOSE_IMAGE) up accounts-db accounts-api -d --no-build
+
+cards-image-up:
+	$(COMPOSE_IMAGE) up cards-db cards-api -d --no-build
+
+loans-image-up:
+	$(COMPOSE_IMAGE) up loans-db loans-api -d --no-build
+
+services-image-up:
+	$(COMPOSE_IMAGE) up accounts-api cards-api loans-api -d --no-build
+
+all-image-up:
+	$(COMPOSE_IMAGE) up -d --no-build
 
 # ==============================================================================
 # Live Sync & Watch

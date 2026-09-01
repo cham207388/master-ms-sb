@@ -27,7 +27,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs}
+          # issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs}
 logging:
   level:

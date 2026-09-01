@@ -1,0 +1,18 @@
+include:
+  - docker-compose.infra.yml
+  - docker-compose-observability.yml
+  - config-server/compose.yml
+  - eureka-server/compose.yml
+  - accounts/compose.image.yml
+  - cards/compose.image.yml
+  - loans/compose.image.yml
+  - gateway-server/compose.yml
+
+volumes:
+  accounts-pg-volume:
+  cards-pg-volume:
+  loans-pg-volume:
+
+networks:
+  securedbank:
+    driver: bridge
