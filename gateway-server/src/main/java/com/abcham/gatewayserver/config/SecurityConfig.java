@@ -24,10 +24,10 @@ public class SecurityConfig {
                 .pathMatchers("/api/accounts/**").hasRole("ACCOUNTS")
                 .pathMatchers("/api/cards/**").hasRole("CARDS")
                 .pathMatchers("/api/loans/**").hasRole("LOANS"))
-                .oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
-                        .jwt(Customizer.withDefaults()));
                 // .oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
-                //         .jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(grantedAuthoritiesExtractor())));
+                //         .jwt(Customizer.withDefaults()));
+                .oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
+                        .jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(grantedAuthoritiesExtractor())));
         serverHttpSecurity.csrf(csrfSpec -> csrfSpec.disable());
         return serverHttpSecurity.build();
     }
