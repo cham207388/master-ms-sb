@@ -171,50 +171,68 @@ The platform features an automated, zero-code-change log telemetry pipeline powe
 ```
 
 ### 1. How Log Collection Works (Grafana Alloy)
+
 - **Zero Instrument overhead**: Microservices don't need dedicated log appenders. Alloy mounts `/var/run/docker.sock` to discover every running container.
 - **Relabeling Rules**: Alloy extracts the raw Docker container name (e.g., `accounts-api`, `cards-api`, `gateway-server`) and attaches it as a searchable stream label `container`.
 - **Multi-Tenant Push**: Alloy pushes collected log streams to `http://gateway:3100/loki/api/v1/push` tagged with header `X-Scope-OrgID: tenant1`.
 
 ### 2. Loki Decoupled Microservices Architecture
+
 - **Read Target (`grafana/loki:3.4.2`)**: Dedicated query processing engine listening on port `3101`.
 - **Write Target (`grafana/loki:3.4.2`)**: High-throughput log ingestion engine listening on port `3102`.
 - **Backend Target (`grafana/loki:3.4.2`)**: Compactor, retention enforcer, and ruler manager.
 - **MinIO Object Store**: S3-compatible backend hosting index files (`index_*`) and compressed log chunks (`loki-data`).
 
 ### 3. Distributed Tracing Pipeline (OpenTelemetry & Grafana Tempo)
+
 - **Automatic JVM Bytecode Instrumentation**: Each Spring Boot container image downloads the OpenTelemetry Java Agent at build time:
+
   ```dockerfile
   ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent.jar
   ```
+
 - **JVM Configuration**: Configured centrally in `common-docker-config.yml`:
+
   ```yaml
   JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
   OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
   ```
+
 - **Service Name Identification**: Each service specifies `OTEL_SERVICE_NAME` in its compose environment (`accounts`, `cards`, `loans`, `gateway-server`, `eureka-server`, `config-server`).
 - **Grafana & Loki Correlation**: Grafana Tempo (`http://tempo:3100`, OTLP ports `4317` gRPC / `4318` HTTP) receives trace spans and correlates them with Loki log streams via `TraceID` derived fields.
 
 ### 4. LogQL Learning & Query Guide
-When accessing Grafana at **http://localhost:3000**, navigate to **Explore** and select the **Loki** or **Tempo** datasource.
 
-#### Essential LogQL Examples:
+When accessing Grafana at **<http://localhost:3000>**, navigate to **Explore** and select the **Loki** or **Tempo** datasource.
+
+#### Essential LogQL Examples
+
 - **Stream all logs for a specific microservice**:
+
   ```logql
   {container="accounts-api"}
   ```
+
 - **Filter logs containing explicit errors**:
+
   ```logql
   {container="accounts-api"} |= "ERROR"
   ```
+
 - **Filter and parse JSON log payloads**:
+
   ```logql
   {container="gateway-server"} | json | level="error"
   ```
+
 - **Exclude noise (e.g., actuator health checks)**:
+
   ```logql
   {container="accounts-api"} != "/actuator/health"
   ```
+
 - **Calculate log entry rate per minute across services**:
+
   ```logql
   sum by (container) (rate({container=~".+"}[1m]))
   ```
@@ -224,6 +242,7 @@ When accessing Grafana at **http://localhost:3000**, navigate to **Explore** and
 ## 🛠 Local Development & Execution Guide
 
 ### Prerequisites
+
 - **JDK 25** installed & configured in environment path.
 - **Docker & Docker Compose** installed and running.
 - **Gradle** (or use bundled `./gradlew` wrapper in each directory).
@@ -352,7 +371,6 @@ Each microservice relies on configurable environment variables in its `applicati
 | `config-all-down`      | `docker compose -f ../master-ms-sb-config-server/compose.yml down -v`               | Stops Config Server & RabbitMQ stack      |
 | `dbs-down`             | `accounts-db-down cards-db-down loans-db-down`                                      | Stops all databases and cleans volumes    |
 
-
 ## Observability Resources
 
 For full details on the observability and monitoring platform architecture, data flow, component breakdown, and quickstart commands, see the dedicated [Observability README](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/README.md).
@@ -360,7 +378,7 @@ For full details on the observability and monitoring platform architecture, data
 ### Micrometer
 
 Spring Boot Actuator provides a MicrometerFacade for Spring Boot applications to integrate with Micrometer.
-For Java application to expose metrics 
+For Java application to expose metrics
 
 - [micrometer](https://micrometer.io/)
 
@@ -402,3 +420,6 @@ OpenTelemetry is a set of APIs, SDKs, and tools used to generate, collect, and e
 
 - [OpenTelemetry](https://opentelemetry.io/)
 
+## References
+
+- [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
