@@ -64,9 +64,7 @@ A **client** is an application that talks to Keycloak. OIDC “Client authentica
 | Client ID | Type | Flow | Audience |
 | :--- | :--- | :--- | :--- |
 | `securedbank-cc` | Confidential | Client credentials | Accounts / cards / loans APIs (M2M) |
-| `securedbankclient` | Confidential | Authorization code (no PKCE) | Interactive login tests |
-| `securedbankclientpublic` | Public | Authorization code + PKCE S256 | Generic SPA |
-| `securedbankclientpublicui` | Public | Authorization code + PKCE S256 | Angular UI (`localhost:4200`) |
+| `securedbank-ac` | Confidential | Authorization code (no PKCE) | Interactive login tests |
 
 The UI client redirects to `http://localhost:4200/dashboard` after login and `http://localhost:4200/home` after logout. The other browser clients allow `*` redirects for local testing only.
 
@@ -92,7 +90,7 @@ Keycloak exposes these OAuth 2.0 / OIDC grants on `/.well-known/openid-configura
 
 **PKCE** (Proof Key for Code Exchange) binds the authorization code to the client that started the login. The public clients require **S256**. They send a `code_challenge` to `/auth` and the matching `code_verifier` to `/token`.
 
-`securedbankclient` leaves PKCE unset so the confidential authorization-code path can be tested with a client secret only.
+`securedbank-ac` leaves PKCE unset so the confidential authorization-code path can be tested with a client secret only.
 
 ---
 

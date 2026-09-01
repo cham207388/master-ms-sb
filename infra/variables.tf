@@ -40,7 +40,7 @@ variable "realm" {
 variable "auth_code_client_id" {
   description = "Client ID for the authorization-code OAuth client"
   type        = string
-  default     = "securedbankclient"
+  default     = "securedbank-ac"
 }
 
 variable "auth_code_client_secret" {

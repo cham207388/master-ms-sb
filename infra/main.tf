@@ -37,12 +37,13 @@ resource "keycloak_required_action" "configure_totp" {
 locals {
   # Shared realm roles used by the M2M service account and human users.
   realm_roles = toset([
-    "USER",
-    "ADMIN",
+    "ACCOUNTS",
+    "CARDS",
+    "LOANS",
   ])
 }
 
-# Create USER and ADMIN as realm roles.
+# Create ACCOUNTS, CARDS, and LOANS as realm roles.
 resource "keycloak_role" "service_account" {
   for_each = local.realm_roles
 
