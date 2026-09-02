@@ -3,7 +3,9 @@
 ## Dependencies
 
 * main `org.springframework.cloud:spring-cloud-function-context`
-* turn into a web app: `org.springframework.cloud:spring-cloud-function-web`
+* turn into a web app:
+  * `org.springframework.cloud:spring-cloud-function-web`
+  * `org.springframework.boot:spring-boot-starter-webmvc`
 
 ## Reference Documentation
 
