@@ -1,14 +1,14 @@
 .PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
         cards cards-build cards-db-up cards-db-down cards-api-run \
         loans loans-build loans-db-up loans-db-down loans-api \
-        eureka-server-build eureka-server-up eureka-server-down dbs-down \
+        eureka-server-build eureka-server-up eureka-server-down dbs-up dbs-down \
         watch watch-accounts watch-cards watch-loans watch-gateway \
         gateway-up gateway-down \
         accounts-image-build cards-image-build loans-image-build \
         accounts-image-push cards-image-push loans-image-push \
         images-build images-push images-build-push images-pull \
         accounts-image-up cards-image-up loans-image-up \
-        services-image-up all-image-up \
+        services-image-up all-image-up all-compose-up all-compose-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
         infra-plan infra-apply infra-output infra-down
 
@@ -17,6 +17,8 @@ TOFU := tofu
 DOCKERHUB_USER := baicham
 IMAGE_TAG := latest
 COMPOSE_IMAGE := docker compose -f compose.image.yml
+COMPOSE_ALL := docker compose -f docker-compose.all.yml
+COMPOSE_DBS := docker compose -f docker-compose.dbs.yml
 
 # ==============================================================================
 # Accounts Service
@@ -25,10 +27,10 @@ accounts-build:
 	cd accounts && ./gradlew clean build
 
 accounts-db-up:
-	docker compose up accounts-db -d
+	$(COMPOSE_DBS) up accounts-db -d
 
 accounts-db-down:
-	docker compose down accounts-db -v
+	$(COMPOSE_DBS) down accounts-db -v
 
 accounts-api-run:
 	docker compose up accounts-api -d --build --no-deps
@@ -46,10 +48,10 @@ cards-build:
 	cd cards && ./gradlew clean build
 
 cards-db-up:
-	docker compose up cards-db -d
+	$(COMPOSE_DBS) up cards-db -d
 
 cards-db-down:
-	docker compose down cards-db -v
+	$(COMPOSE_DBS) down cards-db -v
 
 cards-api-run:
 	docker compose up cards-api -d --build --no-deps
@@ -68,10 +70,10 @@ loans-build:
 	cd loans && ./gradlew clean build
 
 loans-db-up:
-	docker compose up loans-db -d
+	$(COMPOSE_DBS) up loans-db -d
 
 loans-db-down:
-	docker compose down loans-db -v
+	$(COMPOSE_DBS) down loans-db -v
 
 loans-api:
 	docker compose up loans-api -d --build --no-deps
@@ -112,7 +114,11 @@ config-server-down:
 # ==============================================================================
 # Global / Teardown
 # ==============================================================================
-dbs-down: accounts-db-down cards-db-down loans-db-down
+dbs-up:
+	$(COMPOSE_DBS) up -d
+
+dbs-down:
+	$(COMPOSE_DBS) down -v
 	@echo "all dbs are down"
 
 api-up: accounts-api-run cards-api-run loans-api
@@ -190,6 +196,12 @@ services-image-up:
 
 all-image-up:
 	$(COMPOSE_IMAGE) up -d --no-build
+
+all-compose-up:
+	$(COMPOSE_ALL) up -d
+
+all-compose-down:
+	$(COMPOSE_ALL) down -v
 
 # ==============================================================================
 # Live Sync & Watch

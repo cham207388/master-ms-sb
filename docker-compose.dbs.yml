@@ -1,0 +1,63 @@
+services:
+  accounts-db:
+    image: 'postgres:18-alpine'
+    container_name: accounts-db
+    environment:
+      POSTGRES_DB: accounts
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5423:5432'
+    volumes:
+      - accounts-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d accounts" ]
+      start_period: 30s
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
+
+  cards-db:
+    image: 'postgres:18-alpine'
+    container_name: cards-db
+    environment:
+      POSTGRES_DB: cards
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5424:5432'
+    volumes:
+      - cards-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cards" ]
+      start_period: 30s
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
+
+  loans-db:
+    image: 'postgres:18-alpine'
+    container_name: loans-db
+    environment:
+      POSTGRES_DB: loans
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5425:5432'
+    volumes:
+      - loans-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d loans" ]
+      start_period: 30s
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
+
+volumes:
+  accounts-pg-volume:
+  cards-pg-volume:
+  loans-pg-volume:
+
+networks:
+  securedbank:
+    driver: bridge

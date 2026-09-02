@@ -1,22 +1,4 @@
 services:
-  accounts-db:
-    image: 'postgres:18-alpine'
-    container_name: accounts-db
-    environment:
-      POSTGRES_DB: accounts
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-    ports:
-      - '5423:5432'
-    volumes:
-      - accounts-pg-volume:/var/lib/postgresql
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d accounts" ]
-      start_period: 30s
-    extends:
-      file: ../common-docker-config.yml
-      service: microservice-base
-
   accounts-api:
     build:
       context: .
@@ -41,6 +23,3 @@ services:
     extends:
       file: ../common-docker-config.yml
       service: microservice-with-config-eureka
-
-volumes:
-  accounts-pg-volume:
