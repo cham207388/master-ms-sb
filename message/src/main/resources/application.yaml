@@ -4,3 +4,6 @@ server:
 spring:
   application:
     name: message
+  cloud:
+    function:
+      definition: email|sms # combining multiple functions with pipe (|) separator as a single function definition
