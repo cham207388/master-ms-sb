@@ -12,6 +12,7 @@ services:
       OTEL_SERVICE_NAME: gateway-server
       # KEYCLOAK_ISSUER_URI: http://localhost:7080/realms/securedbankdev
       KEYCLOAK_JWK_SET_URI: http://host.docker.internal:7080/realms/securedbankdev/protocol/openid-connect/certs
+      # KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/securedbankdev/protocol/openid-connect/certs
     develop:
       watch:
         - action: rebuild

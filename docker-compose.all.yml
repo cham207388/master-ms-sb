@@ -167,8 +167,8 @@ services:
     image: baicham/accounts-api:latest
     pull_policy: missing
     container_name: accounts-api
-    ports:
-      - '8091:8091'
+    # ports:
+    #   - '8091:8091'
     environment:
       <<: [*otel-env, *config-env, *eureka-env]
       SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
@@ -190,8 +190,8 @@ services:
     image: baicham/cards-api:latest
     pull_policy: missing
     container_name: cards-api
-    ports:
-      - '8092:8092'
+    # ports:
+    #   - '8092:8092'
     environment:
       <<: [*otel-env, *config-env, *eureka-env]
       SPRING_DATASOURCE_URL: jdbc:postgresql://cards-db:5432/cards
@@ -213,8 +213,8 @@ services:
     image: baicham/loans-api:latest
     pull_policy: missing
     container_name: loans-api
-    ports:
-      - '8093:8093'
+    # ports:
+    #   - '8093:8093'
     environment:
       <<: [*otel-env, *config-env, *eureka-env]
       SPRING_DATASOURCE_URL: jdbc:postgresql://loans-db:5432/loans
