@@ -1,14 +1,139 @@
-# Alternate full-stack compose: published API images, no Redis.
-include:
-  - docker-compose.dbs.yml
-  - docker-compose-observability.yml
-  - config-server/compose.yml
-  - eureka-server/compose.yml
-  - accounts/compose.image.yml
-  - cards/compose.image.yml
-  - loans/compose.image.yml
+# Standalone full-stack compose. Run with:
+#   docker compose -f docker-compose.all.yml up -d
+# APIs use published images. Redis is excluded.
+
+x-otel-env: &otel-env
+  JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+  OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED: "false"
+  OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED: "false"
+
+x-config-env: &config-env
+  CONFIG_SERVER_URL: http://config-server:8071/
+  SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8071/
+
+x-eureka-env: &eureka-env
+  EUREKA_DEFAULT_ZONE: http://eureka-server:8070/eureka/
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8070/eureka/
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 20s
+  timeout: 10s
+  retries: 20
+  start_period: 10s
+
+x-deploy-limits: &deploy-limits
+  resources:
+    limits:
+      memory: 700m
 
 services:
+  # ---------------------------------------------------------------------------
+  # Databases
+  # ---------------------------------------------------------------------------
+  accounts-db:
+    image: postgres:18-alpine
+    container_name: accounts-db
+    environment:
+      POSTGRES_DB: accounts
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5423:5432'
+    volumes:
+      - accounts-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d accounts" ]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks:
+      - securedbank
+
+  cards-db:
+    image: postgres:18-alpine
+    container_name: cards-db
+    environment:
+      POSTGRES_DB: cards
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5424:5432'
+    volumes:
+      - cards-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cards" ]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks:
+      - securedbank
+
+  loans-db:
+    image: postgres:18-alpine
+    container_name: loans-db
+    environment:
+      POSTGRES_DB: loans
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5425:5432'
+    volumes:
+      - loans-pg-volume:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d loans" ]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    networks:
+      - securedbank
+
+  # ---------------------------------------------------------------------------
+  # Platform (config, discovery, gateway)
+  # ---------------------------------------------------------------------------
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - '8071:8071'
+    environment:
+      <<: *otel-env
+      OTEL_SERVICE_NAME: config-server
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8071/actuator/health/readiness || exit 1" ]
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - '8070:8070'
+    environment:
+      <<: [*otel-env, *config-env]
+      OTEL_SERVICE_NAME: eureka-server
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8070/actuator/health/readiness || exit 1" ]
+    depends_on:
+      config-server:
+        condition: service_healthy
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
   gateway-server:
     build:
       context: ./gateway-server
@@ -17,15 +142,318 @@ services:
     ports:
       - '8072:8072'
     environment:
+      <<: [*otel-env, *config-env, *eureka-env]
       OTEL_SERVICE_NAME: gateway-server
       KEYCLOAK_JWK_SET_URI: http://host.docker.internal:7080/realms/securedbankdev/protocol/openid-connect/certs
     depends_on:
-      - accounts-api
-      - cards-api
-      - loans-api
-    extends:
-      file: common-docker-config.yml
-      service: microservice-with-config-eureka
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      accounts-api:
+        condition: service_started
+      cards-api:
+        condition: service_started
+      loans-api:
+        condition: service_started
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
+  # ---------------------------------------------------------------------------
+  # APIs (published images)
+  # ---------------------------------------------------------------------------
+  accounts-api:
+    image: baicham/accounts-api:latest
+    pull_policy: missing
+    container_name: accounts-api
+    ports:
+      - '8091:8091'
+    environment:
+      <<: [*otel-env, *config-env, *eureka-env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: accounts
+    depends_on:
+      accounts-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
+  cards-api:
+    image: baicham/cards-api:latest
+    pull_policy: missing
+    container_name: cards-api
+    ports:
+      - '8092:8092'
+    environment:
+      <<: [*otel-env, *config-env, *eureka-env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://cards-db:5432/cards
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: cards
+    depends_on:
+      cards-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
+  loans-api:
+    image: baicham/loans-api:latest
+    pull_policy: missing
+    container_name: loans-api
+    ports:
+      - '8093:8093'
+    environment:
+      <<: [*otel-env, *config-env, *eureka-env]
+      SPRING_DATASOURCE_URL: jdbc:postgresql://loans-db:5432/loans
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      OTEL_SERVICE_NAME: loans
+    depends_on:
+      loans-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    deploy: *deploy-limits
+    networks:
+      - securedbank
+
+  # ---------------------------------------------------------------------------
+  # Observability
+  # ---------------------------------------------------------------------------
+  read:
+    image: grafana/loki:3.4.2
+    command: "-config.file=/etc/loki/config.yaml -target=read -query-scheduler.use-scheduler-ring=false"
+    ports:
+      - 3101:3100
+      - 7946
+      - 9095
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+    depends_on:
+      - minio
+    healthcheck:
+      test: [ "CMD", "/usr/bin/loki", "-health" ]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: &loki-dns
+      loki:
+        aliases:
+          - loki
+
+  write:
+    image: grafana/loki:3.4.2
+    command: "-config.file=/etc/loki/config.yaml -target=write"
+    ports:
+      - 3102:3100
+      - 7946
+      - 9095
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+    healthcheck:
+      test: [ "CMD", "/usr/bin/loki", "-health" ]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - minio
+    networks:
+      <<: *loki-dns
+
+  alloy:
+    image: grafana/alloy:v1.7.1
+    volumes:
+      - ./observability/alloy/alloy-local-config.yml:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    ports:
+      - 12345:12345
+    depends_on:
+      - gateway
+    networks:
+      - loki
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /data/loki-data && \
+        mkdir -p /data/loki-ruler && \
+        minio server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=loki
+      - MINIO_ROOT_PASSWORD=supersecret
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+      - MINIO_UPDATE=off
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./.data/minio:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 15s
+      timeout: 20s
+      retries: 5
+    networks:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - loki
+      - securedbank
+
+  tempo:
+    image: grafana/tempo:2.9.0
+    container_name: tempo
+    command: -config.file /etc/tempo-config.yml
+    ports:
+      - "3110:3100"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo-config.yml
+    networks:
+      - loki
+      - securedbank
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - gateway
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        /run.sh
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki
+
+  backend:
+    image: grafana/loki:3.4.2
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+    ports:
+      - "3100"
+      - "7946"
+    command: "-config.file=/etc/loki/config.yaml -target=backend -legacy-read-mode=false"
+    depends_on:
+      - gateway
+    healthcheck:
+      test: [ "CMD", "/usr/bin/loki", "-health" ]
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - loki
+
+  gateway:
+    image: nginx:1.27.4-alpine
+    depends_on:
+      - read
+      - write
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        cat <<EOF > /etc/nginx/nginx.conf
+        user  nginx;
+        worker_processes  5;  ## Default: 1
+
+        events {
+          worker_connections   1000;
+        }
+
+        http {
+          resolver 127.0.0.11;
+
+          server {
+            listen             3100;
+
+            location = / {
+              return 200 'OK';
+              auth_basic off;
+            }
+
+            location = /api/prom/push {
+              proxy_pass       http://write:3100\$$request_uri;
+            }
+
+            location = /api/prom/tail {
+              proxy_pass       http://read:3100\$$request_uri;
+              proxy_set_header Upgrade \$$http_upgrade;
+              proxy_set_header Connection "upgrade";
+            }
+
+            location ~ /api/prom/.* {
+              proxy_pass       http://read:3100\$$request_uri;
+            }
+
+            location = /loki/api/v1/push {
+              proxy_pass       http://write:3100\$$request_uri;
+            }
+
+            location = /loki/api/v1/tail {
+              proxy_pass       http://read:3100\$$request_uri;
+              proxy_set_header Upgrade \$$http_upgrade;
+              proxy_set_header Connection "upgrade";
+            }
+
+            location ~ /loki/api/.* {
+              proxy_pass       http://read:3100\$$request_uri;
+            }
+          }
+        }
+        EOF
+        /docker-entrypoint.sh nginx -g "daemon off;"
+    ports:
+      - "3100:3100"
+    healthcheck:
+      test: [ "CMD", "nginx", "-t" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki
 
 volumes:
   accounts-pg-volume:
