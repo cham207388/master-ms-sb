@@ -1,4 +1,5 @@
 package com.abcham.message.dto;
 
-public class AccountsMsgDto {
+public record AccountsMsgDto(Long accountNumber, String name, String email, String mobileNumber) {
+
 }
