@@ -1,85 +1,61 @@
 # Spring Cloud Gateway Server
 
 ![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud-Gateway%20WebFlux-green.svg)
-![Resilience4j](https://img.shields.io/badge/Resilience4j-Circuit%20Breaker-red.svg)
-![Eureka](https://img.shields.io/badge/Eureka-Client-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)
+![OAuth2](https://img.shields.io/badge/OAuth2-Resource%20Server-purple.svg)
+![Keycloak](https://img.shields.io/badge/Keycloak-JWT-blue.svg)
 
-The **Spring Cloud Gateway Server** serves as the single edge API gateway for all SecuredBank microservices (`accounts`, `cards`, `loans`). Built on Spring Cloud Gateway WebFlux, it provides dynamic routing, path rewriting, client-side load balancing, correlation ID request tracing, and resilience mechanisms.
-
----
-
-## 🏛 Architecture & Features
-
-- **Server Port**: `8072`
-- **Engine**: Spring Cloud Gateway WebFlux (Reactive & Non-blocking)
-- **Service Discovery**: Integrates with Netflix Eureka Server on port `8070` for dynamic service resolution (`lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS`)
-- **Central Config**: Fetches configuration properties from Spring Cloud Config Server on port `8071`
-- **Fault Tolerance**: Integrated Resilience4j Circuit Breakers & Retries with fallback endpoints
+Edge API for `accounts`, `cards`, and `loans`. Routes through Eureka (`lb://…`), rewrites `/accounts|cards|loans/**`, and enforces Keycloak JWT roles on mutating requests.
 
 ---
 
-## 🌐 Configured Gateway Routes & Rewrite Rules
+## Specifications
 
-| Route ID | Matching Path Pattern | Rewrite Filter | Circuit Breaker & Fallback | Target Service URI | Sample API Gateway Request |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `accounts-upper` | `/ACCOUNTS/**` | `/ACCOUNTS/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/ACCOUNTS/api/accounts/create` |
-| `accounts-lower` | `/accounts/**` | `/accounts/(.*)` -> `/$1` | `accountsCircuitBreaker` (`forward:/accounts-fallback`) | `lb://ACCOUNTS` | `POST http://localhost:8072/accounts/api/accounts/create` |
-| `cards-upper` | `/CARDS/**` | `/CARDS/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/CARDS/api/cards/create` |
-| `cards-lower` | `/cards/**` | `/cards/(.*)` -> `/$1` | `cardsCircuitBreaker` (`forward:/cards-fallback`) | `lb://CARDS` | `POST http://localhost:8072/cards/api/cards/create` |
-| `loans-upper` | `/LOANS/**` | `/LOANS/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/LOANS/api/loans/create` |
-| `loans-lower` | `/loans/**` | `/loans/(.*)` -> `/$1` | `loansCircuitBreaker` (`forward:/loans-fallback`) | `lb://LOANS` | `POST http://localhost:8072/loans/api/loans/create` |
+- **Port**: `8072`
+- **JWKS**: `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`
+- **Routes**: [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes)
+- **Health**: [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health)
 
 ---
 
-## 🛡️ Resilience & Fallback Endpoints
+## Security
 
-When downstream services are unreachable, experiencing high latency, or returning error thresholds, the gateway circuit breaker redirects requests to local fallback endpoints handled by `FallbackController`:
+OAuth2 resource server. JWT is validated against Keycloak JWKS. `KeycloakRoleConverter` maps `realm_access.roles` to Spring authorities (`ROLE_ACCOUNTS`, `ROLE_CARDS`, `ROLE_LOANS`). CSRF is off.
 
-- **`/accounts-fallback`**: Returns `"Accounts service is currently unavailable. Please try again later."`
-- **`/cards-fallback`**: Returns `"Cards service is currently unavailable. Please try again later."`
-- **`/loans-fallback`**: Returns `"Loans service is currently unavailable. Please try again later."`
+```mermaid
+flowchart LR
+  Client -->|Authorization: Bearer JWT| GW[Gateway :8072]
+  GW -->|GET JWKS| KC[Keycloak<br/>securedbankdev]
+  GW -->|GET permitAll| Svc[lb://ACCOUNTS / CARDS / LOANS]
+  GW -->|POST/PUT/DELETE + role| Svc
+```
 
----
+| Path | Rule |
+| :--- | :--- |
+| `GET /**` | Permit all |
+| `/accounts/**`, `/ACCOUNTS/**` | `ROLE_ACCOUNTS` |
+| `/cards/**`, `/CARDS/**` | `ROLE_CARDS` |
+| `/loans/**`, `/LOANS/**` | `ROLE_LOANS` |
 
-## 🔍 OpenTelemetry Distributed Tracing
-
-Distributed tracing and cross-service correlation context (`traceparent`, `tracestate`) are automatically managed by the `opentelemetry-javaagent` runtime dependency without requiring manual header injection filters.
-
----
-
-## 🛠 Management & Actuator Monitoring Endpoints
-
-- **Gateway Routes**: [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes)
-- **Circuit Breakers Status**: [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers)
-- **Circuit Breaker Events**: [http://localhost:8072/actuator/circuitbreakerevents](http://localhost:8072/actuator/circuitbreakerevents)
-- **Health Indicator**: [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health)
-- **Info Endpoint**: [http://localhost:8072/actuator/info](http://localhost:8072/actuator/info)
+Realm roles and clients are provisioned in [`infra/`](../infra/README.md) (`ACCOUNTS`, `CARDS`, `LOANS`). Example: `POST http://localhost:8072/accounts/api/accounts/create` with a token that includes `ACCOUNTS`.
 
 ---
 
-## 🛠 Local Setup & Running
+## Routing & resilience
 
-### Prerequisites
-- **JDK 25**
-- **Docker & Docker Compose**
-- Config Server running on port `8071`
-- Eureka Server running on port `8070`
+Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matching service.
 
-### Execution Commands
+- **Accounts**: circuit breaker `accountsCircuitBreaker` → `/accounts-fallback`; GET retry ×3
+- **Cards**: GET retry ×3
+- **Loans**: GET retry ×3; Redis rate limiter (`user` header, else `anonymous`)
+
+---
+
+## Local run
+
+Requires Config Server (`8071`), Eureka (`8070`), and Keycloak (`7080`).
 
 ```bash
-# 1. Build Gateway Server
 ./gradlew clean build
-
-# 2. Execute Unit Tests
-./gradlew test
-
-# 3. Launch via Docker Compose
-docker compose up -d
-
-# 4. Or run locally via Gradle
-./gradlew bootRun
+make gateway-restart
 ```

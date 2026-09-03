@@ -1,44 +1,42 @@
-# Getting Started
+# Message Service
 
-## Docker
+![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
+![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-RabbitMQ-blue.svg)
 
-From the repository root, build and start Message and its RabbitMQ dependency:
-
-```bash
-docker compose up -d --build message
-docker compose logs -f message
-```
-
-The root Compose stack includes Message, so `make all-up` starts it too.
-Message connects to `rabbitmq:5672` on the shared `securedbank` network and
-consumes `send-communication` through the `email|sms` function, publishing results
-to `communication-sent`. It is a background worker with no HTTP port to publish.
-The Java 25 image runs as a non-root user and includes the OpenTelemetry agent
-used by the shared Docker configuration.
-
-## Dependencies
-
-* main `org.springframework.cloud:spring-cloud-function-context`
-* turn into a web app:
-  * `org.springframework.cloud:spring-cloud-function-web`
-  * `org.springframework.boot:spring-boot-starter-webmvc`
+Background worker that sends account communications. No public HTTP API. Consumes create events from Accounts, logs email then SMS, and publishes the account number so Accounts can set `communication_sw`.
 
 ---
 
-- spring-cloud-stream
+## Specifications
 
-## Reference Documentation
+- **Internal port**: `9010` (not published)
+- **Broker**: RabbitMQ `5672` (UI `15672`)
+- **Payload**: `AccountsMsgDto` — `accountNumber`, `name`, `email`, `mobileNumber`
 
-For further reference, please consider the following sections:
+Composed function `email|sms`: `email` returns the DTO; `sms` returns `accountNumber`.
 
-* [Official Gradle documentation](https://docs.gradle.org)
-* [Spring Boot Gradle Plugin Reference Guide](https://docs.spring.io/spring-boot/4.1.1/gradle-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.1.1/gradle-plugin/packaging-oci-image.html)
-* [Function](https://docs.spring.io/spring-cloud-function/reference/)
+```mermaid
+flowchart LR
+  Accounts -->|send-communication<br/>AccountsMsgDto| RMQ[(RabbitMQ)]
+  RMQ --> email
+  email --> sms
+  sms -->|communication-sent<br/>accountNumber| RMQ
+  RMQ --> Accounts
+```
 
-### Additional Links
+| Binding | Destination | Group |
+| :--- | :--- | :--- |
+| `emailsms-in-0` | `send-communication` | `message` |
+| `emailsms-out-0` | `communication-sent` | — |
 
-These additional references should also help you:
+---
 
-* [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
-* [Various sample apps using Spring Cloud Function](https://github.com/spring-cloud/spring-cloud-function/tree/main/spring-cloud-function-samples)
+## Local run
+
+RabbitMQ starts as a dependency of `message-up`.
+
+```bash
+make message-build
+make message-up        # or make message-restart
+make watch-message
+```
