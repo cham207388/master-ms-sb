@@ -22,6 +22,8 @@ spring:
     openfeign:
       circuitbreaker:
         enabled: true
+    function:
+      definition: updateCommunication # name of the function defined in the code
     stream:
       bindings:
         updateCommunication-in-0:
