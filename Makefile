@@ -5,8 +5,10 @@
         eureka-server-build eureka-server-up eureka-server-down dbs-up dbs-down \
         watch watch-accounts watch-cards watch-loans watch-gateway watch-message \
         gateway-up gateway-down gateway-restart \
-        accounts-image-build cards-image-build loans-image-build \
-        accounts-image-push cards-image-push loans-image-push \
+        accounts-image-build cards-image-build loans-image-build message-image-build \
+        gateway-server-image-build config-server-image-build eureka-server-image-build \
+        accounts-image-push cards-image-push loans-image-push message-image-push \
+        gateway-server-image-push config-server-image-push eureka-server-image-push \
         images-build images-push images-build-push images-pull \
         accounts-image-up cards-image-up loans-image-up \
         services-image-up all-image-up all-compose-up all-compose-down \
@@ -192,7 +194,20 @@ cards-image-build:
 loans-image-build:
 	docker build -t $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG) ./loans
 
-images-build: accounts-image-build cards-image-build loans-image-build
+message-image-build:
+	docker build -t $(DOCKERHUB_USER)/message:$(IMAGE_TAG) ./message
+
+gateway-server-image-build:
+	docker build -t $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG) ./gateway-server
+
+config-server-image-build:
+	docker build -t $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG) ./config-server
+
+eureka-server-image-build:
+	docker build -t $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG) ./eureka-server
+
+images-build: accounts-image-build cards-image-build loans-image-build message-image-build \
+	gateway-server-image-build config-server-image-build eureka-server-image-build
 
 accounts-image-push:
 	docker push $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG)
@@ -203,7 +218,20 @@ cards-image-push:
 loans-image-push:
 	docker push $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG)
 
-images-push: accounts-image-push cards-image-push loans-image-push
+message-image-push:
+	docker push $(DOCKERHUB_USER)/message:$(IMAGE_TAG)
+
+gateway-server-image-push:
+	docker push $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG)
+
+config-server-image-push:
+	docker push $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG)
+
+eureka-server-image-push:
+	docker push $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG)
+
+images-push: accounts-image-push cards-image-push loans-image-push message-image-push \
+	gateway-server-image-push config-server-image-push eureka-server-image-push
 
 images-build-push: images-build images-push
 
