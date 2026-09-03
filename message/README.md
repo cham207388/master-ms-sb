@@ -7,6 +7,10 @@
   * `org.springframework.cloud:spring-cloud-function-web`
   * `org.springframework.boot:spring-boot-starter-webmvc`
 
+---
+
+- spring-cloud-stream
+
 ## Reference Documentation
 
 For further reference, please consider the following sections:

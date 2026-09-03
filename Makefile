@@ -265,3 +265,8 @@ infra-output:
 infra-down:
 	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
 
+rabbit-mq-up:
+	docker compose -f docker-compose.event.yml up rabbitmq -d
+
+rabbit-mq-down:
+	docker compose -f docker-compose.event.yml down rabbitmq -v

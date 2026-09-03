@@ -42,7 +42,8 @@ dependencies {
 	runtimeOnly "io.opentelemetry.javaagent:opentelemetry-javaagent:${otelVersion}"
 
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
-//	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	implementation 'org.springframework.cloud:spring-cloud-stream'
+    implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

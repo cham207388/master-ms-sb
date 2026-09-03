@@ -2,6 +2,7 @@ package com.abcham.accounts.service.impl;
 
 import com.abcham.accounts.constants.AccountsConstants;
 import com.abcham.accounts.dto.AccountsDto;
+import com.abcham.accounts.dto.AccountsMsgDto;
 import com.abcham.accounts.dto.CustomerDto;
 import com.abcham.accounts.entity.Accounts;
 import com.abcham.accounts.entity.Customer;
@@ -14,6 +15,7 @@ import com.abcham.accounts.repository.CustomerRepository;
 import com.abcham.accounts.service.IAccountsService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -26,6 +28,7 @@ public class AccountsServiceImpl implements IAccountsService {
 
     private AccountsRepository accountsRepository;
     private CustomerRepository customerRepository;
+    private final StreamBridge streamBridge;
 
     @Override
     public void createAccount(CustomerDto customerDto) {
@@ -42,6 +45,7 @@ public class AccountsServiceImpl implements IAccountsService {
         Accounts savedAccount = accountsRepository.save(createNewAccount(savedCustomer));
         log.info("Account created successfully with accountNumber: {} for customerId: {}",
                 savedAccount.getAccountNumber(), savedCustomer.getCustomerId());
+        sendCommunication(savedAccount, savedCustomer);
     }
 
     private Accounts createNewAccount(Customer customer) {
@@ -53,6 +57,14 @@ public class AccountsServiceImpl implements IAccountsService {
         newAccount.setAccountType(AccountsConstants.SAVINGS);
         newAccount.setBranchAddress(AccountsConstants.ADDRESS);
         return newAccount;
+    }
+
+    private void sendCommunication(Accounts account, Customer customer) {
+        var accountsMsgDto = new AccountsMsgDto(account.getAccountNumber(), customer.getName(),
+                customer.getEmail(), customer.getMobileNumber());
+        log.info("Sending Communication request for the details: {}", accountsMsgDto);
+        var result = streamBridge.send("sendCommunication-out-0", accountsMsgDto);
+        log.info("Is the Communication request successfully triggered ? : {}", result);
     }
 
     @Override
