@@ -270,3 +270,9 @@ rabbit-mq-up:
 
 rabbit-mq-down:
 	docker compose -f docker-compose.event.yml down rabbitmq -v
+
+apis-up:
+	docker compose up accounts-api cards-api loans-api -d --build
+
+apis-down:
+	docker compose down accounts-api cards-api loans-api -v
