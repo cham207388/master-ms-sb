@@ -6,7 +6,14 @@ services:
       - 15672:15672
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    extends:
+      file: common-docker-config.yml
+      service: microservice-base
 
 volumes:
   rabbitmq-data:
     driver: local
+
+networks:
+  securedbank:
+    driver: bridge    

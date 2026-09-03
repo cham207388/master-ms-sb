@@ -266,10 +266,10 @@ infra-down:
 	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
 
 rabbit-mq-up:
-	docker compose -f docker-compose.event.yml up rabbitmq -d
+	docker compose rabbit up rabbitmq -d
 
 rabbit-mq-down:
-	docker compose -f docker-compose.event.yml down rabbitmq -v
+	docker compose rabbit down rabbitmq -v
 
 apis-up:
 	docker compose up accounts-api cards-api loans-api -d --build

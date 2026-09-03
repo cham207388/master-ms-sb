@@ -1,5 +1,21 @@
 # Getting Started
 
+## Docker
+
+From the repository root, build and start Message and its RabbitMQ dependency:
+
+```bash
+docker compose up -d --build message
+docker compose logs -f message
+```
+
+The root Compose stack includes Message, so `make all-up` starts it too.
+Message connects to `rabbitmq:5672` on the shared `securedbank` network and
+consumes `send-communication` through the `email|sms` function, publishing results
+to `communication-sent`. It is a background worker with no HTTP port to publish.
+The Java 25 image runs as a non-root user and includes the OpenTelemetry agent
+used by the shared Docker configuration.
+
 ## Dependencies
 
 * main `org.springframework.cloud:spring-cloud-function-context`
