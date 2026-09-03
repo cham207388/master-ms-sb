@@ -1,9 +1,10 @@
-.PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run \
-        cards cards-build cards-db-up cards-db-down cards-api-run \
-        loans loans-build loans-db-up loans-db-down loans-api \
+.PHONY: accounts accounts-build accounts-db-up accounts-db-down accounts-api-run accounts-restart \
+        cards cards-build cards-db-up cards-db-down cards-api-run cards-restart \
+        loans loans-build loans-db-up loans-db-down loans-api loans-restart \
+        message-build message-up message-restart message-down \
         eureka-server-build eureka-server-up eureka-server-down dbs-up dbs-down \
-        watch watch-accounts watch-cards watch-loans watch-gateway \
-        gateway-up gateway-down \
+        watch watch-accounts watch-cards watch-loans watch-gateway watch-message \
+        gateway-up gateway-down gateway-restart \
         accounts-image-build cards-image-build loans-image-build \
         accounts-image-push cards-image-push loans-image-push \
         images-build images-push images-build-push images-pull \
@@ -38,6 +39,9 @@ accounts-api-run:
 accounts:
 	docker compose up accounts-db accounts-api -d
 
+accounts-restart:
+	docker compose up accounts-api -d --build --force-recreate --no-deps
+
 accounts-down:
 	docker compose down accounts-db accounts-api -v
 
@@ -58,6 +62,9 @@ cards-api-run:
 
 cards:
 	docker compose up cards-db cards-api -d
+
+cards-restart:
+	docker compose up cards-api -d --build --force-recreate --no-deps
 
 cards-down:
 	docker compose down cards-db cards-api -v
@@ -81,8 +88,26 @@ loans-api:
 loans:
 	docker compose up loans-db loans-api -d
 
+loans-restart:
+	docker compose up loans-api -d --build --force-recreate --no-deps
+
 loans-down:
 	docker compose down loans-db loans-api -v
+
+# ==============================================================================
+# Message Service
+# ==============================================================================
+message-build:
+	cd message && ./gradlew clean build
+
+message-up:
+	docker compose up message -d --build
+
+message-restart:
+	docker compose up message -d --build --force-recreate --no-deps
+
+message-down:
+	docker compose down message -v
 
 # ==============================================================================
 # Eureka Server
@@ -148,6 +173,9 @@ all-down:
 
 gateway-up:
 	docker compose up gateway-server -d --build
+
+gateway-restart:
+	docker compose up gateway-server -d --build --force-recreate --no-deps
 
 gateway-down:
 	docker compose down gateway-server -v
@@ -223,6 +251,9 @@ watch-loans:
 
 watch-gateway:
 	docker compose watch gateway-server
+
+watch-message:
+	docker compose watch message
 
 # ==============================================================================
 # OpenTofu (Keycloak realm, clients, users)

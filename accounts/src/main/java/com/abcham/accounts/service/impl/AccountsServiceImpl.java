@@ -32,6 +32,7 @@ public class AccountsServiceImpl implements IAccountsService {
 
     @Override
     public void createAccount(CustomerDto customerDto) {
+
         log.info("Creating account for customer with mobileNumber: {}", customerDto.getMobileNumber());
 
         Customer customer = CustomerMapper.mapToCustomer(customerDto, new Customer());
@@ -49,6 +50,7 @@ public class AccountsServiceImpl implements IAccountsService {
     }
 
     private Accounts createNewAccount(Customer customer) {
+
         Accounts newAccount = new Accounts();
         newAccount.setCustomerId(customer.getCustomerId());
         long randomAccNumber = 1000000000L + new Random().nextInt(900000000);
@@ -60,6 +62,7 @@ public class AccountsServiceImpl implements IAccountsService {
     }
 
     private void sendCommunication(Accounts account, Customer customer) {
+
         var accountsMsgDto = new AccountsMsgDto(account.getAccountNumber(), customer.getName(),
                 customer.getEmail(), customer.getMobileNumber());
         log.info("Sending Communication request for the details: {}", accountsMsgDto);
@@ -69,6 +72,7 @@ public class AccountsServiceImpl implements IAccountsService {
 
     @Override
     public CustomerDto fetchAccount(String mobileNumber) {
+
         log.info("Fetching account details for mobileNumber: {}", mobileNumber);
 
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
@@ -85,6 +89,7 @@ public class AccountsServiceImpl implements IAccountsService {
 
     @Override
     public boolean updateAccount(CustomerDto customerDto) {
+
         log.info("Updating account for customer with mobileNumber: {}", customerDto.getMobileNumber());
 
         boolean isUpdated = false;
@@ -112,6 +117,7 @@ public class AccountsServiceImpl implements IAccountsService {
 
     @Override
     public boolean deleteAccount(String mobileNumber) {
+
         log.info("Deleting account for mobileNumber: {}", mobileNumber);
 
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
@@ -122,6 +128,21 @@ public class AccountsServiceImpl implements IAccountsService {
         log.info("Successfully deleted account and customer with customerId: {} for mobileNumber: {}",
                 customer.getCustomerId(), mobileNumber);
         return true;
+    }
+
+    @Override
+    public boolean updateCommunicationStatus(Long accountNumber) {
+
+        boolean isUpdated = false;
+        if (accountNumber != null) {
+            Accounts accounts = accountsRepository.findById(accountNumber).orElseThrow(
+                    () -> new ResourceNotFoundException("Account", "AccountNumber", accountNumber.toString())
+            );
+            accounts.setCommunicationSw(true);
+            accountsRepository.save(accounts);
+            isUpdated = true;
+        }
+        return isUpdated;
     }
 
 }

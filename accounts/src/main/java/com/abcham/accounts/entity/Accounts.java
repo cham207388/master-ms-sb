@@ -1,5 +1,6 @@
 package com.abcham.accounts.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -20,5 +21,8 @@ public class Accounts extends BaseEntity {
     private String accountType;
 
     private String branchAddress;
+
+    @Column(name = "communication_sw")
+    private Boolean communicationSw;
 
 }
