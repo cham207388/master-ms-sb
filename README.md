@@ -1,425 +1,160 @@
-# SecuredBank Microservices Architecture
+# SecuredBank Microservices
 
 ![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.2-blue.svg)
-![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud-Gateway%20WebFlux-green.svg)
-![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-blue.svg)
-![Grafana](https://img.shields.io/badge/Grafana-11.5.2-orange.svg)
-![Loki](https://img.shields.io/badge/Loki-3.4.2-blue.svg)
-![Alloy](https://img.shields.io/badge/Grafana%20Alloy-1.7.1-red.svg)
-![MinIO](https://img.shields.io/badge/MinIO-S3%20Store-pink.svg)
+![Keycloak](https://img.shields.io/badge/Keycloak-OAuth2%20JWT-blue.svg)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Stream-ff6600.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
-![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Bus-ff6600.svg)
-![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
-![Testcontainers](https://img.shields.io/badge/Testcontainers-1.20.4-black.svg)
-![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
-![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-An enterprise-grade, domain-driven banking microservices platform built with **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. The platform decouples core banking domains into standalone microservices (**Accounts**, **Cards**, **Loans**) accessible via an edge API Gateway ([**Gateway Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server)), backed by centralized configuration management ([**Config Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server)), service registration & discovery ([**Eureka Server**](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)), dynamic event-driven refresh (**RabbitMQ** & **Spring Cloud Bus**), and a full observability stack (**Grafana**, **Loki**, **Grafana Alloy**, and **MinIO**).
+Domain-driven banking APIs (**Accounts**, **Cards**, **Loans**) behind a Keycloak-secured Gateway. Config and Eureka sit in the middle. Accounts publishes communication events to RabbitMQ; the **Message** worker sends email/SMS and Accounts marks `communication_sw`. Grafana, Loki, Alloy, Tempo, and MinIO handle telemetry.
+
+Service docs: [accounts](accounts/README.md) · [cards](cards/README.md) · [loans](loans/README.md) · [message](message/README.md) · [gateway](gateway-server/README.md) · [keycloak](infra/README.md) · [observability](observability/README.md)
 
 ---
 
-## 🏛 Architecture Overview
+## Architecture
 
 ```mermaid
-graph TD
-    Client[HTTP Client / API Consumer]
+flowchart TB
+  Client[HTTP Client]
+  KC[Keycloak :7080<br/>realm securedbankdev]
 
-    subgraph Infrastructure [Shared Network: securedbank]
-        ConfigServer[Spring Cloud Config Server<br/>Port: 8071]
-        EurekaServer[Spring Cloud Eureka Server<br/>Port: 8070]
-        RabbitMQ[RabbitMQ Event Bus<br/>Port: 5672]
-        GatewayServer[Spring Cloud Gateway Server<br/>Port: 8072]
-    end
+  subgraph edge [Edge]
+    GW[Gateway :8072]
+  end
 
-    subgraph Accounts Microservice [Port 8091]
-        AccountsApp[Accounts API]
-        AccountsDB[(PostgreSQL 18<br/>DB: accounts<br/>Port: 5423)]
-        AccountsApp --> AccountsDB
-    end
+  subgraph platform [Platform]
+    CFG[Config Server :8071]
+    EU[Eureka :8070]
+    RMQ[(RabbitMQ :5672)]
+  end
 
-    subgraph Cards Microservice [Port 8092]
-        CardsApp[Cards API]
-        CardsDB[(PostgreSQL 18<br/>DB: cards<br/>Port: 5424)]
-        CardsApp --> CardsDB
-    end
+  subgraph domain [Domain]
+    ACC[Accounts :8091]
+    CRD[Cards :8092]
+    LON[Loans :8093]
+    MSG[Message worker]
+    ACCDB[(accounts :5423)]
+    CRDDB[(cards :5424)]
+    LONDB[(loans :5425)]
+  end
 
-    subgraph Loans Microservice [Port 8093]
-        LoansApp[Loans API]
-        LoansDB[(PostgreSQL 18<br/>DB: loans<br/>Port: 5425)]
-        LoansApp --> LoansDB
-    end
+  Client -->|Bearer JWT| GW
+  GW -->|JWKS| KC
+  GW -->|lb://ACCOUNTS| ACC
+  GW -->|lb://CARDS| CRD
+  GW -->|lb://LOANS| LON
 
-    subgraph Telemetry & Observability [Network: loki / securedbank]
-        Alloy[Grafana Alloy Log Collector<br/>Port: 12345]
-        DockerSock[("/var/run/docker.sock")]
-        LokiGateway[Loki Nginx Gateway<br/>Port: 3100]
-        LokiWrite[Loki Write Target<br/>Port: 3102]
-        LokiRead[Loki Read Target<br/>Port: 3101]
-        LokiBackend[Loki Backend Target]
-        MinIO[(MinIO S3 Storage<br/>Buckets: loki-data, loki-ruler<br/>Ports: 9000 / 9001)]
-        GrafanaUI[Grafana Dashboards & Explore<br/>Port: 3000]
-    end
+  ACC --> ACCDB
+  CRD --> CRDDB
+  LON --> LONDB
 
-    AccountsApp -.->|Fetch Config| ConfigServer
-    CardsApp -.->|Fetch Config| ConfigServer
-    LoansApp -.->|Fetch Config| ConfigServer
-    GatewayServer -.->|Fetch Config| ConfigServer
+  ACC & CRD & LON & GW -.->|config / register| CFG
+  ACC & CRD & LON & GW -.-> EU
 
-    AccountsApp -.->|Register & Discover| EurekaServer
-    CardsApp -.->|Register & Discover| EurekaServer
-    LoansApp -.->|Register & Discover| EurekaServer
-    GatewayServer -.->|Register & Discover| EurekaServer
-
-    GatewayServer ==>|lb://ACCOUNTS| AccountsApp
-    GatewayServer ==>|lb://CARDS| CardsApp
-    GatewayServer ==>|lb://LOANS| LoansApp
-
-    AccountsApp <==>|Spring Cloud Bus| RabbitMQ
-    CardsApp <==>|Spring Cloud Bus| RabbitMQ
-    LoansApp <==>|Spring Cloud Bus| RabbitMQ
-    ConfigServer <==>|Spring Cloud Bus| RabbitMQ
-
-    Client -->|REST / HTTP| GatewayServer
-
-    %% Observability Connections
-    DockerSock ==>|Harvest Stdout/Stderr| Alloy
-    Alloy ==>|Push Logs / tenant1| LokiGateway
-    LokiGateway -->|Write Stream| LokiWrite
-    LokiGateway -->|Read Queries| LokiRead
-    LokiWrite -->|Store Chunks| MinIO
-    LokiRead -->|Query Chunks| MinIO
-    LokiBackend -->|Compact & Retention| MinIO
-    GrafanaUI ==>|Query Loki Datasource| LokiGateway
+  ACC -->|send-communication| RMQ
+  RMQ -->|email then sms| MSG
+  MSG -->|communication-sent| RMQ
+  RMQ -->|updateCommunication| ACC
 ```
 
 ---
 
-<details open>
-<summary><strong>🚀 Tech Stack</strong></summary>
+## Event-driven communication
 
-| Component              | Technology                                         | Description                                                                                                                                     |
-| :--------------------- | :------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Language**           | Java 25                                            | Latest Java Toolchain standard (`JavaLanguageVersion.of(25)`)                                                                                   |
-| **Framework**          | Spring Boot 4.1.0                                  | Core microservice framework (Spring Web MVC, Data JPA, Actuator)                                                                                |
-| **API Gateway**        | Spring Cloud Gateway WebFlux 2025.1.2              | Reactive edge routing & path rewriting ([`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server))           |
-| **Load Balancer**      | Spring Cloud LoadBalancer                          | Reactive client-side load balancing (`lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS`)                                                               |
-| **Central Config**     | Spring Cloud Config 2025.1.2                       | Centralized configuration management ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))               |
-| **Service Discovery**  | Spring Cloud Netflix Eureka                        | Service registration server & management dashboard ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server)) |
-| **Event Bus**          | Spring Cloud Bus AMQP                              | Event-driven dynamic configuration refresh via RabbitMQ (`/actuator/busrefresh`)                                                                |
-| **Observability UI**   | Grafana 11.5.2                                     | Telemetry dashboard & log analytics UI with pre-configured Loki datasource (`tenant1`)                                                          |
-| **Log Storage Engine** | Grafana Loki 3.4.2                                 | Microservices decoupled log engine (`read`, `write`, `backend` targets)                                                                         |
-| **Log Collector**     | Grafana Alloy v1.7.1                               | Next-gen OpenTelemetry & Prometheus telemetry collector harvesting Docker logs via `/var/run/docker.sock`                                      |
-| **Distributed Tracing** | Grafana Tempo 2.9.0 / OpenTelemetry Agent          | OTLP tracing collector (`4317` gRPC / `4318` HTTP) with automatic JVM bytecode instrumentation                                                 |
-| **Object Storage**     | MinIO (RELEASE.2024-12-18)                         | High-performance S3-compatible object storage backing Loki index & chunk storage                                                               |
-| **Loki Edge Proxy**    | Nginx 1.27.4-alpine                                | Reverse proxy routing push requests to `write` target and query requests to `read` target                                                        |
-| **Build Tool**         | Gradle                                             | Independent wrapper scripts (`./gradlew`) for each service                                                                                      |
-| **Database**           | PostgreSQL 18 Alpine                               | Containerized relational database per microservice (`postgres:18-alpine`)                                                                       |
-| **Database Migration** | Flyway (`org.flywaydb:flyway-database-postgresql`) | Versioned SQL database migrations (`db/migration/V1__init.sql`)                                                                                 |
-| **API Documentation**  | SpringDoc OpenAPI 3.0 (`3.0.2`)                    | Automated Swagger UI (`/swagger-ui/index.html`) & OpenAPI specs                                                                                 |
-| **Testing**            | Spring Boot Testcontainers                         | Ephemeral PostgreSQL containers (`@ServiceConnection`) for integration tests                                                                    |
-| **Containerization**   | Docker & Docker Compose                            | Multi-stage container builds & unified modular orchestration (`compose.yml` with `include:`)                                                   |
+On `POST /api/accounts/create`, Accounts publishes `AccountsMsgDto` to `send-communication`. Message runs composed function `email|sms` and publishes `accountNumber` to `communication-sent`. Accounts then sets `communication_sw = true`.
 
-</details>
-
----
-
-<details open>
-<summary><strong>⚙️ Infrastructure, Ports & API Allocation</strong></summary>
-
-### Service Port & Infrastructure Allocation
-
-| Microservice / Component | Path | Server Port | Database Name | Host DB Port | Dashboard / UI Endpoint | Actuator Health | Circuit Breaker / Status Endpoint |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gateway Server** | [`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server) | `8072` | N/A | N/A | [http://localhost:8072/actuator/gateway/routes](http://localhost:8072/actuator/gateway/routes) | [http://localhost:8072/actuator/health](http://localhost:8072/actuator/health) | [http://localhost:8072/actuator/circuitbreakers](http://localhost:8072/actuator/circuitbreakers) |
-| **Accounts** | [`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts) | `8091` | `accounts` | `5423` | [http://localhost:8091/swagger-ui/index.html](http://localhost:8091/swagger-ui/index.html) | [http://localhost:8091/actuator/health](http://localhost:8091/actuator/health) | [http://localhost:8091/actuator/circuitbreakers](http://localhost:8091/actuator/circuitbreakers) |
-| **Cards** | [`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards) | `8092` | `cards` | `5424` | [http://localhost:8092/swagger-ui/index.html](http://localhost:8092/swagger-ui/index.html) | [http://localhost:8092/actuator/health](http://localhost:8092/actuator/health) | N/A |
-| **Loans** | [`/loans`](file:///Users/baicham/develop/java-projects/master-ms-sb/loans) | `8093` | `loans` | `5425` | [http://localhost:8093/swagger-ui/index.html](http://localhost:8093/swagger-ui/index.html) | [http://localhost:8093/actuator/health](http://localhost:8093/actuator/health) | N/A |
-| **Config Server** | [`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server) | `8071` | N/A | N/A | N/A | [http://localhost:8071/actuator/health](http://localhost:8071/actuator/health) | N/A |
-| **Eureka Server** | [`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server) | `8070` | N/A | N/A | [http://localhost:8070](http://localhost:8070) | [http://localhost:8070/actuator/health](http://localhost:8070/actuator/health) | N/A |
-| **RabbitMQ** | N/A | `5672` (Mgmt: `15672`) | N/A | N/A | [http://localhost:15672](http://localhost:15672) | N/A | N/A |
-| **Grafana UI** | [`/observability/grafana`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/grafana) | `3000` | N/A | N/A | [http://localhost:3000](http://localhost:3000) | [http://localhost:3000/api/health](http://localhost:3000/api/health) | N/A |
-| **Grafana Tempo** | [`/observability/tempo`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/tempo) | `3110` (OTLP: `4317`/`4318`) | N/A | N/A | N/A | N/A | N/A |
-| **Loki Gateway** | [`/observability/loki`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/loki) | `3100` | N/A | N/A | [http://localhost:3100](http://localhost:3100) | N/A | N/A |
-| **Loki Read Target** | N/A | `3101` | N/A | N/A | N/A | [http://localhost:3101/ready](http://localhost:3101/ready) | N/A |
-| **Loki Write Target** | N/A | `3102` | N/A | N/A | N/A | [http://localhost:3102/ready](http://localhost:3102/ready) | N/A |
-| **MinIO Console** | N/A | `9001` (API: `9000`) | N/A | N/A | [http://localhost:9001](http://localhost:9001) | [http://localhost:9000/minio/health/live](http://localhost:9000/minio/health/live) | N/A |
-| **Grafana Alloy** | [`/observability/alloy`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/alloy) | `12345` | N/A | N/A | [http://localhost:12345](http://localhost:12345) | N/A | N/A |
-
-</details>
-
----
-
-## 🔭 Observability & Log Telemetry Architecture
-
-The platform features an automated, zero-code-change log telemetry pipeline powered by **Grafana Alloy**, **Grafana Loki**, and **Grafana**:
-
-```
-[ Docker Socket /var/run/docker.sock ] 
-            │
-            ▼ (Harvest stdout/stderr logs)
-[ Grafana Alloy Collector (Port 12345) ]
-            │
-            ▼ (HTTP Push / tenant1)
-[ Loki Nginx Gateway (Port 3100) ]
-       ├───► Write Target (Port 3102) ───► MinIO S3 (Buckets: loki-data, loki-ruler)
-       └───► Read Target (Port 3101)  ◄─── MinIO S3
-            ▲
-            │ (LogQL Query)
-[ Grafana UI (Port 3000) ]
+```mermaid
+flowchart LR
+  ACC[Accounts] -->|send-communication| RMQ[(RabbitMQ)]
+  RMQ --> MSG[Message email then sms]
+  MSG -->|communication-sent| RMQ
+  RMQ --> ACC
 ```
 
-### 1. How Log Collection Works (Grafana Alloy)
-
-- **Zero Instrument overhead**: Microservices don't need dedicated log appenders. Alloy mounts `/var/run/docker.sock` to discover every running container.
-- **Relabeling Rules**: Alloy extracts the raw Docker container name (e.g., `accounts-api`, `cards-api`, `gateway-server`) and attaches it as a searchable stream label `container`.
-- **Multi-Tenant Push**: Alloy pushes collected log streams to `http://gateway:3100/loki/api/v1/push` tagged with header `X-Scope-OrgID: tenant1`.
-
-### 2. Loki Decoupled Microservices Architecture
-
-- **Read Target (`grafana/loki:3.4.2`)**: Dedicated query processing engine listening on port `3101`.
-- **Write Target (`grafana/loki:3.4.2`)**: High-throughput log ingestion engine listening on port `3102`.
-- **Backend Target (`grafana/loki:3.4.2`)**: Compactor, retention enforcer, and ruler manager.
-- **MinIO Object Store**: S3-compatible backend hosting index files (`index_*`) and compressed log chunks (`loki-data`).
-
-### 3. Distributed Tracing Pipeline (OpenTelemetry & Grafana Tempo)
-
-- **Automatic JVM Bytecode Instrumentation**: Each Spring Boot container image downloads the OpenTelemetry Java Agent at build time:
-
-  ```dockerfile
-  ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.30.0/opentelemetry-javaagent.jar /app/libs/opentelemetry-javaagent.jar
-  ```
-
-- **JVM Configuration**: Configured centrally in `common-docker-config.yml`:
-
-  ```yaml
-  JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
-  ```
-
-- **Service Name Identification**: Each service specifies `OTEL_SERVICE_NAME` in its compose environment (`accounts`, `cards`, `loans`, `gateway-server`, `eureka-server`, `config-server`).
-- **Grafana & Loki Correlation**: Grafana Tempo (`http://tempo:3100`, OTLP ports `4317` gRPC / `4318` HTTP) receives trace spans and correlates them with Loki log streams via `TraceID` derived fields.
-
-### 4. LogQL Learning & Query Guide
-
-When accessing Grafana at **<http://localhost:3000>**, navigate to **Explore** and select the **Loki** or **Tempo** datasource.
-
-#### Essential LogQL Examples
-
-- **Stream all logs for a specific microservice**:
-
-  ```logql
-  {container="accounts-api"}
-  ```
-
-- **Filter logs containing explicit errors**:
-
-  ```logql
-  {container="accounts-api"} |= "ERROR"
-  ```
-
-- **Filter and parse JSON log payloads**:
-
-  ```logql
-  {container="gateway-server"} | json | level="error"
-  ```
-
-- **Exclude noise (e.g., actuator health checks)**:
-
-  ```logql
-  {container="accounts-api"} != "/actuator/health"
-  ```
-
-- **Calculate log entry rate per minute across services**:
-
-  ```logql
-  sum by (container) (rate({container=~".+"}[1m]))
-  ```
+| Binding | Destination | Role |
+| :--- | :--- | :--- |
+| `sendCommunication-out-0` | `send-communication` | Accounts → Message |
+| `emailsms-in-0` / `emailsms-out-0` | in / `communication-sent` | Message `email\|sms` |
+| `updateCommunication-in-0` | `communication-sent` | Accounts consumer |
 
 ---
 
-## 🛠 Local Development & Execution Guide
+## Gateway security
 
-### Prerequisites
+OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`). Realm roles `ACCOUNTS`, `CARDS`, `LOANS` become `ROLE_*`. CSRF is off. Realm and clients: [`infra/`](infra/README.md).
 
-- **JDK 25** installed & configured in environment path.
-- **Docker & Docker Compose** installed and running.
-- **Gradle** (or use bundled `./gradlew` wrapper in each directory).
+| Path | Rule |
+| :--- | :--- |
+| `GET /**` | Permit all |
+| `/accounts/**`, `/ACCOUNTS/**` | `ROLE_ACCOUNTS` |
+| `/cards/**`, `/CARDS/**` | `ROLE_CARDS` |
+| `/loans/**`, `/LOANS/**` | `ROLE_LOANS` |
+
+Path rewrite `(?i)/accounts\|cards\|loans/(.*)` → `/$1`, then `lb://` the matching service. Accounts has a circuit breaker + fallback; loans has a Redis rate limiter.
 
 ---
 
-### 1. Provisioning Platform via Docker Compose
+## Ports
 
-To launch the full architecture (Config Server, Eureka Server, Gateway Server, RabbitMQ, Databases, Microservice APIs, Loki, MinIO, Alloy, Grafana) on the network stack:
+| Component | Port | Notes |
+| :--- | :--- | :--- |
+| Gateway | `8072` | [routes](http://localhost:8072/actuator/gateway/routes) · [health](http://localhost:8072/actuator/health) |
+| Accounts | `8091` | DB `5423` · [swagger](http://localhost:8091/swagger-ui/index.html) |
+| Cards | `8092` | DB `5424` · [swagger](http://localhost:8092/swagger-ui/index.html) |
+| Loans | `8093` | DB `5425` · [swagger](http://localhost:8093/swagger-ui/index.html) |
+| Message | `9010` internal | Worker; no published HTTP port |
+| Config Server | `8071` | [health](http://localhost:8071/actuator/health) |
+| Eureka | `8070` | [dashboard](http://localhost:8070) |
+| Keycloak | `7080` | [admin](http://localhost:7080) · realm `securedbankdev` |
+| RabbitMQ | `5672` | UI [15672](http://localhost:15672) |
+| Redis | `6379` | Gateway rate limiter |
+| Grafana | `3000` | [UI](http://localhost:3000) |
+| Tempo | `3110` | OTLP `4317` / `4318` |
+| Loki gateway | `3100` | Read `3101` · Write `3102` |
+| MinIO | `9000` / `9001` | Loki object store |
+| Alloy | `12345` | Docker log collector |
+
+---
+
+## Local run
+
+JDK 25, Docker, and Docker Compose.
 
 ```bash
-# Launch entire platform via Makefile (Includes Observability)
-make all-up
+make all-up              # full compose stack
+make keycloak-up && make infra   # Keycloak + realm/roles (needed for mutating gateway calls)
 
-# Or via Docker Compose directly
-docker compose up -d
+make accounts-restart
+make cards-restart
+make loans-restart
+make message-restart
+make gateway-restart
 
-# Provision standalone Observability stack only
-docker compose -f docker-compose-observability.yml up -d
-
-# Stop platform and clean volumes
 make all-down
 ```
 
----
-
-### 2. Building the Services
-
-Compile and package services using the [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) or Gradle directly:
-
-```bash
-# Clean & build microservices via Makefile
-make accounts-build
-make cards-build
-make loans-build
-make eureka-server-build
-make gateway-server-build
-
-# Or build directly using the Gradle wrapper
-cd accounts && ./gradlew clean build
-cd ../cards && ./gradlew clean build
-cd ../loans && ./gradlew clean build
-cd ../config-server && ./gradlew clean build
-cd ../eureka-server && ./gradlew clean build
-cd ../gateway-server && ./gradlew clean build
-```
+Gradle from each module: `./gradlew clean build` or `./gradlew bootRun`.
 
 ---
 
-### 3. Running Applications Locally (IDE / CLI)
+## Makefile (common)
 
-Navigate into the respective service folder and launch via the Gradle wrapper:
-
-```bash
-# Launch Config Server (Port 8071)
-cd config-server && ./gradlew bootRun
-
-# Launch Eureka Server (Port 8070)
-cd eureka-server && ./gradlew bootRun
-
-# Launch Gateway Server (Port 8072)
-cd gateway-server && ./gradlew bootRun
-
-# Launch Accounts Service (Port 8091)
-cd accounts && ./gradlew bootRun
-
-# Launch Cards Service (Port 8092)
-cd cards && ./gradlew bootRun
-
-# Launch Loans Service (Port 8093)
-cd loans && ./gradlew bootRun
-```
+| Target | Purpose |
+| :--- | :--- |
+| `all-up` / `all-down` | Start or tear down the compose stack |
+| `accounts-restart` / `cards-restart` / `loans-restart` | Rebuild and recreate that API |
+| `message-up` / `message-restart` / `message-down` | Message worker |
+| `gateway-up` / `gateway-restart` / `gateway-down` | Gateway |
+| `keycloak-up` / `infra` / `infra-down` / `keycloak-down` | Keycloak + OpenTofu realm |
 
 ---
 
-## 📊 Environment Configuration & Overrides
+## Observability
 
-Each microservice relies on configurable environment variables in its `application.yaml` file:
+Alloy scrapes container stdout via `/var/run/docker.sock` and pushes to Loki (`tenant1`). Tempo receives OTLP traces from the Java agent. Grafana correlates logs and traces. Details: [observability/README.md](observability/README.md).
 
-| Environment Variable                   | Description                    | Accounts Default                | Cards Default                   | Loans Default                   | Config Server Default | Eureka Server Default           | Gateway Server Default          |
-| :------------------------------------- | :----------------------------- | :------------------------------ | :------------------------------ | :------------------------------ | :-------------------- | :------------------------------ | :------------------------------ |
-| `SPRING_DATASOURCE_URL`                | Database JDBC URL              | `jdbc:postgresql://...:5423/..` | `jdbc:postgresql://...:5424/..` | `jdbc:postgresql://...:5425/..` | N/A                   | N/A                             | N/A                             |
-| `SPRING_DATASOURCE_USERNAME`           | Database User                  | `postgres`                      | `postgres`                      | `postgres`                      | N/A                   | N/A                             | N/A                             |
-| `SPRING_DATASOURCE_PASSWORD`           | Database Password              | `postgres`                      | `postgres`                      | `postgres`                      | N/A                   | N/A                             | N/A                             |
-| `SPRING_CONFIG_IMPORT`                 | Config Server Import           | `optional:configserver:http://` | `optional:configserver:http://` | `optional:configserver:http://` | N/A                   | `configserver:http://...`       | `optional:configserver:http://` |
-| `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | Eureka Default Zone URL        | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` | N/A                   | `http://localhost:8070/eureka/` | `http://localhost:8070/eureka/` |
-| `SPRING_DATA_REDIS_HOST`               | Redis Server Host              | N/A                             | N/A                             | N/A                             | N/A                   | N/A                             | `localhost`                     |
-| `SPRING_DATA_REDIS_PORT`               | Redis Server Port              | N/A                             | N/A                             | N/A                             | N/A                   | N/A                             | `6379`                          |
-| `SPRING_RABBITMQ_HOST`                 | RabbitMQ Broker Host           | `localhost`                     | `localhost`                     | `localhost`                     | `localhost`           | N/A                             | N/A                             |
-| `SPRING_RABBITMQ_PORT`                 | RabbitMQ AMQP Port             | `5672`                          | `5672`                          | `5672`                          | `5672`                | N/A                             | N/A                             |
-
----
-
-## 📄 Build & Management Commands ([`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile))
-
-| Makefile Target        | Command Executed                                                                    | Purpose                                   |
-| :--------------------- | :---------------------------------------------------------------------------------- | :---------------------------------------- |
-| `all-up`               | `docker compose up -d`                                                              | Launches entire platform stack            |
-| `all-down`             | `docker compose down -v`                                                            | Stops platform stack & cleans volumes     |
-| `gateway-server-build` | `cd gateway-server && ./gradlew clean build`                                        | Cleans & compiles Gateway Server          |
-| `gateway-up`           | `docker compose up gateway-server -d --build --no-deps`                             | Starts Gateway Server container           |
-| `gateway-down`         | `docker compose stop gateway-server`                                                | Stops Gateway Server container            |
-| `accounts-build`       | `cd accounts && ./gradlew clean build`                                              | Cleans & compiles Accounts service        |
-| `accounts-db-up`       | `cd accounts && docker compose up accounts-db -d`                                   | Starts Accounts PostgreSQL database       |
-| `accounts-db-down`     | `docker compose -f accounts/compose.yml down accounts-db -v`                        | Stops Accounts DB & removes volumes       |
-| `accounts-api-run`     | `docker compose -f accounts/compose.yml up accounts-api -d --build`                 | Rebuilds & starts Accounts API container  |
-| `accounts`             | `docker compose -f accounts/compose.yml up -d`                                      | Starts Accounts DB & API stack            |
-| `accounts-down`        | `docker compose -f accounts/compose.yml down -d`                                    | Stops Accounts DB & API stack             |
-| `cards-build`          | `cd cards && ./gradlew clean build`                                                 | Cleans & compiles Cards service           |
-| `cards-db-up`          | `cd cards && docker compose up cards-db -d`                                         | Starts Cards PostgreSQL database          |
-| `cards-db-down`        | `docker compose -f cards/compose.yml down cards-db -v`                              | Stops Cards DB & removes volumes          |
-| `cards-api-run`        | `docker compose -f cards/compose.yml up cards-api -d`                               | Starts Cards API container                |
-| `cards`                | `docker compose -f cards/compose.yml up -d`                                         | Starts Cards DB & API stack               |
-| `cards-down`           | `docker compose -f cards/compose.yml down -d`                                       | Stops Cards DB & API stack                |
-| `loans-build`          | `cd loans && ./gradlew clean build`                                                 | Cleans & compiles Loans service           |
-| `loans-db-up`          | `cd loans && docker compose up loans-db -d`                                         | Starts Loans PostgreSQL database          |
-| `loans-db-down`        | `docker compose -f loans/compose.yml down loans-db -v`                              | Stops Loans DB & removes volumes          |
-| `loans-api`            | `docker compose -f loans/compose.yml up loans-api -d`                               | Starts Loans API container                |
-| `loans`                | `docker compose -f loans/compose.yml up -d`                                         | Starts Loans DB & API stack               |
-| `loans-down`           | `docker compose -f loans/compose.yml down -d`                                       | Stops Loans DB & API stack                |
-| `rabbit-mq-up`         | `docker compose -f ../master-ms-sb-config-server/compose.yml up rabbit-mq -d`       | Starts standalone RabbitMQ container      |
-| `rabbit-mq-down`       | `docker compose -f ../master-ms-sb-config-server/compose.yml down rabbit-mq -v`     | Stops RabbitMQ container & cleans volumes |
-| `config-server-up`     | `docker compose -f ../master-ms-sb-config-server/compose.yml up config-server -d`   | Starts Config Server container            |
-| `config-server-down`   | `docker compose -f ../master-ms-sb-config-server/compose.yml down config-server -v` | Stops Config Server container             |
-| `config-all-up`        | `docker compose -f ../master-ms-sb-config-server/compose.yml up -d`                 | Starts Config Server & RabbitMQ stack     |
-| `config-all-down`      | `docker compose -f ../master-ms-sb-config-server/compose.yml down -v`               | Stops Config Server & RabbitMQ stack      |
-| `dbs-down`             | `accounts-db-down cards-db-down loans-db-down`                                      | Stops all databases and cleans volumes    |
-
-## Observability Resources
-
-For full details on the observability and monitoring platform architecture, data flow, component breakdown, and quickstart commands, see the dedicated [Observability README](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/README.md).
-
-### Micrometer
-
-Spring Boot Actuator provides a MicrometerFacade for Spring Boot applications to integrate with Micrometer.
-For Java application to expose metrics
-
-- [micrometer](https://micrometer.io/)
-
-**Path**
-
-- `service-name/actuator/metrics`
-
-### Prometheus
-
-Collects metrics from individual services and stores them in a single location
-
-- [prometheus](https://prometheus.io/)
-
-**Path**
-
-- `service-name/actuator/prometheus`
-
-### Grafana
-
-Provides a visualization layer on top of Prometheus, Loki, and Tempo.
-
-- [grafana](https://grafana.com/)
-
-### Loki
-
-Collects logs from individual services and stores them in a single location
-
-- [loki](https://grafana.com/docs/loki/latest/)
-
-### Tempo
-
-Collects traces from individual services and stores them in a single location
-
-- [tempo](https://grafana.com/docs/tempo/latest/)
-
-### OpenTelemetry
-
-OpenTelemetry is a set of APIs, SDKs, and tools used to generate, collect, and export telemetry data (metrics, logs, and traces) from applications.
-
-- [OpenTelemetry](https://opentelemetry.io/)
-
-## References
-
-- [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
+- Grafana Explore: [http://localhost:3000](http://localhost:3000)
+- Metrics: `/actuator/prometheus` · traces: Tempo OTLP `4317`/`4318`
+- LogQL example: `{container="accounts-api"} |= "ERROR"`
