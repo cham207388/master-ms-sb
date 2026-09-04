@@ -295,7 +295,35 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `images-build` / `images-push` / `images-build-push` | Hub images (APIs, message, gateway, config, eureka) |
 | `watch` / `watch-accounts` / `watch-message` / … | Compose watch |
 
----
+### Docker Hub images
+
+Default tag is `latest` via `IMAGE_TAG`. Override with `IMAGE_TAG=...`, or use `*-tag` targets that require `TAG=` for immutable releases.
+
+| Makefile Target | Image(s) | Purpose |
+| :-------------- | :------- | :------ |
+| `accounts-image-build` / `accounts-image-push` | `baicham/accounts-api:$(IMAGE_TAG)` | Build or push Accounts image |
+| `cards-image-build` / `cards-image-push` | `baicham/cards-api:$(IMAGE_TAG)` | Build or push Cards image |
+| `loans-image-build` / `loans-image-push` | `baicham/loans-api:$(IMAGE_TAG)` | Build or push Loans image |
+| `message-image-build` / `message-image-push` | `baicham/message:$(IMAGE_TAG)` | Build or push Message worker image |
+| `config-server-image-build` / `config-server-image-push` | `baicham/config-server:$(IMAGE_TAG)` | Build or push Config Server image |
+| `eureka-server-image-build` / `eureka-server-image-push` | `baicham/eureka-server:$(IMAGE_TAG)` | Build or push Eureka Server image |
+| `gateway-server-image-build` / `gateway-server-image-push` | `baicham/gateway-server:$(IMAGE_TAG)` | Build or push Gateway Server image |
+| `images-build` / `images-push` / `images-build-push` | All seven images above | Build and/or push every service image |
+| `*-image-build-tag` / `*-image-push-tag` | Same repos with `TAG` | Same as above; **requires** `TAG=` |
+| `images-build-tag` / `images-push-tag` / `images-build-push-tag` | All seven with `TAG` | Aggregate immutable build/push; **requires** `TAG=` |
+
+```bash
+# Mutable (defaults to latest)
+make images-build-push
+make images-build-push IMAGE_TAG=v1.0.0
+
+# Immutable (TAG required)
+make images-build-push-tag TAG=v1.0.0
+make config-server-image-build-tag TAG=v1.0.0
+make eureka-server-image-push-tag TAG=v1.0.0
+make gateway-server-image-build-tag TAG=v1.0.0
+make gateway-server-image-push-tag TAG=v1.0.0
+```
 
 ## Observability resources
 

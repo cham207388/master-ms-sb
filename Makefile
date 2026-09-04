@@ -12,8 +12,10 @@
         gateway-server-image-push config-server-image-push eureka-server-image-push \
         images-build images-push images-build-push images-pull \
         require-tag \
-        accounts-image-build-tag cards-image-build-tag loans-image-build-tag \
-        accounts-image-push-tag cards-image-push-tag loans-image-push-tag \
+        accounts-image-build-tag cards-image-build-tag loans-image-build-tag message-image-build-tag \
+        config-server-image-build-tag eureka-server-image-build-tag gateway-server-image-build-tag \
+        accounts-image-push-tag cards-image-push-tag loans-image-push-tag message-image-push-tag \
+        config-server-image-push-tag eureka-server-image-push-tag gateway-server-image-push-tag \
         images-build-tag images-push-tag images-build-push-tag \
         accounts-image-up cards-image-up loans-image-up \
         services-image-up all-image-up all-compose-up all-compose-down \
@@ -208,17 +210,17 @@ loans-image-build:
 message-image-build:
 	docker build -t $(DOCKERHUB_USER)/message:$(IMAGE_TAG) ./message
 
-gateway-server-image-build:
-	docker build -t $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG) ./gateway-server
-
 config-server-image-build:
 	docker build -t $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG) ./config-server
 
 eureka-server-image-build:
 	docker build -t $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG) ./eureka-server
 
+gateway-server-image-build:
+	docker build -t $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG) ./gateway-server
+
 images-build: accounts-image-build cards-image-build loans-image-build message-image-build \
-	gateway-server-image-build config-server-image-build eureka-server-image-build
+	config-server-image-build eureka-server-image-build gateway-server-image-build
 
 accounts-image-push:
 	docker push $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG)
@@ -232,17 +234,17 @@ loans-image-push:
 message-image-push:
 	docker push $(DOCKERHUB_USER)/message:$(IMAGE_TAG)
 
-gateway-server-image-push:
-	docker push $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG)
-
 config-server-image-push:
 	docker push $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG)
 
 eureka-server-image-push:
 	docker push $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG)
 
+gateway-server-image-push:
+	docker push $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG)
+
 images-push: accounts-image-push cards-image-push loans-image-push message-image-push \
-	gateway-server-image-push config-server-image-push eureka-server-image-push
+	config-server-image-push eureka-server-image-push gateway-server-image-push
 
 images-build-push: images-build images-push
 
@@ -265,6 +267,18 @@ cards-image-build-tag: require-tag
 loans-image-build-tag: require-tag
 	$(MAKE) loans-image-build IMAGE_TAG=$(TAG)
 
+message-image-build-tag: require-tag
+	$(MAKE) message-image-build IMAGE_TAG=$(TAG)
+
+config-server-image-build-tag: require-tag
+	$(MAKE) config-server-image-build IMAGE_TAG=$(TAG)
+
+eureka-server-image-build-tag: require-tag
+	$(MAKE) eureka-server-image-build IMAGE_TAG=$(TAG)
+
+gateway-server-image-build-tag: require-tag
+	$(MAKE) gateway-server-image-build IMAGE_TAG=$(TAG)
+
 images-build-tag: require-tag
 	$(MAKE) images-build IMAGE_TAG=$(TAG)
 
@@ -276,6 +290,18 @@ cards-image-push-tag: require-tag
 
 loans-image-push-tag: require-tag
 	$(MAKE) loans-image-push IMAGE_TAG=$(TAG)
+
+message-image-push-tag: require-tag
+	$(MAKE) message-image-push IMAGE_TAG=$(TAG)
+
+config-server-image-push-tag: require-tag
+	$(MAKE) config-server-image-push IMAGE_TAG=$(TAG)
+
+eureka-server-image-push-tag: require-tag
+	$(MAKE) eureka-server-image-push IMAGE_TAG=$(TAG)
+
+gateway-server-image-push-tag: require-tag
+	$(MAKE) gateway-server-image-push IMAGE_TAG=$(TAG)
 
 images-push-tag: require-tag
 	$(MAKE) images-push IMAGE_TAG=$(TAG)
