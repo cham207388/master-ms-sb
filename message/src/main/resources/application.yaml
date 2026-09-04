@@ -17,3 +17,8 @@ spring:
       kafka:
         binder:
           brokers: ${KAFKA_BROKER:localhost:9092}
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.apache.kafka.clients.consumer.internals.OffsetFetcherUtils: ERROR
