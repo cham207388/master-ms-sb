@@ -33,7 +33,7 @@ flowchart LR
 
 ## Local run
 
-Kafka starts as a dependency of `message-up` (via root compose / `docker-compose.event.yml`).
+Kafka starts as a dependency of `message-up` (via root compose / [`docker/compose.event.yml`](../docker/compose.event.yml)).
 
 ```bash
 make message-build

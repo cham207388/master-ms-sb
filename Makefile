@@ -20,9 +20,10 @@ INFRA_DIR := infra
 TOFU := tofu
 DOCKERHUB_USER := baicham
 IMAGE_TAG := latest
-COMPOSE_IMAGE := docker compose -f compose.image.yml
-COMPOSE_ALL := docker compose -f docker-compose.all.yml
-COMPOSE_DBS := docker compose -f docker-compose.dbs.yml
+COMPOSE := docker compose -f docker/compose.yml --project-directory .
+COMPOSE_IMAGE := docker compose -f docker/compose.image.yml --project-directory .
+COMPOSE_ALL := docker compose -f docker/compose.all.yml --project-directory .
+COMPOSE_KEYCLOAK := docker compose -f docker/compose.keycloak.yml --project-directory .
 
 # ==============================================================================
 # Accounts Service
@@ -31,22 +32,22 @@ accounts-build:
 	cd accounts && ./gradlew clean build
 
 accounts-db-up:
-	$(COMPOSE_DBS) up accounts-db -d
+	$(COMPOSE) up accounts-db -d
 
 accounts-db-down:
-	$(COMPOSE_DBS) down accounts-db -v
+	$(COMPOSE) stop accounts-db
 
 accounts-api-run:
-	docker compose up accounts-api -d --build --no-deps
+	$(COMPOSE) up accounts-api -d --build --no-deps
 
 accounts:
-	docker compose up accounts-db accounts-api -d
+	$(COMPOSE) up accounts-db accounts-api -d
 
 accounts-restart:
-	docker compose up accounts-api -d --build --force-recreate --no-deps
+	$(COMPOSE) up accounts-api -d --build --force-recreate --no-deps
 
 accounts-down:
-	docker compose down accounts-db accounts-api -v
+	$(COMPOSE) down accounts-db accounts-api -v
 
 # ==============================================================================
 # Cards Service
@@ -55,22 +56,22 @@ cards-build:
 	cd cards && ./gradlew clean build
 
 cards-db-up:
-	$(COMPOSE_DBS) up cards-db -d
+	$(COMPOSE) up cards-db -d
 
 cards-db-down:
-	$(COMPOSE_DBS) down cards-db -v
+	$(COMPOSE) stop cards-db
 
 cards-api-run:
-	docker compose up cards-api -d --build --no-deps
+	$(COMPOSE) up cards-api -d --build --no-deps
 
 cards:
-	docker compose up cards-db cards-api -d
+	$(COMPOSE) up cards-db cards-api -d
 
 cards-restart:
-	docker compose up cards-api -d --build --force-recreate --no-deps
+	$(COMPOSE) up cards-api -d --build --force-recreate --no-deps
 
 cards-down:
-	docker compose down cards-db cards-api -v
+	$(COMPOSE) down cards-db cards-api -v
 
 
 # ==============================================================================
@@ -80,22 +81,22 @@ loans-build:
 	cd loans && ./gradlew clean build
 
 loans-db-up:
-	$(COMPOSE_DBS) up loans-db -d
+	$(COMPOSE) up loans-db -d
 
 loans-db-down:
-	$(COMPOSE_DBS) down loans-db -v
+	$(COMPOSE) stop loans-db
 
 loans-api:
-	docker compose up loans-api -d --build --no-deps
+	$(COMPOSE) up loans-api -d --build --no-deps
 
 loans:
-	docker compose up loans-db loans-api -d
+	$(COMPOSE) up loans-db loans-api -d
 
 loans-restart:
-	docker compose up loans-api -d --build --force-recreate --no-deps
+	$(COMPOSE) up loans-api -d --build --force-recreate --no-deps
 
 loans-down:
-	docker compose down loans-db loans-api -v
+	$(COMPOSE) down loans-db loans-api -v
 
 # ==============================================================================
 # Message Service
@@ -104,13 +105,13 @@ message-build:
 	cd message && ./gradlew clean build
 
 message-up:
-	docker compose up message -d --build
+	$(COMPOSE) up message -d --build
 
 message-restart:
-	docker compose up message -d --build --force-recreate --no-deps
+	$(COMPOSE) up message -d --build --force-recreate --no-deps
 
 message-down:
-	docker compose down message -v
+	$(COMPOSE) down message -v
 
 # ==============================================================================
 # Eureka Server
@@ -119,72 +120,72 @@ eureka-server-build:
 	cd eureka-server && ./gradlew clean build
 
 eureka-server-up:
-	docker compose up eureka-server -d
+	$(COMPOSE) up eureka-server -d
 
 eureka-server-down:
-	docker compose stop eureka-server
+	$(COMPOSE) stop eureka-server
 
 # ==============================================================================
 # Config Server
 # ==============================================================================
 config-server-up:
-	docker compose -f ../config-server/compose.yml up config-server -d
+	$(COMPOSE) up config-server -d
 
 config-server-down:
-	docker compose -f ../config-server/compose.yml down config-server -v
+	$(COMPOSE) stop config-server
 
 # ==============================================================================
 # Kafka (event bus)
 # ==============================================================================
 kafka-up:
-	docker compose -f docker-compose.event.yml up kafka -d
+	$(COMPOSE) up kafka -d
 
 kafka-down:
-	docker compose -f docker-compose.event.yml stop kafka
+	$(COMPOSE) stop kafka
 
 # ==============================================================================
 # Global / Teardown
 # ==============================================================================
 dbs-up:
-	$(COMPOSE_DBS) up -d
+	$(COMPOSE) up accounts-db cards-db loans-db redis -d
 
 dbs-down:
-	$(COMPOSE_DBS) down -v
+	$(COMPOSE) stop accounts-db cards-db loans-db redis
 	@echo "all dbs are down"
 
 api-up: accounts-api-run cards-api-run loans-api
 	@echo "restart apis"
 
 config-eureka:
-	docker compose up config-server eureka-server -d
+	$(COMPOSE) up config-server eureka-server -d
 
 config-eureka-down:
-	docker compose down config-server eureka-server -v
+	$(COMPOSE) down config-server eureka-server -v
 
 services-up:
-	docker compose up accounts-api cards-api loans-api -d --build
+	$(COMPOSE) up accounts-api cards-api loans-api -d --build
 
 services-down:
-	docker compose down accounts-api cards-api loans-api
+	$(COMPOSE) down accounts-api cards-api loans-api
 
 
 # ==============================================================================
 # All Services
 # ==============================================================================
 all-up:
-	docker compose up -d
+	$(COMPOSE) up -d
 
 all-down:
-	docker compose down -v
+	$(COMPOSE) down -v
 
 gateway-up:
-	docker compose up gateway-server -d --build
+	$(COMPOSE) up gateway-server -d --build
 
 gateway-restart:
-	docker compose up gateway-server -d --build --force-recreate --no-deps
+	$(COMPOSE) up gateway-server -d --build --force-recreate --no-deps
 
 gateway-down:
-	docker compose down gateway-server -v
+	$(COMPOSE) down gateway-server -v
 
 # ==============================================================================
 # Docker Hub images (run without a local Dockerfile build)
@@ -267,25 +268,25 @@ all-compose-down:
 # Live Sync & Watch
 # ==============================================================================
 watch:
-	docker compose watch
+	$(COMPOSE) watch
 
 watch-all-up: all-up watch
 	@echo "start all and watch"
 
 watch-accounts:
-	docker compose watch accounts-api
+	$(COMPOSE) watch accounts-api
 
 watch-cards:
-	docker compose watch cards-api
+	$(COMPOSE) watch cards-api
 
 watch-loans:
-	docker compose watch loans-api
+	$(COMPOSE) watch loans-api
 
 watch-gateway:
-	docker compose watch gateway-server
+	$(COMPOSE) watch gateway-server
 
 watch-message:
-	docker compose watch message
+	$(COMPOSE) watch message
 
 # ==============================================================================
 # OpenTofu (Keycloak realm, clients, users)
@@ -294,10 +295,10 @@ watch-message:
 # Copy infra/terraform.tfvars.example to infra/terraform.tfvars on first use.
 
 keycloak-up:
-	docker compose -f docker-compose.keycloak.yml up -d
+	$(COMPOSE_KEYCLOAK) up -d
 
 keycloak-down:
-	docker compose -f docker-compose.keycloak.yml down -v
+	$(COMPOSE_KEYCLOAK) down -v
 
 infra-tfvars:
 	@if [ ! -f $(INFRA_DIR)/terraform.tfvars ]; then \
@@ -329,7 +330,7 @@ infra-down:
 	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
 
 apis-up:
-	docker compose up accounts-api cards-api loans-api -d --build
+	$(COMPOSE) up accounts-api cards-api loans-api -d --build
 
 apis-down:
-	docker compose down accounts-api cards-api loans-api -v
+	$(COMPOSE) down accounts-api cards-api loans-api -v

@@ -7,7 +7,7 @@ services:
       - 7946
       - 9095
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yml:/etc/loki/config.yaml
     depends_on:
       - minio
     healthcheck:
@@ -29,7 +29,7 @@ services:
       - 7946
       - 9095
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yml:/etc/loki/config.yaml
     healthcheck:
       test: [ "CMD", "/usr/bin/loki", "-health" ]
       start_period: 30s
@@ -44,7 +44,7 @@ services:
   alloy:
     image: grafana/alloy:v1.7.1
     volumes:
-      - ./observability/alloy/alloy-local-config.yml:/etc/alloy/config.alloy:ro
+      - ../observability/alloy/alloy-local-config.yml:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     ports:
@@ -87,7 +87,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - loki
       - securedbank
@@ -101,7 +101,7 @@ services:
       - "4317:4317"
       - "4318:4318"
     volumes:
-      - ./observability/tempo/tempo.yml:/etc/tempo-config.yml
+      - ../observability/tempo/tempo.yml:/etc/tempo-config.yml
     networks:
       - loki
       - securedbank
@@ -122,7 +122,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ../observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
       interval: 10s
@@ -134,7 +134,7 @@ services:
   backend:
     image: grafana/loki:3.4.2
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/config.yaml
+      - ../observability/loki/loki-config.yml:/etc/loki/config.yaml
     ports:
       - "3100"
       - "7946"

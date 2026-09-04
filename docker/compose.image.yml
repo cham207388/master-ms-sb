@@ -1,6 +1,6 @@
 include:
-  - docker-compose.dbs.yml
-  - docker-compose-observability.yml
+  - docker/compose.dbs.yml
+  - docker/compose.observability.yml
   - config-server/compose.yml
   - eureka-server/compose.yml
   - accounts/compose.image.yml
