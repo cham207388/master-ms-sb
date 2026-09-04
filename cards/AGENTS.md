@@ -50,7 +50,7 @@ Run all build and execution commands within the `cards` directory:
    ```
 
 3. **Kubernetes (kind)**:
-   - Manifests: [`cards/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml`
+   - Manifests: [`cards/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml`
    - Apply: `make k8s-cards` or `kubectl apply -f cards/k8s/`
    - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
    - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)

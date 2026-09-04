@@ -150,8 +150,50 @@ metadata:
 spec:
   selector:
     app: loans
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 8093
       targetPort: 8093
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loans-db
+spec:
+  podSelector:
+    matchLabels:
+      app: loans-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: loans
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loans
+spec:
+  podSelector:
+    matchLabels:
+      app: loans
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway-server
+        - podSelector:
+            matchLabels:
+              app: accounts
+      ports:
+        - protocol: TCP
+          port: 8093

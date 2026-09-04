@@ -65,4 +65,4 @@ make accounts-restart   # rebuild and recreate accounts-api
 
 ### Kubernetes (kind)
 
-Manifests: [`k8s/`](k8s/) (`db.yml`, `deployment.yml`, `service.yml`). From repo root: `make k8s-accounts`. See [docs/kubernetes.md](../docs/kubernetes.md).
+Manifests: [`k8s/`](k8s/) (`db.yml`, `deployment.yml`, `service.yml`, `networkpolicy.yml`). From repo root: `make k8s-accounts`. See [docs/kubernetes.md](../docs/kubernetes.md).

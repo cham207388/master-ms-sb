@@ -9,14 +9,84 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml) | Keycloak Deployment + Postgres StatefulSet + Secret + Services |
 | [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
 | [`kubernetes/3_*.yml` … `8_*.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
-| `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml` (Service + StatefulSet), `deployment.yml`, `service.yml` |
-| `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/` | `deployment.yml`, `service.yml` |
+| `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml` |
+| `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/` | `deployment.yml`, `service.yml` (LoadBalancer) |
 
 Postgres 18 volumes mount at **`/var/lib/postgresql`** (same as Compose). Do not mount at `/var/lib/postgresql/data`.
 
+## Network architecture
+
+Edge services stay reachable from the host via LoadBalancer (+ `cloud-provider-kind`). Domain APIs and databases are ClusterIP-only; ingress is restricted with NetworkPolicies.
+
+```mermaid
+flowchart TB
+  user[Client]
+  gw[gateway-server LoadBalancer]
+  cfg[config-server LoadBalancer]
+  eureka[eureka-server LoadBalancer]
+  keycloak[keycloak LoadBalancer]
+  acc[accounts ClusterIP]
+  cards[cards ClusterIP]
+  loans[loans ClusterIP]
+  accdb[accounts-db ClusterIP]
+  cardsdb[cards-db ClusterIP]
+  loansdb[loans-db ClusterIP]
+
+  user --> gw
+  user --> cfg
+  user --> eureka
+  user --> keycloak
+  gw --> acc
+  gw --> cards
+  gw --> loans
+  acc --> cards
+  acc --> loans
+  acc --> accdb
+  cards --> cardsdb
+  loans --> loansdb
+```
+
+| Tier | Service type | Who may reach it |
+| :--- | :--- | :--- |
+| Keycloak, config-server, eureka-server, gateway-server | LoadBalancer | Host / clients (learning access) |
+| accounts | ClusterIP | `gateway-server` only (`:8091`) |
+| cards / loans | ClusterIP | `gateway-server` **or** `accounts` (Feign for `fetchCustomerDetails`) |
+| `*-db` | ClusterIP | Matching API pod only (`:5432`) |
+
+Policies are ingress-only allow-lists (no namespace default-deny, no egress mesh). The same objects exist in:
+
+- `<service>/k8s/networkpolicy.yml` — used by `make k8s-accounts` / `k8s-cards` / `k8s-loans`
+- [`kubernetes/5_accounts.yml`](../kubernetes/5_accounts.yml), [`6_loans.yml`](../kubernetes/6_loans.yml), [`7_cards.yml`](../kubernetes/7_cards.yml) — monolithic learning path
+
+### NetworkPolicy enforcement (Calico)
+
+Default **kindnet does not enforce NetworkPolicy**. Manifests are valid but inert until you install a policy-capable CNI such as [Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/kind).
+
+Create (or recreate) the kind cluster **without** the default CNI:
+
+```yaml
+# kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+networking:
+  disableDefaultCNI: true
+  podSubnet: "192.168.0.0/16"
+```
+
+```bash
+kind create cluster --config kind-config.yaml
+make k8s-calico   # applies projectcalico/calico CALICO_VERSION (default v3.29.2)
+# wait until calico-node / calico-kube-controllers are Ready, then:
+make k8s-up
+```
+
+Do not run `make k8s-calico` on a stock kind cluster that still has kindnet — CNIs will conflict. Prefer a dedicated Calico-enabled cluster for policy labs.
+
 ## Prerequisites
 
-1. kind cluster running (`kubectl` context `kind-kind`).
+1. kind cluster running (`kubectl` context `kind-kind`), optionally Calico as above.
 2. [cloud-provider-kind](https://kind.sigs.k8s.io/docs/user/loadbalancer/) on the **host** (not in-cluster):
 
 ```bash
@@ -26,16 +96,17 @@ sudo cloud-provider-kind          # foreground
 # stop: sudo pkill cloud-provider-kind
 ```
 
-On macOS/Docker Desktop, prefer **`localhost:<Service port>`** (mapped by the `kindccm-...` container). Do not use the Docker bridge `EXTERNAL-IP` from `kubectl get svc` in a browser.
+On macOS/Docker Desktop, prefer **`localhost:<Service port>`** (mapped by the `kindccm-...` container). Do not use the Docker bridge `EXTERNAL-IP` from `kubectl get svc` in a browser. Domain APIs (accounts/cards/loans) have no EXTERNAL-IP — call them via the gateway.
 
 ## Apply (Makefile)
 
 ```bash
+make k8s-calico            # once, on a disableDefaultCNI cluster
 make k8s-keycloak          # kubernetes/1_keycloak.yml
 make k8s-configmap         # kubernetes/2_configmap.yml
 make k8s-config-server
 make k8s-eureka-server
-make k8s-accounts          # accounts/k8s/
+make k8s-accounts          # accounts/k8s/ (db + deployment + service + networkpolicy)
 make k8s-cards
 make k8s-loans
 make k8s-gateway-server
@@ -45,12 +116,14 @@ make k8s-services          # all six service folders
 make k8s-up                # platform + services
 ```
 
-Equivalent raw applies:
+Equivalent raw applies (either path):
 
 ```bash
 kubectl apply -f kubernetes/1_keycloak.yml
 kubectl apply -f kubernetes/2_configmap.yml
 kubectl apply -f accounts/k8s/
+# or monolithic learning path:
+kubectl apply -f kubernetes/5_accounts.yml
 # …
 ```
 
@@ -80,7 +153,8 @@ Per-service names and datasource URLs stay on each Deployment (not in the shared
 
 ## Suggested order
 
-1. `make k8s-platform` (wait for Keycloak; `make infra`)
-2. `make k8s-config-server` then `make k8s-eureka-server`
-3. `make k8s-accounts` / `k8s-cards` / `k8s-loans`
-4. `make k8s-gateway-server` (needs Redis if rate limiting is enabled; ConfigMap points at `redis`)
+1. (Optional) Calico-enabled kind cluster + `make k8s-calico`
+2. `make k8s-platform` (wait for Keycloak; `make infra`)
+3. `make k8s-config-server` then `make k8s-eureka-server`
+4. `make k8s-accounts` / `k8s-cards` / `k8s-loans`
+5. `make k8s-gateway-server` (needs Redis if rate limiting is enabled; ConfigMap points at `redis`)

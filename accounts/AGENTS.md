@@ -52,7 +52,7 @@ Run all build and execution commands within the `accounts` directory:
    ```
 
 3. **Kubernetes (kind)**:
-   - Manifests: [`accounts/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml`
+   - Manifests: [`accounts/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml`
    - Apply: `make k8s-accounts` (from repo root) or `kubectl apply -f accounts/k8s/`
    - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
    - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)

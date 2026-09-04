@@ -310,7 +310,8 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `images-build` / `images-push` / `images-build-push` | Hub images (APIs, message, gateway, config, eureka) |
 | `watch` / `watch-accounts` / `watch-message` / … | Compose watch |
 | `k8s-keycloak` / `k8s-configmap` | Apply platform manifests under `kubernetes/` |
-| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB + Deployment + Service) |
+| `k8s-calico` | Install Calico on kind (NetworkPolicy; needs `disableDefaultCNI`) |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB + Deployment + ClusterIP + NetworkPolicy) |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` / `k8s-services` / `k8s-up` | Platform only, services only, or everything |
 
@@ -361,8 +362,14 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 **Layout**
 
 - Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
-- Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
-- Numbered files `kubernetes/3_*.yml` … `8_*.yml` are monolithic copies (kept for the learning path)
+- Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
+- Numbered files `kubernetes/3_*.yml` … `8_*.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies)
+
+**Isolation**
+
+- Edge (gateway / config / eureka / keycloak): LoadBalancer
+- Domain APIs + DBs: ClusterIP; NetworkPolicies allow gateway→APIs, accounts→cards/loans (Feign), and API→own DB only
+- kindnet does **not** enforce NetworkPolicy — use `make k8s-calico` on a cluster created with `disableDefaultCNI: true` (see [docs/kubernetes.md](docs/kubernetes.md))
 
 **Prerequisites**
 
@@ -373,6 +380,7 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 **Apply**
 
 ```bash
+# optional: make k8s-calico   # NetworkPolicy enforcement
 make k8s-platform          # Keycloak + ConfigMap
 make infra                 # OpenTofu realm on Keycloak Postgres
 make k8s-services          # or: make k8s-up for platform + services
@@ -382,7 +390,8 @@ make k8s-services          # or: make k8s-up for platform + services
 **Access**
 
 - Keycloak admin: http://localhost:7080/admin/ → realm dropdown → `securedbankdev`
-- `kubectl get svc` then curl `http://localhost:<Service port>/…` when `cloud-provider-kind` has mapped the port
+- Call domain APIs through the gateway LoadBalancer (`localhost:<gateway port>`), not accounts/cards/loans Services directly
+- `kubectl get svc` then curl `http://localhost:<Service port>/…` for edge LoadBalancers when `cloud-provider-kind` has mapped the port
 
 </details>
 

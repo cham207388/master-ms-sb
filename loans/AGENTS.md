@@ -50,7 +50,7 @@ Run all build and execution commands within the `loans` directory:
    ```
 
 3. **Kubernetes (kind)**:
-   - Manifests: [`loans/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml`
+   - Manifests: [`loans/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml`
    - Apply: `make k8s-loans` or `kubectl apply -f loans/k8s/`
    - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
    - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)

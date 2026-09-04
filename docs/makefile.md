@@ -42,13 +42,14 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | :--- | :--- |
 | `k8s-keycloak` | Apply `kubernetes/1_keycloak.yml` |
 | `k8s-configmap` | Apply `kubernetes/2_configmap.yml` |
-| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` |
+| `k8s-calico` | Install Calico CNI (`CALICO_VERSION`, default `v3.29.2`) for NetworkPolicy |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB, Deployment, ClusterIP Service, NetworkPolicy) |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` | Keycloak + ConfigMap |
 | `k8s-services` | Config, Eureka, Accounts, Cards, Loans, Gateway |
 | `k8s-up` | Platform + all service manifests |
 
-See [kubernetes.md](kubernetes.md) for layout, `cloud-provider-kind`, and access notes.
+See [kubernetes.md](kubernetes.md) for layout, ClusterIP + NetworkPolicy architecture, Calico-on-kind, `cloud-provider-kind`, and access notes.
 
 ## Watch
 

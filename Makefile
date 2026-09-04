@@ -21,7 +21,7 @@
         services-image-up all-image-up all-compose-up all-compose-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
         infra-plan infra-apply infra-output infra-down \
-        k8s-keycloak k8s-configmap \
+        k8s-keycloak k8s-configmap k8s-calico \
         k8s-accounts k8s-cards k8s-loans \
         k8s-config-server k8s-eureka-server k8s-gateway-server \
         k8s-services k8s-platform k8s-up
@@ -403,11 +403,18 @@ infra-down:
 # Kubernetes (kind) — apply manifests
 # ==============================================================================
 # Platform resources live under kubernetes/; service objects under <service>/k8s/.
+# Calico version pin for NetworkPolicy enforcement (kindnet does not enforce).
+CALICO_VERSION := v3.29.2
+
 k8s-keycloak:
 	kubectl apply -f kubernetes/1_keycloak.yml
 
 k8s-configmap:
 	kubectl apply -f kubernetes/2_configmap.yml
+
+# Requires a kind cluster created with disableDefaultCNI: true (see docs/kubernetes.md).
+k8s-calico:
+	kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/$(CALICO_VERSION)/manifests/calico.yaml
 
 k8s-accounts:
 	kubectl apply -f accounts/k8s/
