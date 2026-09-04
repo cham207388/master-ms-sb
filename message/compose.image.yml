@@ -1,6 +1,6 @@
 services:
   message:
-    image: baicham/message:latest
+    image: baicham/securedbank-message:latest
     pull_policy: missing
     container_name: message
     environment:

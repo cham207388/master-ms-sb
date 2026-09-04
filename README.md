@@ -322,14 +322,14 @@ Default tag is `latest` via `IMAGE_TAG`. Override with `IMAGE_TAG=...`, or use `
 
 | Makefile Target | Image(s) | Purpose |
 | :-------------- | :------- | :------ |
-| `accounts-image-build` / `accounts-image-push` | `baicham/accounts-api:$(IMAGE_TAG)` | Build or push Accounts image |
-| `cards-image-build` / `cards-image-push` | `baicham/cards-api:$(IMAGE_TAG)` | Build or push Cards image |
-| `loans-image-build` / `loans-image-push` | `baicham/loans-api:$(IMAGE_TAG)` | Build or push Loans image |
-| `message-image-build` / `message-image-push` | `baicham/message:$(IMAGE_TAG)` | Build or push Message worker image |
+| `accounts-image-build` / `accounts-image-push` | `baicham/securedbank-accounts-api:$(IMAGE_TAG)` | Build or push Accounts image |
+| `cards-image-build` / `cards-image-push` | `baicham/securedbank-cards-api:$(IMAGE_TAG)` | Build or push Cards image |
+| `loans-image-build` / `loans-image-push` | `baicham/securedbank-loans-api:$(IMAGE_TAG)` | Build or push Loans image |
+| `message-image-build` / `message-image-push` | `baicham/securedbank-message:$(IMAGE_TAG)` | Build or push Message worker image |
 | `message-image-up` | — | Run `kafka` + `message` from Hub (`compose.image.yml`) |
-| `config-server-image-build` / `config-server-image-push` | `baicham/config-server:$(IMAGE_TAG)` | Build or push Config Server image |
-| `eureka-server-image-build` / `eureka-server-image-push` | `baicham/eureka-server:$(IMAGE_TAG)` | Build or push Eureka Server image |
-| `gateway-server-image-build` / `gateway-server-image-push` | `baicham/gateway-server:$(IMAGE_TAG)` | Build or push Gateway Server image |
+| `config-server-image-build` / `config-server-image-push` | `baicham/securedbank-config-server:$(IMAGE_TAG)` | Build or push Config Server image |
+| `eureka-server-image-build` / `eureka-server-image-push` | `baicham/securedbank-eureka-server:$(IMAGE_TAG)` | Build or push Eureka Server image |
+| `gateway-server-image-build` / `gateway-server-image-push` | `baicham/securedbank-gateway-server:$(IMAGE_TAG)` | Build or push Gateway Server image |
 | `images-build` / `images-push` / `images-build-push` | All seven images above | Build and/or push every service image |
 | `*-image-build-tag` / `*-image-push-tag` | Same repos with `TAG` | Same as above; **requires** `TAG=` |
 | `images-build-tag` / `images-push-tag` / `images-build-push-tag` | All seven with `TAG` | Aggregate immutable build/push; **requires** `TAG=` |

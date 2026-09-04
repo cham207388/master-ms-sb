@@ -203,49 +203,49 @@ gateway-down:
 # Mutable default tag (overrideable): make images-build-push IMAGE_TAG=v1.0.0
 # Immutable explicit tag (required):  make images-build-push-tag TAG=v1.0.0
 accounts-image-build:
-	docker build -t $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG) ./accounts
+	docker build -t $(DOCKERHUB_USER)/securedbank-accounts-api:$(IMAGE_TAG) ./accounts
 
 cards-image-build:
-	docker build -t $(DOCKERHUB_USER)/cards-api:$(IMAGE_TAG) ./cards
+	docker build -t $(DOCKERHUB_USER)/securedbank-cards-api:$(IMAGE_TAG) ./cards
 
 loans-image-build:
-	docker build -t $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG) ./loans
+	docker build -t $(DOCKERHUB_USER)/securedbank-loans-api:$(IMAGE_TAG) ./loans
 
 message-image-build:
-	docker build -t $(DOCKERHUB_USER)/message:$(IMAGE_TAG) ./message
+	docker build -t $(DOCKERHUB_USER)/securedbank-message:$(IMAGE_TAG) ./message
 
 config-server-image-build:
-	docker build -t $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG) ./config-server
+	docker build -t $(DOCKERHUB_USER)/securedbank-config-server:$(IMAGE_TAG) ./config-server
 
 eureka-server-image-build:
-	docker build -t $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG) ./eureka-server
+	docker build -t $(DOCKERHUB_USER)/securedbank-eureka-server:$(IMAGE_TAG) ./eureka-server
 
 gateway-server-image-build:
-	docker build -t $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG) ./gateway-server
+	docker build -t $(DOCKERHUB_USER)/securedbank-gateway-server:$(IMAGE_TAG) ./gateway-server
 
 images-build: accounts-image-build cards-image-build loans-image-build message-image-build \
 	config-server-image-build eureka-server-image-build gateway-server-image-build
 
 accounts-image-push:
-	docker push $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-accounts-api:$(IMAGE_TAG)
 
 cards-image-push:
-	docker push $(DOCKERHUB_USER)/cards-api:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-cards-api:$(IMAGE_TAG)
 
 loans-image-push:
-	docker push $(DOCKERHUB_USER)/loans-api:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-loans-api:$(IMAGE_TAG)
 
 message-image-push:
-	docker push $(DOCKERHUB_USER)/message:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-message:$(IMAGE_TAG)
 
 config-server-image-push:
-	docker push $(DOCKERHUB_USER)/config-server:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-config-server:$(IMAGE_TAG)
 
 eureka-server-image-push:
-	docker push $(DOCKERHUB_USER)/eureka-server:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-eureka-server:$(IMAGE_TAG)
 
 gateway-server-image-push:
-	docker push $(DOCKERHUB_USER)/gateway-server:$(IMAGE_TAG)
+	docker push $(DOCKERHUB_USER)/securedbank-gateway-server:$(IMAGE_TAG)
 
 images-push: accounts-image-push cards-image-push loans-image-push message-image-push \
 	config-server-image-push eureka-server-image-push gateway-server-image-push

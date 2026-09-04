@@ -1,6 +1,6 @@
 services:
   cards-api:
-    image: baicham/cards-api:latest
+    image: baicham/securedbank-cards-api:latest
     pull_policy: missing
     container_name: cards-api
     ports:

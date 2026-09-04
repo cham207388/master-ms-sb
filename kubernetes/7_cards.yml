@@ -98,7 +98,7 @@ spec:
               done
       containers:
       - name: cards
-        image: baicham/cards-api:s12
+        image: baicham/securedbank-cards-api:s12
         ports:
         - containerPort: 8092
         env:

@@ -98,7 +98,7 @@ spec:
               done
       containers:
       - name: loans
-        image: baicham/loans-api:s12
+        image: baicham/securedbank-loans-api:s12
         ports:
         - containerPort: 8093
         env:
