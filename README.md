@@ -25,7 +25,8 @@ Platform guides: [docs/](docs/README.md) · [Docker Compose](docs/docker.md) · 
 
 ---
 
-## Architecture
+<details>
+<summary><span style="color: cyan;"><strong>Architecture</strong></span></summary>
 
 ```mermaid
 flowchart TB
@@ -83,9 +84,12 @@ flowchart TB
   Grafana --> Tempo
 ```
 
+</details>
+
 ---
 
-## Event-driven communication
+<details>
+<summary><span style="color: cyan;"><strong>Event-driven communication</strong></span></summary>
 
 On `POST /api/accounts/create`, Accounts publishes `AccountsMsgDto` to `send-communication`. Message runs composed function `email|sms` and publishes `accountNumber` to `communication-sent`. Accounts then sets `communication_sw = true`.
 
@@ -103,9 +107,12 @@ flowchart LR
 | `emailsms-in-0` / `emailsms-out-0` | in / `communication-sent` | Message `email\|sms` |
 | `updateCommunication-in-0` | `communication-sent` | Accounts consumer |
 
+</details>
+
 ---
 
-## Gateway security
+<details>
+<summary><span style="color: cyan;"><strong>Gateway security</strong></span></summary>
 
 OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`). Realm roles `ACCOUNTS`, `CARDS`, `LOANS` become `ROLE_*`. CSRF is off. Realm and clients: [`infra/`](infra/README.md).
 
@@ -118,10 +125,12 @@ OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhos
 
 Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matching service. Accounts has a circuit breaker + fallback; loans has a Redis rate limiter.
 
+</details>
+
 ---
 
-<details open>
-<summary><strong>Tech Stack</strong></summary>
+<details>
+<summary><span style="color: cyan;"><strong>Tech Stack</strong></span></summary>
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
@@ -150,8 +159,8 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 
 ---
 
-<details open>
-<summary><strong>Infrastructure, Ports & Endpoints</strong></summary>
+<details>
+<summary><span style="color: cyan;"><strong>Infrastructure, Ports & Endpoints</strong></span></summary>
 
 | Component | Path | Port | DB / Host Port | UI / Docs | Health / Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -160,7 +169,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Cards** | [`cards`](cards) | `8092` | `cards` / `5424` | [swagger](http://localhost:8092/swagger-ui/index.html) | [health](http://localhost:8092/actuator/health) |
 | **Loans** | [`loans`](loans) | `8093` | `loans` / `5425` | [swagger](http://localhost:8093/swagger-ui/index.html) | [health](http://localhost:8093/actuator/health) |
 | **Message** | [`message`](message) | `9010` internal | — | Worker (no published HTTP) | — |
-| **Config Server** | [`config-server`](config-server) | `8071` | — | — | [health](http://localhost:8071/actuator/health) |
+| **Config Server** | [`config-server`](config-server) | `8071` | — | — | [health](http://localhost:8071/actuator/health) <br> [accounts-config-prod](http://localhost:8071/accounts/prod) <br> [accounts-config-default](http://localhost:8071/accounts/default) <br> [cards-config-prod](http://localhost:8071/cards/prod) <br> [cards-config-default](http://localhost:8071/cards/default) <br> [loans-config-prod](http://localhost:8071/loans/prod) <br> [loans-config-default](http://localhost:8071/loans/default) |
 | **Eureka** | [`eureka-server`](eureka-server) | `8070` | — | [dashboard](http://localhost:8070) | [health](http://localhost:8070/actuator/health) |
 | **Keycloak** | [`infra`](infra) | `7080` | — | [admin](http://localhost:7080) · realm `securedbankdev` | — |
 | **Kafka** | [`docker/compose.event.yml`](docker/compose.event.yml) | `9092` host / `19092` Docker | — | Broker for Accounts ↔ Message | — |
@@ -175,9 +184,10 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 
 ---
 
-## Observability & log telemetry
+<details>
+<summary><span style="color: cyan;"><strong>Observability & log telemetry</strong></span></summary>
 
-```
+```txt
 [ Docker Socket /var/run/docker.sock ]
             │
             ▼ harvest stdout/stderr
@@ -196,7 +206,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 
 **Loki** uses separate read / write / backend targets. **Tempo** receives OTLP from the OpenTelemetry Java agent (`JAVA_TOOL_OPTIONS` in [`docker/common.yml`](docker/common.yml), `OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317`). Set `OTEL_SERVICE_NAME` per service (`accounts`, `cards`, `loans`, `message`, `gateway-server`, …).
 
-### LogQL examples
+**LogQL examples**
 
 ```logql
 {container="accounts-api"}
@@ -208,9 +218,12 @@ sum by (container) (rate({container=~".+"}[1m]))
 
 Full detail: [observability/README.md](observability/README.md).
 
+</details>
+
 ---
 
-## Local development
+<details>
+<summary><span style="color: cyan;"><strong>Local development</strong></span></summary>
 
 **Prerequisites:** JDK 25, Docker & Docker Compose.
 
@@ -236,7 +249,7 @@ make all-down
 
 Compose layout and Kafka listeners: [docs/docker.md](docs/docker.md).
 
-### Build
+**Build**
 
 ```bash
 make accounts-build
@@ -248,7 +261,7 @@ make gateway-server-build
 # or: cd <service> && ./gradlew clean build
 ```
 
-### Boot locally
+**Boot locally**
 
 ```bash
 cd config-server && ./gradlew bootRun   # 8071
@@ -259,6 +272,8 @@ cd cards && ./gradlew bootRun           # 8092
 cd loans && ./gradlew bootRun           # 8093
 cd message && ./gradlew bootRun         # 9010 (worker)
 ```
+
+</details>
 
 ---
 
@@ -325,7 +340,7 @@ make gateway-server-image-build-tag TAG=v1.0.0
 make gateway-server-image-push-tag TAG=v1.0.0
 ```
 
-## Observability resources
+**Observability resources**
 
 - Metrics: `/actuator/metrics`, `/actuator/prometheus` — [Micrometer](https://micrometer.io/) · [Prometheus](https://prometheus.io/)
 - Logs: [Loki](https://grafana.com/docs/loki/latest/) via Alloy
@@ -355,7 +370,8 @@ make gateway-server-image-push-tag TAG=v1.0.0
 
 ---
 
-## References
+<details>
+<summary><span style="color: cyan;"><strong>References</strong></span></summary>
 
 - [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
 - [Apache Kafka](https://kafka.apache.org/)
@@ -364,3 +380,5 @@ make gateway-server-image-push-tag TAG=v1.0.0
 - [kubernetes](https://kubernetes.io/)
   - [dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
   - [helm](https://helm.sh/)
+
+</details>

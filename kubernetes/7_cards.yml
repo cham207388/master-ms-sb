@@ -1,3 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cards-db
+  labels:
+    app: cards-db
+spec:
+  selector:
+    app: cards-db
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cards-db
+  labels:
+    app: cards-db
+spec:
+  serviceName: cards-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cards-db
+  template:
+    metadata:
+      labels:
+        app: cards-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: cards
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          volumeMounts:
+            - name: cards-pg-data
+              mountPath: /var/lib/postgresql
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "cards"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+  volumeClaimTemplates:
+    - metadata:
+        name: cards-pg-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,6 +85,17 @@ spec:
       labels:
         app: cards
     spec:
+      initContainers:
+        - name: wait-for-db
+          image: postgres:18-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until pg_isready -h cards-db -p 5432 -U postgres -d cards; do
+                echo "waiting for cards-db..."
+                sleep 2
+              done
       containers:
       - name: cards
         image: baicham/cards-api:s12
