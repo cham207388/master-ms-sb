@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server-deployment
+  labels:
+    app: eureka-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eureka-server
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      containers:
+      - name: eureka-server
+        image: baicham/eureka-server:latest
+        ports:
+        - containerPort: 8070
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: "eureka-server"
+        - name: CONFIG_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: CONFIG_SERVER_URL
+        - name: SPRING_CONFIG_IMPORT
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: SPRING_CONFIG_IMPORT
+        - name: EUREKA_DEFAULT_ZONE
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: EUREKA_DEFAULT_ZONE
+        - name: EUREKA_HOSTNAME
+          value: "eureka-server"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "400Mi"
+          limits:
+            cpu: "500m"
+            memory: "700Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server
+spec:
+  selector:
+    app: eureka-server
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8070
+      targetPort: 8070

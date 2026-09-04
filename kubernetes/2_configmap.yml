@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: securedbank-configmap
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  CONFIG_SERVER_URL: "http://config-server:8071/"
+  SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8071/"
+  EUREKA_DEFAULT_ZONE: "http://eureka-server:8070/eureka/"
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8070/eureka/"
+  KEYCLOAK_JWK_SET_URI: "http://keycloak:7080/realms/securedbankdev/protocol/openid-connect/certs"
+  KAFKA_BROKER: "kafka:19092"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
