@@ -25,5 +25,5 @@ services:
       - loans-api
       - redis
     extends:
-      file: ../common-docker-config.yml
+      file: ../docker/common.yml
       service: microservice-with-config-eureka

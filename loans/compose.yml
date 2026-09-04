@@ -21,5 +21,5 @@ services:
       loans-db:
         condition: service_healthy
     extends:
-      file: ../common-docker-config.yml
+      file: ../docker/common.yml
       service: microservice-with-config-eureka

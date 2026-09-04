@@ -1,5 +1,5 @@
 # Standalone full-stack compose. Run with:
-#   docker compose -f docker-compose.all.yml up -d
+#   docker compose -f docker/compose.all.yml --project-directory . up -d
 # Domain APIs and Message use published images. Includes Kafka for the
 # Accounts <-> Message communication flow. Redis and Keycloak are excluded.
 

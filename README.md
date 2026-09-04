@@ -21,6 +21,8 @@ Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2
 
 Service docs: [accounts](accounts/README.md) · [cards](cards/README.md) · [loans](loans/README.md) · [message](message/README.md) · [gateway](gateway-server/README.md) · [config](config-server/README.md) · [eureka](eureka-server/README.md) · [keycloak](infra/README.md) · [observability](observability/README.md)
 
+Platform guides: [docs/](docs/README.md) · [Docker Compose](docs/docker.md) · [Makefile](docs/makefile.md) · Orchestration: [`docker/`](docker/)
+
 ---
 
 ## Architecture
@@ -142,7 +144,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Migrations** | Flyway | `db/migration/V*.sql` |
 | **API Docs** | SpringDoc OpenAPI 3.0.2 | `/swagger-ui/index.html` |
 | **Testing** | Testcontainers | `@ServiceConnection` PostgreSQL |
-| **Containers** | Docker Compose | Root [`compose.yml`](compose.yml) with `include:` |
+| **Containers** | Docker Compose | [`docker/compose.yml`](docker/compose.yml) with `include:` |
 
 </details>
 
@@ -161,7 +163,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Config Server** | [`config-server`](config-server) | `8071` | — | — | [health](http://localhost:8071/actuator/health) |
 | **Eureka** | [`eureka-server`](eureka-server) | `8070` | — | [dashboard](http://localhost:8070) | [health](http://localhost:8070/actuator/health) |
 | **Keycloak** | [`infra`](infra) | `7080` | — | [admin](http://localhost:7080) · realm `securedbankdev` | — |
-| **Kafka** | [`docker-compose.event.yml`](docker-compose.event.yml) | `9092` host / `19092` Docker | — | Broker for Accounts ↔ Message | — |
+| **Kafka** | [`docker/compose.event.yml`](docker/compose.event.yml) | `9092` host / `19092` Docker | — | Broker for Accounts ↔ Message | — |
 | **Redis** | — | `6379` | — | Gateway rate limiter | — |
 | **Grafana** | [`observability/grafana`](observability/grafana) | `3000` | — | [UI](http://localhost:3000) | [api/health](http://localhost:3000/api/health) |
 | **Tempo** | [`observability/tempo`](observability/tempo) | `3110` | OTLP `4317`/`4318` | — | — |
@@ -192,7 +194,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 
 **Alloy** mounts `/var/run/docker.sock`, labels streams with `container` (e.g. `accounts-api`), and pushes to Loki with `X-Scope-OrgID: tenant1`.
 
-**Loki** uses separate read / write / backend targets. **Tempo** receives OTLP from the OpenTelemetry Java agent (`JAVA_TOOL_OPTIONS` in `common-docker-config.yml`, `OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317`). Set `OTEL_SERVICE_NAME` per service (`accounts`, `cards`, `loans`, `message`, `gateway-server`, …).
+**Loki** uses separate read / write / backend targets. **Tempo** receives OTLP from the OpenTelemetry Java agent (`JAVA_TOOL_OPTIONS` in [`docker/common.yml`](docker/common.yml), `OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317`). Set `OTEL_SERVICE_NAME` per service (`accounts`, `cards`, `loans`, `message`, `gateway-server`, …).
 
 ### LogQL examples
 
@@ -215,13 +217,12 @@ Full detail: [observability/README.md](observability/README.md).
 ```bash
 # Full stack (includes Message + Kafka + observability)
 make all-up
-# or: docker compose up -d
+# or: docker compose -f docker/compose.yml --project-directory . up -d
 
 # Keycloak + realm/roles (needed for mutating gateway calls)
 make keycloak-up && make infra
 
-# Observability only
-docker compose -f docker-compose-observability.yml up -d
+# Observability is included in make all-up (see docs/docker.md)
 
 # Rebuild / recreate a service
 make accounts-restart
@@ -232,6 +233,8 @@ make gateway-restart
 
 make all-down
 ```
+
+Compose layout and Kafka listeners: [docs/docker.md](docs/docker.md).
 
 ### Build
 
@@ -274,6 +277,8 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 ---
 
 ## Makefile ([`Makefile`](Makefile))
+
+Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 
 | Target | Purpose |
 | :--- | :--- |

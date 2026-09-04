@@ -24,5 +24,5 @@ services:
       kafka:
         condition: service_started
     extends:
-      file: ../common-docker-config.yml
+      file: ../docker/common.yml
       service: microservice-with-config-eureka

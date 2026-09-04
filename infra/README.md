@@ -1,6 +1,6 @@
 # Keycloak infra
 
-OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0** (`docker-compose.keycloak.yml`, host `http://localhost:7080`). This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
+OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0** ([`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml), host `http://localhost:7080`). This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
 
 ```bash
 make keycloak-up      # start Keycloak + Postgres
