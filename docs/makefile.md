@@ -48,6 +48,8 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | `k8s-services` | Config, Eureka, Accounts, Cards, Loans, Gateway |
 | `k8s-up` | Platform + all service manifests |
 
+See [kubernetes.md](kubernetes.md) for layout, `cloud-provider-kind`, and access notes.
+
 ## Watch
 
 | Target | Purpose |

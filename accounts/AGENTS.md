@@ -51,7 +51,13 @@ Run all build and execution commands within the `accounts` directory:
    docker compose down -v
    ```
 
-3. **Environment Configuration**:
+3. **Kubernetes (kind)**:
+   - Manifests: [`accounts/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml`
+   - Apply: `make k8s-accounts` (from repo root) or `kubectl apply -f accounts/k8s/`
+   - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
+   - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)
+
+4. **Environment Configuration**:
    - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5423/accounts` / `jdbc:postgresql://accounts-db:5432/accounts`)
    - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)

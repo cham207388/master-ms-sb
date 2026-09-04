@@ -49,7 +49,13 @@ Run all build and execution commands within the `loans` directory:
    docker compose down -v
    ```
 
-3. **Environment Configuration**:
+3. **Kubernetes (kind)**:
+   - Manifests: [`loans/k8s/`](k8s/) — `db.yml`, `deployment.yml`, `service.yml`
+   - Apply: `make k8s-loans` or `kubectl apply -f loans/k8s/`
+   - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
+   - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)
+
+4. **Environment Configuration**:
    - `SPRING_DATASOURCE_URL` (default: `jdbc:postgresql://localhost:5425/loans` / `jdbc:postgresql://loans-db:5432/loans`)
    - `SPRING_DATASOURCE_USERNAME` (default: `postgres`)
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)

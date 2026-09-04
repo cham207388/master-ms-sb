@@ -45,6 +45,11 @@ Run all build and execution commands within the `config-server` directory:
    docker compose down -v
    ```
 
+3. **Kubernetes (kind)**:
+   - Manifests: [`config-server/k8s/`](k8s/) — `deployment.yml`, `service.yml`
+   - Apply: `make k8s-config-server` or `kubectl apply -f config-server/k8s/`
+   - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)
+
 ---
 
 ## 📐 REST API & Operational Conventions

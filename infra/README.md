@@ -1,14 +1,19 @@
 # Keycloak infra
 
-OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0** ([`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml), host `http://localhost:7080`). This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
+OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0**. Local Compose: [`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml). Kind: [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml) (Postgres StatefulSet + Deployment). Host URL: `http://localhost:7080`. This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
 
 ```bash
+# Compose
 make keycloak-up      # start Keycloak + Postgres
+make keycloak-down    # stop Keycloak and wipe its volume
+
+# kind
+make k8s-keycloak     # apply kubernetes/1_keycloak.yml
+
 make infra            # tofu init + apply (alias: make infra-apply)
 make infra-plan       # preview changes
 make infra-output     # realm, client IDs, OIDC URLs
 make infra-down       # destroy OpenTofu resources
-make keycloak-down    # stop Keycloak and wipe its volume
 ```
 
 On first run, `make infra-init` copies `terraform.tfvars.example` → `terraform.tfvars` if needed. Edit secrets there (`terraform.tfvars` is gitignored). OpenTofu logs into the built-in **master** realm via `admin-cli`, then creates the application realm.

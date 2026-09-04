@@ -59,3 +59,7 @@ Requires Config Server (`8071`), Eureka (`8070`), and Keycloak (`7080`).
 ./gradlew clean build
 make gateway-restart
 ```
+
+### Kubernetes (kind)
+
+Manifests: [`k8s/`](k8s/). From repo root: `make k8s-gateway-server`. See [docs/kubernetes.md](../docs/kubernetes.md).

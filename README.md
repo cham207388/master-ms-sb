@@ -21,7 +21,7 @@ Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2
 
 Service docs: [accounts](accounts/README.md) · [cards](cards/README.md) · [loans](loans/README.md) · [message](message/README.md) · [gateway](gateway-server/README.md) · [config](config-server/README.md) · [eureka](eureka-server/README.md) · [keycloak](infra/README.md) · [observability](observability/README.md)
 
-Platform guides: [docs/](docs/README.md) · [Docker Compose](docs/docker.md) · [Makefile](docs/makefile.md) · Orchestration: [`docker/`](docker/)
+Platform guides: [docs/](docs/README.md) · [Docker Compose](docs/docker.md) · [Makefile](docs/makefile.md) · [Kubernetes](docs/kubernetes.md) · Orchestration: [`docker/`](docker/)
 
 ---
 
@@ -356,19 +356,33 @@ make gateway-server-image-push-tag TAG=v1.0.0
 <details>
 <summary><span style="color: blue;">Kubernetes</span></summary>
 
-- start kind cluster
-  - docker desktop for local
-  - any cloud provider: EKS, GKE, AKS, etc.
-- start `sudo cloud-provider-kind` or `sudo -b cloud-provider-kind` to run in the background
-  - `sudo pkill cloud-provider-kind` to stop it
-  - install with brew if not already installed on your machine
-  - `brew install cloud-provider-kind`
-  - this provides an external IP for LoadBalancer services
+Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 
-**Access app**
+**Layout**
 
-- kubectl get svc (note the external IP and exposed port)
-- curl http://<external-ip>:<exposed-port>
+- Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
+- Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
+- Numbered files `kubernetes/3_*.yml` … `8_*.yml` are monolithic copies (kept for the learning path)
+
+**Prerequisites**
+
+- kind cluster + `brew install cloud-provider-kind`
+- Run on the host: `sudo cloud-provider-kind` (or `sudo -b …`); stop with `sudo pkill cloud-provider-kind`
+- On macOS use `localhost:<port>` (e.g. Keycloak `http://localhost:7080/admin/`), not the Docker bridge EXTERNAL-IP
+
+**Apply**
+
+```bash
+make k8s-platform          # Keycloak + ConfigMap
+make infra                 # OpenTofu realm on Keycloak Postgres
+make k8s-services          # or: make k8s-up for platform + services
+# per service: make k8s-accounts | k8s-cards | k8s-loans | k8s-config-server | …
+```
+
+**Access**
+
+- Keycloak admin: http://localhost:7080/admin/ → realm dropdown → `securedbankdev`
+- `kubectl get svc` then curl `http://localhost:<Service port>/…` when `cloud-provider-kind` has mapped the port
 
 </details>
 

@@ -51,11 +51,18 @@ Run all build and execution commands within the `gateway-server` directory:
    docker compose down -v
    ```
 
-3. **Environment Configuration**:
+3. **Kubernetes (kind)**:
+   - Manifests: [`gateway-server/k8s/`](k8s/) — `deployment.yml`, `service.yml`
+   - Apply: `make k8s-gateway-server` or `kubectl apply -f gateway-server/k8s/`
+   - Shared ConfigMap: `securedbank-configmap` (`KEYCLOAK_JWK_SET_URI`, Redis, Eureka, Config)
+   - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)
+
+4. **Environment Configuration**:
    - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)
    - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
    - `SPRING_DATA_REDIS_HOST` (default: `localhost` or `redis`)
    - `SPRING_DATA_REDIS_PORT` (default: `6379`)
+   - `KEYCLOAK_JWK_SET_URI` (default: `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`)
 
 ---
 

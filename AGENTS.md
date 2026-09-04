@@ -70,6 +70,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Containerization & Orchestration**:
   - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root users (`producer:producer`, `gateway:gateway`).
   - Consolidated [`docker/compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker/compose.yml) with `include:` directives pulling in infrastructure, observability (`docker/compose.observability.yml`), config-server, eureka-server, and microservices via shared bridge networks (`securedbank`, `loki`). Platform guides: [`docs/`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs). OpenTofu/Keycloak: [`infra/`](file:///Users/baicham/develop/java-projects/master-ms-sb/infra).
+  - **Kubernetes (kind)**: Platform manifests in [`kubernetes/`](file:///Users/baicham/develop/java-projects/master-ms-sb/kubernetes) (`1_keycloak.yml`, `2_configmap.yml`); per-service objects under `<service>/k8s/` (`deployment.yml`, `service.yml`, and for domain APIs `db.yml`). Guide: [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md).
 
 ---
 
@@ -96,6 +97,7 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Kafka: `make kafka-up`, `make kafka-down`
      - Config Server: `make config-server-up` (via compose includes)
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
+     - Kubernetes (kind): `make k8s-keycloak`, `make k8s-configmap`, `make k8s-accounts` / `k8s-cards` / `k8s-loans`, `make k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server`, `make k8s-platform`, `make k8s-services`, `make k8s-up` — see [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md)
 
 3. **Orchestration with Root Compose**:
    - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, Kafka, APIs, Message, Loki, Alloy, MinIO, Grafana) on the network stack:
@@ -117,6 +119,12 @@ When building, testing, or executing commands in this workspace, always adhere t
    - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.
    - **Status & Health Page URLs**: Microservices explicitly define `eureka.instance.status-page-url: http://localhost:${server.port}/actuator/info` and `eureka.instance.health-check-url: http://localhost:${server.port}/actuator/health` so clicking status links on the Eureka Dashboard (`http://localhost:8070`) routes through published host ports (`8091`, `8092`, `8093`, `8072`) while inter-service communication remains containerized.
    - **Kafka dual listeners**: Host clients use `localhost:9092`; containers on `securedbank` must bootstrap `kafka:19092` (not `kafka:9092`), or metadata will advertise `localhost` and connections fail inside the client container.
+
+6. **Kubernetes conventions**:
+   - Prefer `<service>/k8s/` for day-to-day applies; keep [`kubernetes/`](file:///Users/baicham/develop/java-projects/master-ms-sb/kubernetes) numbered monoliths for the learning path (do not delete them).
+   - Postgres 18 PVCs mount at `/var/lib/postgresql` (not `/var/lib/postgresql/data`).
+   - LoadBalancer EXTERNAL-IP on kind requires host-side `cloud-provider-kind`; on macOS access via `localhost:<Service port>`.
+   - Shared runtime env: ConfigMap `securedbank-configmap` (`kubernetes/2_configmap.yml`).
 
 ---
 

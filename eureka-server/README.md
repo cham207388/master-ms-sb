@@ -80,3 +80,7 @@ docker compose up -d
 # 4. Or run locally via Gradle
 ./gradlew bootRun
 ```
+
+### Kubernetes (kind)
+
+Manifests: [`k8s/`](k8s/). From repo root: `make k8s-eureka-server`. See [docs/kubernetes.md](../docs/kubernetes.md).

@@ -44,7 +44,13 @@ Run all build and execution commands within the `eureka-server` directory:
    docker compose down -v
    ```
 
-3. **Environment Configuration**:
+3. **Kubernetes (kind)**:
+   - Manifests: [`eureka-server/k8s/`](k8s/) — `deployment.yml`, `service.yml`
+   - Apply: `make k8s-eureka-server` or `kubectl apply -f eureka-server/k8s/`
+   - Shared ConfigMap: `securedbank-configmap` (`make k8s-configmap` first)
+   - Guide: [`docs/kubernetes.md`](../docs/kubernetes.md)
+
+4. **Environment Configuration**:
    - `SPRING_CONFIG_IMPORT` (default: `configserver:http://localhost:8071/` or `configserver:http://config-server:8071/`)
    - `EUREKA_INSTANCE_HOSTNAME` (default: `localhost`)
    - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/`)
