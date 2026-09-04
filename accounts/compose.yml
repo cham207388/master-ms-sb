@@ -10,7 +10,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      KAFKA_BROKER: kafka:9092
+      KAFKA_BROKER: kafka:19092
       OTEL_SERVICE_NAME: accounts
     develop:
       watch:

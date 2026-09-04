@@ -10,7 +10,7 @@ Background worker that sends account communications. No public HTTP API. Consume
 ## Specifications
 
 - **Internal port**: `9010` (not published)
-- **Broker**: Apache Kafka `9092` (`KAFKA_BROKER`)
+- **Broker**: Apache Kafka `9092` host / `19092` Docker (`KAFKA_BROKER`; Compose: `kafka:19092`)
 - **Payload**: `AccountsMsgDto` — `accountNumber`, `name`, `email`, `mobileNumber`
 
 Composed function `email|sms`: `email` returns the DTO; `sms` returns `accountNumber`.

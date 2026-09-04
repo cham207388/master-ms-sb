@@ -267,7 +267,7 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 | `SPRING_DATASOURCE_USERNAME` / `PASSWORD` | DB credentials | `postgres` / `postgres` |
 | `SPRING_CONFIG_IMPORT` | Config Server | `optional:configserver:http://localhost:8071/` |
 | `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | Eureka zone | `http://localhost:8070/eureka/` |
-| `KAFKA_BROKER` | Kafka bootstrap | `localhost:9092` (in Compose: `kafka:9092`) |
+| `KAFKA_BROKER` | Kafka bootstrap | `localhost:9092` (in Compose: `kafka:19092`) |
 | `SPRING_DATA_REDIS_HOST` / `PORT` | Gateway rate limiter | `localhost` / `6379` |
 | `KEYCLOAK_JWK_SET_URI` | Gateway JWT JWKS | `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs` |
 
@@ -301,4 +301,6 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 ## References
 
 - [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
-- [Apache Kafka](https://kafka.apache.org/)
+- [Apache Kafka]
+  - [Getting Started](https://kafka.apache.org/)
+  - [Kafka on docker](https://developer.confluent.io/confluent-tutorials/kafka-on-docker/)
