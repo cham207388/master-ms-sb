@@ -51,8 +51,10 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | `k8s-platform` | Keycloak + ConfigMap |
 | `k8s-services` | Config, Eureka, Kafka, Accounts, Cards, Loans, Message, Gateway |
 | `k8s-up` | Platform + all service manifests |
+| `helm-deps` / `helm-lint` / `helm-template` | Update local lib dep, lint, render chart |
+| `helm-up` / `helm-down` | `helm upgrade --install` / `uninstall` release `securedbank` |
 
-See [kubernetes.md](kubernetes.md) for layout, ClusterIP + NetworkPolicy architecture, Calico-on-kind, `cloud-provider-kind`, and access notes.
+See [kubernetes.md](kubernetes.md) for layout, ClusterIP + NetworkPolicy architecture, Helm umbrella chart, Calico-on-kind, `cloud-provider-kind`, and access notes.
 
 ## Watch
 

@@ -1,0 +1,48 @@
+{{- define "securedbank-lib.networkpolicy" -}}
+{{- $name := .name -}}
+{{- $svc := .svc -}}
+{{- $dbName := printf "%s-db" $name -}}
+{{- if $svc.database }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $dbName }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $dbName }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ $name }}
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+{{- end }}
+{{- if and $svc.networkPolicy $svc.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ $name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range $svc.networkPolicy.ingressFrom }}
+        - podSelector:
+            matchLabels:
+              app: {{ . }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ $svc.port }}
+{{- end }}
+{{- end -}}

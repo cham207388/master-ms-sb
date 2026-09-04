@@ -1,0 +1,16 @@
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.enabled }}
+{{- $ctx := dict "root" $ "name" $name "svc" $svc }}
+{{- if $svc.database }}
+{{ include "securedbank-lib.postgres" $ctx }}
+---
+{{- end }}
+{{ include "securedbank-lib.deployment" $ctx }}
+---
+{{ include "securedbank-lib.service" $ctx }}
+{{- if or $svc.database (and $svc.networkPolicy $svc.networkPolicy.enabled) }}
+---
+{{ include "securedbank-lib.networkpolicy" $ctx }}
+{{- end }}
+{{- end }}
+{{- end }}

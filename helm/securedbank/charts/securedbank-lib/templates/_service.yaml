@@ -1,0 +1,16 @@
+{{- define "securedbank-lib.service" -}}
+{{- $name := .name -}}
+{{- $svc := .svc -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+spec:
+  selector:
+    app: {{ $name }}
+  type: {{ $svc.serviceType | default "ClusterIP" }}
+  ports:
+    - protocol: TCP
+      port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+{{- end -}}

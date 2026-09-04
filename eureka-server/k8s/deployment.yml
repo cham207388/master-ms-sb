@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: eureka-server
-        image: baicham/securedbank-eureka-server:s12
+        image: baicham/securedbank-eureka-server:s15
         ports:
         - containerPort: 8070
         env:

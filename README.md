@@ -315,6 +315,7 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message` | Apply `<service>/k8s/` (message: Deployment + ClusterIP) |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` / `k8s-services` / `k8s-up` | Platform only, services only, or everything |
+| `helm-up` / `helm-down` / `helm-lint` / `helm-template` | Umbrella Helm chart (`helm/securedbank`, no Bitnami) |
 
 ### Docker Hub images
 
@@ -366,6 +367,7 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 - Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
 - Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `message/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
 - Numbered files `kubernetes/3_*.yml` … `10_message.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies; `9` is Kafka)
+- Optional DRY install: [`helm/securedbank`](helm/securedbank) (`make helm-up`) — same resources via values; no Bitnami
 
 **Isolation**
 

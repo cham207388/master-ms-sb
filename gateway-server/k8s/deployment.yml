@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: gateway-server
-        image: baicham/securedbank-gateway-server:s12
+        image: baicham/securedbank-gateway-server:s15
         ports:
         - containerPort: 8072
         env:

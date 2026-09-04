@@ -40,6 +40,9 @@ out/
 .data/
 **/.data/
 
+## Helm packaged local deps (source lives in charts/securedbank-lib/)
+helm/securedbank/charts/*.tgz
+
 ## Terraform
 infra/.terraform/**
 infra/.terraform.lock.hcl

@@ -1,0 +1,77 @@
+{{- define "securedbank-lib.deployment" -}}
+{{- $root := .root -}}
+{{- $name := .name -}}
+{{- $svc := .svc -}}
+{{- $cm := $root.Values.global.configMapName -}}
+{{- $dbName := printf "%s-db" $name -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-deployment
+  labels:
+    app: {{ $name }}
+spec:
+  replicas: {{ $svc.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      {{- if $svc.database }}
+      initContainers:
+        - name: wait-for-db
+          image: {{ $root.Values.global.postgresImage }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until pg_isready -h {{ $dbName }} -p 5432 -U postgres -d {{ $name }}; do
+                echo "waiting for {{ $dbName }}..."
+                sleep 2
+              done
+      {{- end }}
+      containers:
+      - name: {{ $name }}
+        image: {{ include "securedbank-lib.fullname" . }}
+        ports:
+        - containerPort: {{ $svc.port }}
+        {{- $hasEnv := or (or (not (hasKey $svc "springApplicationName")) $svc.springApplicationName) $svc.kafkaBroker $svc.configMapKeys $svc.extraEnv $svc.database }}
+        {{- if $hasEnv }}
+        env:
+        {{- if or (not (hasKey $svc "springApplicationName")) $svc.springApplicationName }}
+        - name: SPRING_APPLICATION_NAME
+          value: {{ $name | quote }}
+        {{- end }}
+        {{- range $svc.configMapKeys | default list }}
+        - name: {{ . }}
+          valueFrom:
+            configMapKeyRef:
+              name: {{ $cm }}
+              key: {{ . }}
+        {{- end }}
+        {{- if $svc.kafkaBroker }}
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: {{ $cm }}
+              key: KAFKA_BROKER
+        {{- end }}
+        {{- if $svc.database }}
+        - name: SPRING_DATASOURCE_URL
+          value: {{ printf "jdbc:postgresql://%s:5432/%s" $dbName $name | quote }}
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "postgres"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "postgres"
+        {{- end }}
+        {{- range $svc.extraEnv | default list }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        {{- end }}
+        resources:
+          {{- toYaml ($svc.resources | default $root.Values.global.defaultResources) | nindent 10 }}
+{{- end -}}

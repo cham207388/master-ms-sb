@@ -1,0 +1,71 @@
+{{- define "securedbank-lib.postgres" -}}
+{{- $root := .root -}}
+{{- $name := .name -}}
+{{- $dbName := printf "%s-db" $name -}}
+{{- $claim := printf "%s-pg-data" $name -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $dbName }}
+  labels:
+    app: {{ $dbName }}
+spec:
+  selector:
+    app: {{ $dbName }}
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $dbName }}
+  labels:
+    app: {{ $dbName }}
+spec:
+  serviceName: {{ $dbName }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $dbName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $dbName }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ $root.Values.global.postgresImage }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ $name | quote }}
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          volumeMounts:
+            - name: {{ $claim }}
+              mountPath: /var/lib/postgresql
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", {{ $name | quote }}]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 10
+          resources:
+            {{- toYaml $root.Values.global.postgresResources | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ $claim }}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ $root.Values.global.postgresStorage }}
+{{- end -}}

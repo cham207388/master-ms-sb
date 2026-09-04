@@ -1,0 +1,170 @@
+global:
+  imageRegistry: baicham
+  imageTag: s15
+  configMapName: securedbank-configmap
+  postgresImage: postgres:18-alpine
+  postgresStorage: 1Gi
+  postgresResources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  defaultResources:
+    requests:
+      cpu: "200m"
+      memory: "400Mi"
+    limits:
+      cpu: "500m"
+      memory: "700Mi"
+
+configMap:
+  enabled: true
+  data:
+    SPRING_PROFILES_ACTIVE: "prod"
+    CONFIG_SERVER_URL: "http://config-server:8071/"
+    SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8071/"
+    EUREKA_DEFAULT_ZONE: "http://eureka-server:8070/eureka/"
+    EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8070/eureka/"
+    KEYCLOAK_JWK_SET_URI: "http://keycloak:7080/realms/securedbankdev/protocol/openid-connect/certs"
+    KAFKA_BROKER: "kafka:19092"
+    SPRING_DATA_REDIS_HOST: "redis"
+    SPRING_DATA_REDIS_PORT: "6379"
+
+kafka:
+  enabled: true
+  image: apache/kafka:4.3.1
+  clusterId: "4L6g3nShT-eMCtK--X86sw"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+keycloak:
+  enabled: true
+  image: quay.io/keycloak/keycloak:26.7.0
+  hostname: "http://localhost:7080"
+  adminUser: admin
+  adminPassword: admin
+  dbPassword: keycloak-db-password
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+services:
+  config-server:
+    enabled: true
+    port: 8071
+    image: securedbank-config-server
+    serviceType: LoadBalancer
+    springApplicationName: false
+    database: false
+    configMapKeys: []
+
+  eureka-server:
+    enabled: true
+    port: 8070
+    image: securedbank-eureka-server
+    serviceType: LoadBalancer
+    database: false
+    configMapKeys:
+      - CONFIG_SERVER_URL
+      - SPRING_CONFIG_IMPORT
+      - EUREKA_DEFAULT_ZONE
+    extraEnv:
+      - name: EUREKA_HOSTNAME
+        value: eureka-server
+
+  accounts:
+    enabled: true
+    port: 8091
+    image: securedbank-accounts-api
+    serviceType: ClusterIP
+    database: true
+    kafkaBroker: true
+    configMapKeys:
+      - SPRING_PROFILES_ACTIVE
+      - CONFIG_SERVER_URL
+      - SPRING_CONFIG_IMPORT
+      - EUREKA_DEFAULT_ZONE
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+    networkPolicy:
+      enabled: true
+      ingressFrom:
+        - gateway-server
+
+  cards:
+    enabled: true
+    port: 8092
+    image: securedbank-cards-api
+    serviceType: ClusterIP
+    database: true
+    configMapKeys:
+      - SPRING_PROFILES_ACTIVE
+      - CONFIG_SERVER_URL
+      - SPRING_CONFIG_IMPORT
+      - EUREKA_DEFAULT_ZONE
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+    networkPolicy:
+      enabled: true
+      ingressFrom:
+        - gateway-server
+        - accounts
+
+  loans:
+    enabled: true
+    port: 8093
+    image: securedbank-loans-api
+    serviceType: ClusterIP
+    database: true
+    configMapKeys:
+      - SPRING_PROFILES_ACTIVE
+      - CONFIG_SERVER_URL
+      - SPRING_CONFIG_IMPORT
+      - EUREKA_DEFAULT_ZONE
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+    networkPolicy:
+      enabled: true
+      ingressFrom:
+        - gateway-server
+        - accounts
+
+  message:
+    enabled: true
+    port: 9010
+    image: securedbank-message
+    serviceType: ClusterIP
+    database: false
+    kafkaBroker: true
+    configMapKeys: []
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "300m"
+        memory: "512Mi"
+
+  gateway-server:
+    enabled: true
+    port: 8072
+    image: securedbank-gateway-server
+    serviceType: LoadBalancer
+    database: false
+    configMapKeys:
+      - SPRING_PROFILES_ACTIVE
+      - CONFIG_SERVER_URL
+      - SPRING_CONFIG_IMPORT
+      - EUREKA_DEFAULT_ZONE
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+      - KEYCLOAK_JWK_SET_URI
+      - SPRING_DATA_REDIS_HOST
+      - SPRING_DATA_REDIS_PORT

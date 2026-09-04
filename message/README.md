@@ -38,8 +38,8 @@ Kafka starts as a dependency of `message-up` (via root compose / [`docker/compos
 ```bash
 make message-build
 make message-up        # or make message-restart
-make message-image-build IMAGE_TAG=s12
-make message-image-push IMAGE_TAG=s12
+make message-image-build IMAGE_TAG=s15
+make message-image-push IMAGE_TAG=s15
 make message-image-up  # Hub image + Kafka via compose.image.yml
 make watch-message
 ```

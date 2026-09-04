@@ -98,7 +98,7 @@ spec:
               done
       containers:
       - name: accounts
-        image: baicham/securedbank-accounts-api:s12
+        image: baicham/securedbank-accounts-api:s15
         ports:
         - containerPort: 8091
         env:

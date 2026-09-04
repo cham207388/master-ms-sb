@@ -24,7 +24,8 @@
         k8s-keycloak k8s-configmap k8s-calico k8s-kafka \
         k8s-accounts k8s-cards k8s-loans k8s-message \
         k8s-config-server k8s-eureka-server k8s-gateway-server \
-        k8s-services k8s-platform k8s-up
+        k8s-services k8s-platform k8s-up \
+        helm-deps helm-lint helm-template helm-up helm-down
 
 INFRA_DIR := infra
 TOFU := tofu
@@ -452,6 +453,29 @@ k8s-services: k8s-config-server k8s-eureka-server k8s-kafka k8s-accounts k8s-car
 
 k8s-up: k8s-platform k8s-services
 	@echo "all kubernetes manifests applied"
+
+# ==============================================================================
+# Helm (umbrella chart — alternative to make k8s-*)
+# ==============================================================================
+# No Bitnami deps. Library chart: helm/securedbank/charts/securedbank-lib
+# Raw kubernetes/ and */k8s/ remain valid for learning / granular apply.
+HELM_CHART := helm/securedbank
+HELM_RELEASE := securedbank
+
+helm-deps:
+	helm dependency update $(HELM_CHART)
+
+helm-lint: helm-deps
+	helm lint $(HELM_CHART)
+
+helm-template: helm-deps
+	helm template $(HELM_RELEASE) $(HELM_CHART)
+
+helm-up: helm-deps
+	helm upgrade --install $(HELM_RELEASE) $(HELM_CHART)
+
+helm-down:
+	helm uninstall $(HELM_RELEASE)
 
 apis-up:
 	$(COMPOSE) up accounts-api cards-api loans-api -d --build

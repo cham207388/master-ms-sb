@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: message
-        image: baicham/securedbank-message:s12
+        image: baicham/securedbank-message:s15
         ports:
         - containerPort: 9010
         env:

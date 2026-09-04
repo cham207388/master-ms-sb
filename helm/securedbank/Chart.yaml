@@ -1,0 +1,10 @@
+apiVersion: v2
+name: securedbank
+description: SecuredBank microservices umbrella chart (no Bitnami deps)
+type: application
+version: 0.1.0
+appVersion: "s15"
+dependencies:
+  - name: securedbank-lib
+    version: 0.1.0
+    repository: "file://charts/securedbank-lib"

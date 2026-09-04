@@ -10,6 +10,7 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
 | [`kubernetes/3_*.yml` … `10_message.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
 | [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) | Single-node KRaft Kafka (`kafka:19092`) |
+| [`helm/securedbank/`](../helm/securedbank/) | Umbrella Helm chart (DRYs Deployments/Services/DBs/NetPol); library under `charts/securedbank-lib/` |
 | `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml` |
 | `message/k8s/` | `deployment.yml`, `service.yml` (ClusterIP worker; Kafka via ConfigMap) |
 | `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/` | `deployment.yml`, `service.yml` (LoadBalancer) |
@@ -136,6 +137,21 @@ kubectl apply -f kubernetes/9_kafka.yml
 kubectl apply -f kubernetes/10_message.yml
 # …
 ```
+
+## Helm (DRY alternative)
+
+Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies** — Kafka, Keycloak, and Postgres use the same first-party images as the raw YAML.
+
+Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies.
+
+```bash
+make helm-lint       # dependency update + lint
+make helm-template   # render manifests to stdout
+make helm-up         # helm upgrade --install securedbank
+make helm-down       # helm uninstall securedbank
+```
+
+Tune ports, images, and Feign NetPol `ingressFrom` in [`helm/securedbank/values.yaml`](../helm/securedbank/values.yaml) (`global.imageTag`, `services.*`). Example: bump all app images with `--set global.imageTag=s15`.
 
 ## Keycloak + realm
 

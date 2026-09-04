@@ -1,0 +1,5 @@
+apiVersion: v2
+name: securedbank-lib
+description: Shared templates for SecuredBank Deployments, Services, Postgres, NetworkPolicies
+type: library
+version: 0.1.0
