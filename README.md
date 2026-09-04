@@ -304,6 +304,28 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 - Traces: [Tempo](https://grafana.com/docs/tempo/latest/) · [OpenTelemetry](https://opentelemetry.io/)
 - UI: [Grafana](https://grafana.com/) at [http://localhost:3000](http://localhost:3000)
 
+---
+
+<details>
+<summary><span style="color: blue;">Kubernetes</span></summary>
+
+- start kind cluster
+  - docker desktop for local
+  - any cloud provider: EKS, GKE, AKS, etc.
+- start `cloud-provider-kind`
+  - install with brew if not already installed on your machine
+  - `brew install cloud-provider-kind`
+  - this provides an external IP for LoadBalancer services
+
+**Access app**
+
+- kubectl get svc (note the external IP and exposed port)
+- curl http://<external-ip>:<exposed-port>
+
+</details>
+
+---
+
 ## References
 
 - [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)

@@ -8,5 +8,5 @@ spec:
   type: LoadBalancer
   ports:
     - protocol: TCP
-      port: 8071
-      targetPort: 8071
+      port: 8071 # exposed port
+      targetPort: 8071 # container port
