@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: loans
-        image: baicham/loans:latest
+        image: baicham/loans-api:s12
         ports:
         - containerPort: 8093
         env:

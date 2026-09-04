@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: eureka-server
-        image: baicham/eureka-server:latest
+        image: baicham/eureka-server:s12
         ports:
         - containerPort: 8070
         env:

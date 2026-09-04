@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: config-server
-        image: baicham/config-server:latest
+        image: baicham/config-server:s12
         ports:
         - containerPort: 8071
         resources:

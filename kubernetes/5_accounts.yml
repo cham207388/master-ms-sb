@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: accounts
-        image: baicham/accounts:latest
+        image: baicham/accounts-api:s12
         ports:
         - containerPort: 8091
         env:

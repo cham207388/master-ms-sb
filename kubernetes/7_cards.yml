@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: cards
-        image: baicham/cards:latest
+        image: baicham/cards-api:s12
         ports:
         - containerPort: 8092
         env:
