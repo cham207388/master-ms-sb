@@ -26,7 +26,7 @@ spec:
             - name: KC_HTTP_ENABLED
               value: "true"
             - name: KC_HOSTNAME
-              value: "http://keycloak:7080"
+              value: "http://localhost:7080"
           ports:
             - name: http
               containerPort: 8080
