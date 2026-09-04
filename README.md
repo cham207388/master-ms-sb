@@ -309,6 +309,10 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `keycloak-up` / `infra` / `infra-down` / `keycloak-down` | Keycloak + OpenTofu realm |
 | `images-build` / `images-push` / `images-build-push` | Hub images (APIs, message, gateway, config, eureka) |
 | `watch` / `watch-accounts` / `watch-message` / … | Compose watch |
+| `k8s-keycloak` / `k8s-configmap` | Apply platform manifests under `kubernetes/` |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB + Deployment + Service) |
+| `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
+| `k8s-platform` / `k8s-services` / `k8s-up` | Platform only, services only, or everything |
 
 ### Docker Hub images
 

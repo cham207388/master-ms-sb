@@ -20,7 +20,11 @@
         accounts-image-up cards-image-up loans-image-up \
         services-image-up all-image-up all-compose-up all-compose-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
-        infra-plan infra-apply infra-output infra-down
+        infra-plan infra-apply infra-output infra-down \
+        k8s-keycloak k8s-configmap \
+        k8s-accounts k8s-cards k8s-loans \
+        k8s-config-server k8s-eureka-server k8s-gateway-server \
+        k8s-services k8s-platform k8s-up
 
 INFRA_DIR := infra
 TOFU := tofu
@@ -394,6 +398,43 @@ infra-output:
 
 infra-down:
 	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
+
+# ==============================================================================
+# Kubernetes (kind) — apply manifests
+# ==============================================================================
+# Platform resources live under kubernetes/; service objects under <service>/k8s/.
+k8s-keycloak:
+	kubectl apply -f kubernetes/1_keycloak.yml
+
+k8s-configmap:
+	kubectl apply -f kubernetes/2_configmap.yml
+
+k8s-accounts:
+	kubectl apply -f accounts/k8s/
+
+k8s-cards:
+	kubectl apply -f cards/k8s/
+
+k8s-loans:
+	kubectl apply -f loans/k8s/
+
+k8s-config-server:
+	kubectl apply -f config-server/k8s/
+
+k8s-eureka-server:
+	kubectl apply -f eureka-server/k8s/
+
+k8s-gateway-server:
+	kubectl apply -f gateway-server/k8s/
+
+k8s-platform: k8s-keycloak k8s-configmap
+	@echo "platform manifests applied (keycloak + configmap)"
+
+k8s-services: k8s-config-server k8s-eureka-server k8s-accounts k8s-cards k8s-loans k8s-gateway-server
+	@echo "service manifests applied"
+
+k8s-up: k8s-platform k8s-services
+	@echo "all kubernetes manifests applied"
 
 apis-up:
 	$(COMPOSE) up accounts-api cards-api loans-api -d --build

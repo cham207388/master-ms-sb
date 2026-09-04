@@ -36,6 +36,18 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | `all-image-up` | Full image-based stack (`docker/compose.image.yml`) |
 | `all-compose-up` / `all-compose-down` | Monolithic `docker/compose.all.yml` |
 
+## Kubernetes (kind)
+
+| Target | Purpose |
+| :--- | :--- |
+| `k8s-keycloak` | Apply `kubernetes/1_keycloak.yml` |
+| `k8s-configmap` | Apply `kubernetes/2_configmap.yml` |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` |
+| `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
+| `k8s-platform` | Keycloak + ConfigMap |
+| `k8s-services` | Config, Eureka, Accounts, Cards, Loans, Gateway |
+| `k8s-up` | Platform + all service manifests |
+
 ## Watch
 
 | Target | Purpose |
