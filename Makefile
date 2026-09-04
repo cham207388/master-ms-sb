@@ -7,6 +7,10 @@
         accounts-image-build cards-image-build loans-image-build \
         accounts-image-push cards-image-push loans-image-push \
         images-build images-push images-build-push images-pull \
+        require-tag \
+        accounts-image-build-tag cards-image-build-tag loans-image-build-tag \
+        accounts-image-push-tag cards-image-push-tag loans-image-push-tag \
+        images-build-tag images-push-tag images-build-push-tag \
         accounts-image-up cards-image-up loans-image-up \
         services-image-up all-image-up all-compose-up all-compose-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
@@ -155,6 +159,8 @@ gateway-down:
 # ==============================================================================
 # Docker Hub images (run without a local Dockerfile build)
 # ==============================================================================
+# Mutable default tag (overrideable): make images-build-push IMAGE_TAG=v1.0.0
+# Immutable explicit tag (required):  make images-build-push-tag TAG=v1.0.0
 accounts-image-build:
 	docker build -t $(DOCKERHUB_USER)/accounts-api:$(IMAGE_TAG) ./accounts
 
@@ -181,6 +187,40 @@ images-build-push: images-build images-push
 
 images-pull:
 	$(COMPOSE_IMAGE) pull accounts-api cards-api loans-api
+
+# ------------------------------------------------------------------------------
+# Immutable tags — TAG is required (fails fast if omitted)
+# Example: make images-build-push-tag TAG=2026.03.04
+# ------------------------------------------------------------------------------
+require-tag:
+	@test -n "$(TAG)" || (echo "TAG is required. Example: make images-build-push-tag TAG=v1.0.0" && exit 1)
+
+accounts-image-build-tag: require-tag
+	$(MAKE) accounts-image-build IMAGE_TAG=$(TAG)
+
+cards-image-build-tag: require-tag
+	$(MAKE) cards-image-build IMAGE_TAG=$(TAG)
+
+loans-image-build-tag: require-tag
+	$(MAKE) loans-image-build IMAGE_TAG=$(TAG)
+
+images-build-tag: require-tag
+	$(MAKE) images-build IMAGE_TAG=$(TAG)
+
+accounts-image-push-tag: require-tag
+	$(MAKE) accounts-image-push IMAGE_TAG=$(TAG)
+
+cards-image-push-tag: require-tag
+	$(MAKE) cards-image-push IMAGE_TAG=$(TAG)
+
+loans-image-push-tag: require-tag
+	$(MAKE) loans-image-push IMAGE_TAG=$(TAG)
+
+images-push-tag: require-tag
+	$(MAKE) images-push IMAGE_TAG=$(TAG)
+
+images-build-push-tag: require-tag
+	$(MAKE) images-build-push IMAGE_TAG=$(TAG)
 
 accounts-image-up:
 	$(COMPOSE_IMAGE) up accounts-db accounts-api -d --no-build
