@@ -8,8 +8,10 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | :--- | :--- |
 | [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml) | Keycloak Deployment + Postgres StatefulSet + Secret + Services |
 | [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
-| [`kubernetes/3_*.yml` … `8_*.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
+| [`kubernetes/3_*.yml` … `10_message.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
+| [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) | Single-node KRaft Kafka (`kafka:19092`) |
 | `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml` |
+| `message/k8s/` | `deployment.yml`, `service.yml` (ClusterIP worker; Kafka via ConfigMap) |
 | `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/` | `deployment.yml`, `service.yml` (LoadBalancer) |
 
 Postgres 18 volumes mount at **`/var/lib/postgresql`** (same as Compose). Do not mount at `/var/lib/postgresql/data`.
@@ -51,12 +53,16 @@ flowchart TB
 | Keycloak, config-server, eureka-server, gateway-server | LoadBalancer | Host / clients (learning access) |
 | accounts | ClusterIP | `gateway-server` only (`:8091`) |
 | cards / loans | ClusterIP | `gateway-server` **or** `accounts` (Feign for `fetchCustomerDetails`) |
+| message | ClusterIP | Internal worker (`:9010`); talks to Kafka (`KAFKA_BROKER`), no public ingress required |
+| kafka | ClusterIP | In-cluster PLAINTEXT `:19092` (matches ConfigMap); see [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) |
 | `*-db` | ClusterIP | Matching API pod only (`:5432`) |
 
 Policies are ingress-only allow-lists (no namespace default-deny, no egress mesh). The same objects exist in:
 
 - `<service>/k8s/networkpolicy.yml` — used by `make k8s-accounts` / `k8s-cards` / `k8s-loans`
 - [`kubernetes/5_accounts.yml`](../kubernetes/5_accounts.yml), [`6_loans.yml`](../kubernetes/6_loans.yml), [`7_cards.yml`](../kubernetes/7_cards.yml) — monolithic learning path
+- Message worker: [`message/k8s/`](../message/k8s/) or [`kubernetes/10_message.yml`](../kubernetes/10_message.yml) (no NetworkPolicy; Kafka is the bus)
+- Kafka broker: [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) (`make k8s-kafka`)
 
 ### NetworkPolicy enforcement (Calico)
 
@@ -106,13 +112,15 @@ make k8s-keycloak          # kubernetes/1_keycloak.yml
 make k8s-configmap         # kubernetes/2_configmap.yml
 make k8s-config-server
 make k8s-eureka-server
+make k8s-kafka             # kubernetes/9_kafka.yml (before accounts/message)
 make k8s-accounts          # accounts/k8s/ (db + deployment + service + networkpolicy)
 make k8s-cards
 make k8s-loans
+make k8s-message           # message/k8s/ (deployment + ClusterIP)
 make k8s-gateway-server
 
 make k8s-platform          # keycloak + configmap
-make k8s-services          # all six service folders
+make k8s-services          # config, eureka, kafka, accounts, cards, loans, message, gateway
 make k8s-up                # platform + services
 ```
 
@@ -124,6 +132,8 @@ kubectl apply -f kubernetes/2_configmap.yml
 kubectl apply -f accounts/k8s/
 # or monolithic learning path:
 kubectl apply -f kubernetes/5_accounts.yml
+kubectl apply -f kubernetes/9_kafka.yml
+kubectl apply -f kubernetes/10_message.yml
 # …
 ```
 
@@ -156,5 +166,7 @@ Per-service names and datasource URLs stay on each Deployment (not in the shared
 1. (Optional) Calico-enabled kind cluster + `make k8s-calico`
 2. `make k8s-platform` (wait for Keycloak; `make infra`)
 3. `make k8s-config-server` then `make k8s-eureka-server`
-4. `make k8s-accounts` / `k8s-cards` / `k8s-loans`
+4. `make k8s-kafka` then `make k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message`
 5. `make k8s-gateway-server` (needs Redis if rate limiting is enabled; ConfigMap points at `redis`)
+
+Message and Accounts bootstrap Kafka at ConfigMap `KAFKA_BROKER` (`kafka:19092`), which matches the in-cluster Service in [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml).

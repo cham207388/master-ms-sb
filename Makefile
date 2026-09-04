@@ -17,12 +17,12 @@
         accounts-image-push-tag cards-image-push-tag loans-image-push-tag message-image-push-tag \
         config-server-image-push-tag eureka-server-image-push-tag gateway-server-image-push-tag \
         images-build-tag images-push-tag images-build-push-tag \
-        accounts-image-up cards-image-up loans-image-up \
+        accounts-image-up cards-image-up loans-image-up message-image-up \
         services-image-up all-image-up all-compose-up all-compose-down \
         infra infra-tfvars infra-init infra-fmt infra-validate \
         infra-plan infra-apply infra-output infra-down \
-        k8s-keycloak k8s-configmap k8s-calico \
-        k8s-accounts k8s-cards k8s-loans \
+        k8s-keycloak k8s-configmap k8s-calico k8s-kafka \
+        k8s-accounts k8s-cards k8s-loans k8s-message \
         k8s-config-server k8s-eureka-server k8s-gateway-server \
         k8s-services k8s-platform k8s-up
 
@@ -253,7 +253,8 @@ images-push: accounts-image-push cards-image-push loans-image-push message-image
 images-build-push: images-build images-push
 
 images-pull:
-	$(COMPOSE_IMAGE) pull accounts-api cards-api loans-api
+	$(COMPOSE_IMAGE) pull accounts-api cards-api loans-api message \
+		config-server eureka-server gateway-server
 
 # ------------------------------------------------------------------------------
 # Immutable tags — TAG is required (fails fast if omitted)
@@ -322,8 +323,11 @@ cards-image-up:
 loans-image-up:
 	$(COMPOSE_IMAGE) up loans-db loans-api -d --no-build
 
+message-image-up:
+	$(COMPOSE_IMAGE) up kafka message -d --no-build
+
 services-image-up:
-	$(COMPOSE_IMAGE) up accounts-api cards-api loans-api -d --no-build
+	$(COMPOSE_IMAGE) up accounts-api cards-api loans-api kafka message -d --no-build
 
 all-image-up:
 	$(COMPOSE_IMAGE) up -d --no-build
@@ -416,6 +420,9 @@ k8s-configmap:
 k8s-calico:
 	kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/$(CALICO_VERSION)/manifests/calico.yaml
 
+k8s-kafka:
+	kubectl apply -f kubernetes/9_kafka.yml
+
 k8s-accounts:
 	kubectl apply -f accounts/k8s/
 
@@ -424,6 +431,9 @@ k8s-cards:
 
 k8s-loans:
 	kubectl apply -f loans/k8s/
+
+k8s-message:
+	kubectl apply -f message/k8s/
 
 k8s-config-server:
 	kubectl apply -f config-server/k8s/
@@ -437,7 +447,7 @@ k8s-gateway-server:
 k8s-platform: k8s-keycloak k8s-configmap
 	@echo "platform manifests applied (keycloak + configmap)"
 
-k8s-services: k8s-config-server k8s-eureka-server k8s-accounts k8s-cards k8s-loans k8s-gateway-server
+k8s-services: k8s-config-server k8s-eureka-server k8s-kafka k8s-accounts k8s-cards k8s-loans k8s-message k8s-gateway-server
 	@echo "service manifests applied"
 
 k8s-up: k8s-platform k8s-services

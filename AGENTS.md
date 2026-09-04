@@ -70,7 +70,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Containerization & Orchestration**:
   - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root users (`producer:producer`, `gateway:gateway`).
   - Consolidated [`docker/compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker/compose.yml) with `include:` directives pulling in infrastructure, observability (`docker/compose.observability.yml`), config-server, eureka-server, and microservices via shared bridge networks (`securedbank`, `loki`). Platform guides: [`docs/`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs). OpenTofu/Keycloak: [`infra/`](file:///Users/baicham/develop/java-projects/master-ms-sb/infra).
-  - **Kubernetes (kind)**: Platform manifests in [`kubernetes/`](file:///Users/baicham/develop/java-projects/master-ms-sb/kubernetes) (`1_keycloak.yml`, `2_configmap.yml`); per-service objects under `<service>/k8s/` (`deployment.yml`, `service.yml`, and for domain APIs `db.yml` + `networkpolicy.yml`). Guide: [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md).
+  - **Kubernetes (kind)**: Platform manifests in [`kubernetes/`](file:///Users/baicham/develop/java-projects/master-ms-sb/kubernetes) (`1_keycloak.yml`, `2_configmap.yml`); per-service objects under `<service>/k8s/` (`deployment.yml`, `service.yml`, and for domain APIs `db.yml` + `networkpolicy.yml`; message worker under [`message/k8s/`](file:///Users/baicham/develop/java-projects/master-ms-sb/message/k8s)). Guide: [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md).
 
 ---
 
@@ -97,7 +97,7 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Kafka: `make kafka-up`, `make kafka-down`
      - Config Server: `make config-server-up` (via compose includes)
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
-     - Kubernetes (kind): `make k8s-keycloak`, `make k8s-configmap`, `make k8s-calico` (NetworkPolicy CNI), `make k8s-accounts` / `k8s-cards` / `k8s-loans`, `make k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server`, `make k8s-platform`, `make k8s-services`, `make k8s-up` — see [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md)
+     - Kubernetes (kind): `make k8s-keycloak`, `make k8s-configmap`, `make k8s-calico` (NetworkPolicy CNI), `make k8s-kafka`, `make k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message`, `make k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server`, `make k8s-platform`, `make k8s-services`, `make k8s-up` — see [`docs/kubernetes.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/kubernetes.md)
 
 3. **Orchestration with Root Compose**:
    - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, Kafka, APIs, Message, Loki, Alloy, MinIO, Grafana) on the network stack:

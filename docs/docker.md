@@ -7,7 +7,7 @@ Platform orchestration lives under [`docker/`](../docker/). Service Dockerfiles 
 | File | Role |
 | :--- | :--- |
 | [`docker/compose.yml`](../docker/compose.yml) | Default full stack (`include:` of DBs, Kafka, observability, APIs, message, gateway) |
-| [`docker/compose.image.yml`](../docker/compose.image.yml) | Same pattern using published Hub images for domain APIs |
+| [`docker/compose.image.yml`](../docker/compose.image.yml) | Hub images for domain APIs + message (+ Kafka via `compose.event.yml`) |
 | [`docker/compose.dbs.yml`](../docker/compose.dbs.yml) | PostgreSQL + Redis |
 | [`docker/compose.event.yml`](../docker/compose.event.yml) | Apache Kafka |
 | [`docker/compose.observability.yml`](../docker/compose.observability.yml) | Loki, Alloy, Grafana, Tempo, Prometheus, MinIO |

@@ -38,5 +38,14 @@ Kafka starts as a dependency of `message-up` (via root compose / [`docker/compos
 ```bash
 make message-build
 make message-up        # or make message-restart
+make message-image-build IMAGE_TAG=s12
+make message-image-push IMAGE_TAG=s12
+make message-image-up  # Hub image + Kafka via compose.image.yml
 make watch-message
 ```
+
+### Kubernetes (kind)
+
+Manifests: [`k8s/`](k8s/) (`deployment.yml`, ClusterIP `service.yml`). From repo root: `make k8s-message` (also included in `make k8s-services`). Monolithic copy: [`kubernetes/10_message.yml`](../kubernetes/10_message.yml).
+
+Requires Kafka: `make k8s-kafka` ([`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml)); clients use ConfigMap `KAFKA_BROKER` (`kafka:19092`). See [docs/kubernetes.md](../docs/kubernetes.md).

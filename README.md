@@ -311,7 +311,8 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `watch` / `watch-accounts` / `watch-message` / … | Compose watch |
 | `k8s-keycloak` / `k8s-configmap` | Apply platform manifests under `kubernetes/` |
 | `k8s-calico` | Install Calico on kind (NetworkPolicy; needs `disableDefaultCNI`) |
-| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB + Deployment + ClusterIP + NetworkPolicy) |
+| `k8s-kafka` | Apply `kubernetes/9_kafka.yml` |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message` | Apply `<service>/k8s/` (message: Deployment + ClusterIP) |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` / `k8s-services` / `k8s-up` | Platform only, services only, or everything |
 
@@ -325,6 +326,7 @@ Default tag is `latest` via `IMAGE_TAG`. Override with `IMAGE_TAG=...`, or use `
 | `cards-image-build` / `cards-image-push` | `baicham/cards-api:$(IMAGE_TAG)` | Build or push Cards image |
 | `loans-image-build` / `loans-image-push` | `baicham/loans-api:$(IMAGE_TAG)` | Build or push Loans image |
 | `message-image-build` / `message-image-push` | `baicham/message:$(IMAGE_TAG)` | Build or push Message worker image |
+| `message-image-up` | — | Run `kafka` + `message` from Hub (`compose.image.yml`) |
 | `config-server-image-build` / `config-server-image-push` | `baicham/config-server:$(IMAGE_TAG)` | Build or push Config Server image |
 | `eureka-server-image-build` / `eureka-server-image-push` | `baicham/eureka-server:$(IMAGE_TAG)` | Build or push Eureka Server image |
 | `gateway-server-image-build` / `gateway-server-image-push` | `baicham/gateway-server:$(IMAGE_TAG)` | Build or push Gateway Server image |
@@ -362,8 +364,8 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 **Layout**
 
 - Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
-- Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
-- Numbered files `kubernetes/3_*.yml` … `8_*.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies)
+- Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `message/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
+- Numbered files `kubernetes/3_*.yml` … `10_message.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies; `9` is Kafka)
 
 **Isolation**
 
@@ -384,7 +386,7 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 make k8s-platform          # Keycloak + ConfigMap
 make infra                 # OpenTofu realm on Keycloak Postgres
 make k8s-services          # or: make k8s-up for platform + services
-# per service: make k8s-accounts | k8s-cards | k8s-loans | k8s-config-server | …
+# per service: make k8s-kafka | k8s-accounts | k8s-cards | k8s-loans | k8s-message | k8s-config-server | …
 ```
 
 **Access**

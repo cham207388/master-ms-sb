@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-deployment
+  labels:
+    app: message
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: message
+  template:
+    metadata:
+      labels:
+        app: message
+    spec:
+      containers:
+      - name: message
+        image: baicham/message:s12
+        ports:
+        - containerPort: 9010
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: "message"
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: KAFKA_BROKER
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "300m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: message
+spec:
+  selector:
+    app: message
+  type: ClusterIP
+  ports:
+    - protocol: TCP
+      port: 9010
+      targetPort: 9010

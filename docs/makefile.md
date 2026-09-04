@@ -30,9 +30,11 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 
 | Target | Purpose |
 | :--- | :--- |
-| `images-build` / `images-push` / `images-build-push` | Build/push Hub images |
-| `images-pull` | Pull domain API images |
-| `accounts-image-up` / `cards-image-up` / `loans-image-up` | Run DB + API from Hub images |
+| `images-build` / `images-push` / `images-build-push` | Build/push Hub images (APIs, message, config, eureka, gateway) |
+| `images-pull` | Pull Hub images including `message` |
+| `message-image-build` / `message-image-push` / `message-image-up` | Message worker Hub image / run with Kafka |
+| `accounts-image-up` / `cards-image-up` / `loans-image-up` / `message-image-up` | Run from Hub images |
+| `services-image-up` | APIs + kafka + message from Hub images |
 | `all-image-up` | Full image-based stack (`docker/compose.image.yml`) |
 | `all-compose-up` / `all-compose-down` | Monolithic `docker/compose.all.yml` |
 
@@ -43,10 +45,11 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | `k8s-keycloak` | Apply `kubernetes/1_keycloak.yml` |
 | `k8s-configmap` | Apply `kubernetes/2_configmap.yml` |
 | `k8s-calico` | Install Calico CNI (`CALICO_VERSION`, default `v3.29.2`) for NetworkPolicy |
-| `k8s-accounts` / `k8s-cards` / `k8s-loans` | Apply `<service>/k8s/` (DB, Deployment, ClusterIP Service, NetworkPolicy) |
+| `k8s-kafka` | Apply `kubernetes/9_kafka.yml` |
+| `k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message` | Apply `<service>/k8s/` |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` | Keycloak + ConfigMap |
-| `k8s-services` | Config, Eureka, Accounts, Cards, Loans, Gateway |
+| `k8s-services` | Config, Eureka, Kafka, Accounts, Cards, Loans, Message, Gateway |
 | `k8s-up` | Platform + all service manifests |
 
 See [kubernetes.md](kubernetes.md) for layout, ClusterIP + NetworkPolicy architecture, Calico-on-kind, `cloud-provider-kind`, and access notes.
