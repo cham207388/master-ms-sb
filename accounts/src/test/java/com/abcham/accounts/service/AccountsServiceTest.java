@@ -16,11 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cloud.stream.function.StreamBridge;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +33,9 @@ class AccountsServiceTest {
 
     @Mock
     private CustomerRepository customerRepository;
+
+    @Mock
+    private StreamBridge streamBridge;
 
     @InjectMocks
     private AccountsServiceImpl accountsService;
@@ -72,11 +77,13 @@ class AccountsServiceTest {
         when(customerRepository.findByMobileNumber("1234567890")).thenReturn(Optional.empty());
         when(customerRepository.save(any(Customer.class))).thenReturn(customer);
         when(accountsRepository.save(any(Accounts.class))).thenReturn(accounts);
+        when(streamBridge.send(eq("sendCommunication-out-0"), any())).thenReturn(true);
 
         assertDoesNotThrow(() -> accountsService.createAccount(customerDto));
 
         verify(customerRepository, times(1)).save(any(Customer.class));
         verify(accountsRepository, times(1)).save(any(Accounts.class));
+        verify(streamBridge, times(1)).send(eq("sendCommunication-out-0"), any());
     }
 
     @Test
