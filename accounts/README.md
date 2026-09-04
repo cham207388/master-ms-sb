@@ -56,6 +56,8 @@ flowchart LR
 
 ## Local run
 
+Requires Kafka (`make kafka-up` or full stack). Compose sets `KAFKA_BROKER=kafka:19092`; local `bootRun` defaults to `localhost:9092`.
+
 ```bash
 ./gradlew clean build
 make accounts-restart   # rebuild and recreate accounts-api

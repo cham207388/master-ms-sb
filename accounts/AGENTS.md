@@ -13,11 +13,11 @@ The **Accounts Microservice** manages customer registration, profile metadata, a
 - **Package Base**: `com.abcham.accounts`
 - **Entities**:
   - `Customer`: `customer_id` (PK), `name`, `email`, `mobile_number`, audit fields.
-  - `Accounts`: `account_number` (PK), `customer_id` (FK), `account_type`, `branch_address`, audit fields.
+  - `Accounts`: `account_number` (PK), `customer_id` (FK), `account_type`, `branch_address`, `communication_sw`, audit fields.
 - **Central Infrastructure Dependencies**:
   - **Spring Cloud Config Server**: Port `8071` (`/accounts/default`)
   - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8070/eureka/`)
-  - **RabbitMQ Bus Broker**: Port `5672` (Event bus for dynamic refresh)
+  - **Apache Kafka**: Host `localhost:9092` / Compose `kafka:19092` (Spring Cloud Stream: `send-communication` out, `communication-sent` in)
 
 ---
 
@@ -25,7 +25,7 @@ The **Accounts Microservice** manages customer registration, profile metadata, a
 
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Data JPA, Actuator, Flyway).
-- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
+- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-stream-binder-kafka`).
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
 - **Database Migration**: Flyway (`org.flywaydb:flyway-database-postgresql`), migrations located at `src/main/resources/db/migration/V1__init.sql`.
 - **API Documentation**: SpringDoc OpenAPI 3.0 (`springdoc-openapi-starter-webmvc-ui:3.0.2`).
@@ -57,8 +57,7 @@ Run all build and execution commands within the `accounts` directory:
    - `SPRING_DATASOURCE_PASSWORD` (default: `postgres`)
    - `SPRING_CONFIG_IMPORT` (default: `optional:configserver:http://localhost:8071/` or `optional:configserver:http://config-server:8071/`)
    - `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (default: `http://localhost:8070/eureka/` or `http://eureka-server:8070/eureka/`)
-   - `SPRING_RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`)
-   - `SPRING_RABBITMQ_PORT` (default: `5672`)
+   - `KAFKA_BROKER` (default: `localhost:9092` / Compose: `kafka:19092`)
 
 ---
 

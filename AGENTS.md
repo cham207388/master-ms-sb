@@ -12,6 +12,7 @@ The application is structured as a domain-driven microservices architecture comp
    - **Server Port**: `8091`
    - **Database**: PostgreSQL 18 on host port `5423` (DB: `accounts`)
    - **Domain**: Customer onboarding, account lifecycle management, and profile metadata.
+   - **Messaging**: Publishes to Kafka topic `send-communication`; consumes `communication-sent` to set `communication_sw`.
 
 2. **Cards Microservice** ([`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards))
    - **Server Port**: `8092`
@@ -23,23 +24,28 @@ The application is structured as a domain-driven microservices architecture comp
    - **Database**: PostgreSQL 18 on host port `5425` (DB: `loans`)
    - **Domain**: Customer loan creation, repayment tracking, and outstanding balance management.
 
-4. **Spring Cloud Config Server** ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))
+4. **Message Worker** ([`/message`](file:///Users/baicham/develop/java-projects/master-ms-sb/message))
+   - **Internal Port**: `9010` (not published)
+   - **Domain**: Consumes account communication events from Kafka, simulates email then SMS, and publishes `communication-sent`.
+
+5. **Spring Cloud Config Server** ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))
    - **Server Port**: `8071`
    - **Domain**: Centralized configuration management backed by Git (`https://github.com/cham207388/config-server-sb-sc-ms.git`).
 
-5. **Spring Cloud Netflix Eureka Server** ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server))
+6. **Spring Cloud Netflix Eureka Server** ([`/eureka-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/eureka-server))
    - **Server Port**: `8070`
    - **Domain**: Service registration & discovery server (Dashboard: `http://localhost:8070`, endpoint: `http://eureka-server:8070/eureka/`).
 
-6. **Spring Cloud Gateway Server** ([`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server))
+7. **Spring Cloud Gateway Server** ([`/gateway-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/gateway-server))
    - **Server Port**: `8072`
    - **Domain**: Edge API routing, reactive load balancing (`lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS`), dynamic path rewriting (`/ACCOUNTS/**` -> `/api/accounts/**`), and Gateway Actuator metrics (`/actuator/gateway/routes`).
 
-7. **RabbitMQ Event Bus**
-   - **AMQP Port**: `5672` (Management UI: `15672`)
-   - **Domain**: Provides Spring Cloud Bus AMQP for dynamic configuration refresh (`/actuator/busrefresh`).
+8. **Apache Kafka Event Broker** ([`docker-compose.event.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose.event.yml))
+   - **Host Port**: `9092` (`PLAINTEXT_HOST` for local `bootRun`)
+   - **Docker Network Port**: `19092` (`PLAINTEXT` advertised as `kafka:19092` for containers)
+   - **Domain**: Spring Cloud Stream binder for Accounts ↔ Message (`send-communication` / `communication-sent`).
 
-8. **Observability Telemetry Stack** ([`docker-compose-observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose-observability.yml), [`/observability`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability))
+9. **Observability Telemetry Stack** ([`docker-compose-observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose-observability.yml), [`/observability`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability))
    - **Grafana UI Port**: `3000`
    - **Loki Gateway Port**: `3100` (Read target: `3101`, Write target: `3102`)
    - **MinIO S3 Store Ports**: `9000` (API) / `9001` (Console)
@@ -52,7 +58,8 @@ The application is structured as a domain-driven microservices architecture comp
 
 - **Java Standard**: Java 25 (`JavaLanguageVersion.of(25)` configured in `build.gradle`).
 - **Framework**: Spring Boot `4.1.0` (Spring Web MVC, Spring Data JPA, Actuator, Flyway).
-- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-gateway-server-webflux`, `spring-cloud-starter-loadbalancer`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-starter-bus-amqp`).
+- **Spring Cloud**: Spring Cloud `2025.1.2` (`spring-cloud-starter-config`, `spring-cloud-starter-gateway-server-webflux`, `spring-cloud-starter-loadbalancer`, `spring-cloud-starter-netflix-eureka-server`, `spring-cloud-starter-netflix-eureka-client`, `spring-cloud-stream-binder-kafka`).
+- **Messaging**: Apache Kafka `4.3.1` (`apache/kafka`) with Spring Cloud Stream for domain events (Accounts ↔ Message).
 - **Observability & Telemetry**: Grafana `11.5.2`, Grafana Loki `3.4.2` (Microservices target architecture: Read, Write, Backend), Grafana Alloy `v1.7.1` log collector, MinIO `RELEASE.2024-12-18T13-15-44Z` S3 storage, Nginx `1.27.4-alpine` Loki edge proxy gateway.
 - **Dependency Management**: Spring Dependency Management `1.1.7`.
 - **Database**: PostgreSQL 18 Alpine (`postgres:18-alpine`).
@@ -75,23 +82,26 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Accounts: `cd accounts && ./gradlew clean build`
      - Cards: `cd cards && ./gradlew clean build`
      - Loans: `cd loans && ./gradlew clean build`
+     - Message: `cd message && ./gradlew clean build`
      - Config Server: `cd config-server && ./gradlew clean build`
      - Eureka Server: `cd eureka-server && ./gradlew clean build`
      - Gateway Server: `cd gateway-server && ./gradlew clean build`
 
 2. **Makefile Commands**:
    - Use the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile) targets for multi-service operations:
-     - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make eureka-server-build`, `make gateway-server-build`
+     - Build: `make accounts-build`, `make cards-build`, `make loans-build`, `make message-build`, `make eureka-server-build`, `make gateway-server-build`
      - Databases: `make accounts-db-up`, `make cards-db-up`, `make loans-db-up`, `make dbs-down`
-     - Service Stacks: `make accounts`, `make cards`, `make loans`, `make gateway-up`, `make gateway-down`, `make all-up`, `make all-down`
-     - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`
-     - Config Server & RabbitMQ: `make rabbit-mq-up`, `make config-server-up`, `make config-all-up`, `make config-all-down`
+     - Service Stacks: `make accounts`, `make cards`, `make loans`, `make message-up`, `make gateway-up`, `make gateway-down`, `make all-up`, `make all-down`
+     - Stack Teardown: `make accounts-down`, `make cards-down`, `make loans-down`, `make message-down`
+     - Kafka: `make kafka-up`, `make kafka-down`
+     - Config Server: `make config-server-up` (via compose includes)
      - Eureka Server: `make eureka-server-up`, `make eureka-server-down`
 
 3. **Orchestration with Root Compose**:
-   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, RabbitMQ, APIs, Loki, Alloy, MinIO, Grafana) on the network stack:
+   - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, Kafka, APIs, Message, Loki, Alloy, MinIO, Grafana) on the network stack:
      - `make all-up` or `docker compose up -d`
      - Standalone Observability: `docker compose -f docker-compose-observability.yml up -d`
+     - Standalone Kafka: `make kafka-up` or `docker compose -f docker-compose.event.yml up kafka -d`
      - Teardown: `docker compose down -v`
 
 4. **Environment Configuration**:
@@ -99,12 +109,13 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Database: `SPRING_DATASOURCE_URL` (e.g. `jdbc:postgresql://accounts-db:5432/accounts`), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`
      - Config Server: `SPRING_CONFIG_IMPORT` (e.g. `optional:configserver:http://config-server:8071/`)
      - Eureka Server: `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (e.g. `http://eureka-server:8070/eureka/`)
-     - Event Bus / RabbitMQ: `SPRING_RABBITMQ_HOST` (default: `localhost` or `rabbit-mq`), `SPRING_RABBITMQ_PORT` (`5672`), `SPRING_RABBITMQ_USERNAME`, `SPRING_RABBITMQ_PASSWORD`
+     - Kafka: `KAFKA_BROKER` (default: `localhost:9092` for host; Compose: `kafka:19092`)
      - Redis Rate Limiter: `SPRING_DATA_REDIS_HOST` (default: `localhost` or `redis`), `SPRING_DATA_REDIS_PORT` (`6379`)
 
 5. **Docker Container Networking & Eureka Dashboard Status Links**:
    - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.
    - **Status & Health Page URLs**: Microservices explicitly define `eureka.instance.status-page-url: http://localhost:${server.port}/actuator/info` and `eureka.instance.health-check-url: http://localhost:${server.port}/actuator/health` so clicking status links on the Eureka Dashboard (`http://localhost:8070`) routes through published host ports (`8091`, `8092`, `8093`, `8072`) while inter-service communication remains containerized.
+   - **Kafka dual listeners**: Host clients use `localhost:9092`; containers on `securedbank` must bootstrap `kafka:19092` (not `kafka:9092`), or metadata will advertise `localhost` and connections fail inside the client container.
 
 ---
 

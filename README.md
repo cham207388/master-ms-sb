@@ -37,7 +37,7 @@ flowchart TB
   subgraph platform [Platform]
     CFG[Config Server :8071]
     EU[Eureka :8070]
-    RMQ[(Kafka :9092)]
+    KFK[(Kafka :9092/:19092)]
   end
 
   subgraph domain [Domain]
@@ -70,10 +70,10 @@ flowchart TB
   ACC & CRD & LON & GW -.->|config / register| CFG
   ACC & CRD & LON & GW -.-> EU
 
-  ACC -->|send-communication| RMQ
-  RMQ -->|email then sms| MSG
-  MSG -->|communication-sent| RMQ
-  RMQ -->|updateCommunication| ACC
+  ACC -->|send-communication| KFK
+  KFK -->|email then sms| MSG
+  MSG -->|communication-sent| KFK
+  KFK -->|updateCommunication| ACC
 
   Alloy -->|push tenant1| LokiGW
   ACC & CRD & LON & GW & MSG -.->|OTLP| Tempo
@@ -89,10 +89,10 @@ On `POST /api/accounts/create`, Accounts publishes `AccountsMsgDto` to `send-com
 
 ```mermaid
 flowchart LR
-  ACC[Accounts] -->|send-communication| RMQ[(Kafka)]
-  RMQ --> MSG[Message email then sms]
-  MSG -->|communication-sent| RMQ
-  RMQ --> ACC
+  ACC[Accounts] -->|send-communication| KFK[(Kafka)]
+  KFK --> MSG[Message email then sms]
+  MSG -->|communication-sent| KFK
+  KFK --> ACC
 ```
 
 | Binding | Destination | Role |
@@ -161,7 +161,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Config Server** | [`config-server`](config-server) | `8071` | — | — | [health](http://localhost:8071/actuator/health) |
 | **Eureka** | [`eureka-server`](eureka-server) | `8070` | — | [dashboard](http://localhost:8070) | [health](http://localhost:8070/actuator/health) |
 | **Keycloak** | [`infra`](infra) | `7080` | — | [admin](http://localhost:7080) · realm `securedbankdev` | — |
-| **Kafka** | — | `9092` | — | Broker for Accounts ↔ Message | — |
+| **Kafka** | [`docker-compose.event.yml`](docker-compose.event.yml) | `9092` host / `19092` Docker | — | Broker for Accounts ↔ Message | — |
 | **Redis** | — | `6379` | — | Gateway rate limiter | — |
 | **Grafana** | [`observability/grafana`](observability/grafana) | `3000` | — | [UI](http://localhost:3000) | [api/health](http://localhost:3000/api/health) |
 | **Tempo** | [`observability/tempo`](observability/tempo) | `3110` | OTLP `4317`/`4318` | — | — |
@@ -284,6 +284,7 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 | `message-up` / `message-restart` / `message-down` | Message worker |
 | `gateway-up` / `gateway-restart` / `gateway-down` | Gateway |
 | `eureka-server-up` / `eureka-server-down` | Eureka |
+| `kafka-up` / `kafka-down` | Apache Kafka broker |
 | `dbs-up` / `dbs-down` | All databases |
 | `keycloak-up` / `infra` / `infra-down` / `keycloak-down` | Keycloak + OpenTofu realm |
 | `images-build` / `images-push` / `images-build-push` | Hub images (APIs, message, gateway, config, eureka) |
@@ -301,6 +302,6 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 ## References
 
 - [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
-- [Apache Kafka]
-  - [Getting Started](https://kafka.apache.org/)
-  - [Kafka on docker](https://developer.confluent.io/confluent-tutorials/kafka-on-docker/)
+- [Apache Kafka](https://kafka.apache.org/)
+  - [Getting started with Docker](https://kafka.apache.org/43/getting-started/docker/)
+  - [Kafka on Docker (Confluent tutorial)](https://developer.confluent.io/confluent-tutorials/kafka-on-docker/)
