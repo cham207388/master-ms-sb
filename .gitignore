@@ -36,8 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
-## Observability
-.data/**
+## Local runtime / volume data (MinIO, Loki, etc.)
+.data/
+**/.data/
 
 ## Terraform
 infra/.terraform/**
