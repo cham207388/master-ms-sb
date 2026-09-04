@@ -1,19 +1,18 @@
 services:
-  rabbitmq:
-    image: rabbitmq:4.3.5-management
+  # Local/dev Kafka. See https://kafka.apache.org/43/getting-started/docker/
+  # Equivalent: docker run -p 9092:9092 apache/kafka:4.3.1
+  kafka:
+    image: apache/kafka:4.3.1
     ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - 9092:9092
     extends:
       file: common-docker-config.yml
-      service: microservice-base
-
-volumes:
-  rabbitmq-data:
-    driver: local
+      service: shared-network
+    deploy:
+      resources:
+        limits:
+          memory: 1000m
 
 networks:
   securedbank:
-    driver: bridge    
+    driver: bridge

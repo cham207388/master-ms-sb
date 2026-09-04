@@ -1,6 +1,6 @@
 # Standalone full-stack compose. Run with:
 #   docker compose -f docker-compose.all.yml up -d
-# Domain APIs and Message use published images. Includes RabbitMQ for the
+# Domain APIs and Message use published images. Includes Kafka for the
 # Accounts <-> Message communication flow. Redis and Keycloak are excluded.
 
 x-otel-env: &otel-env
@@ -98,14 +98,11 @@ services:
   # ---------------------------------------------------------------------------
   # Event bus
   # ---------------------------------------------------------------------------
-  rabbitmq:
-    image: rabbitmq:4.3.5-management
-    container_name: rabbitmq
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: kafka
     ports:
-      - '5672:5672'
-      - '15672:15672'
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - '9092:9092'
     networks:
       - securedbank
 
@@ -189,11 +186,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_RABBITMQ_CONNECTION_TIMEOUT: 10s
+      KAFKA_BROKER: kafka:9092
       OTEL_SERVICE_NAME: accounts
     depends_on:
       accounts-db:
@@ -202,7 +195,7 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      rabbitmq:
+      kafka:
         condition: service_started
     deploy: *deploy-limits
     networks:
@@ -260,14 +253,10 @@ services:
     container_name: message
     environment:
       <<: *otel-env
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_RABBITMQ_CONNECTION_TIMEOUT: 10s
+      KAFKA_BROKER: kafka:9092
       OTEL_SERVICE_NAME: message
     depends_on:
-      rabbitmq:
+      kafka:
         condition: service_started
     deploy: *deploy-limits
     networks:
@@ -500,7 +489,6 @@ volumes:
   accounts-pg-volume:
   cards-pg-volume:
   loans-pg-volume:
-  rabbitmq-data:
 
 networks:
   securedbank:

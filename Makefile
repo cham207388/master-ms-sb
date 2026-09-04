@@ -3,6 +3,7 @@
         loans loans-build loans-db-up loans-db-down loans-api loans-restart \
         message-build message-up message-restart message-down \
         eureka-server-build eureka-server-up eureka-server-down dbs-up dbs-down \
+        kafka-up kafka-down \
         watch watch-accounts watch-cards watch-loans watch-gateway watch-message \
         gateway-up gateway-down gateway-restart \
         accounts-image-build cards-image-build loans-image-build message-image-build \
@@ -126,17 +127,20 @@ eureka-server-down:
 # ==============================================================================
 # Config Server
 # ==============================================================================
-rabbit-mq-up:
-	docker compose -f ../config-server/compose.yml up rabbit-mq -d
-
-rabbit-mq-down:
-	docker compose -f ../config-server/compose.yml down rabbit-mq -v
-
 config-server-up:
 	docker compose -f ../config-server/compose.yml up config-server -d
 
 config-server-down:
 	docker compose -f ../config-server/compose.yml down config-server -v
+
+# ==============================================================================
+# Kafka (event bus)
+# ==============================================================================
+kafka-up:
+	docker compose -f docker-compose.event.yml up kafka -d
+
+kafka-down:
+	docker compose -f docker-compose.event.yml stop kafka
 
 # ==============================================================================
 # Global / Teardown
@@ -323,12 +327,6 @@ infra-output:
 
 infra-down:
 	cd $(INFRA_DIR) && $(TOFU) destroy -auto-approve
-
-rabbit-mq-up:
-	docker compose rabbit up rabbitmq -d
-
-rabbit-mq-down:
-	docker compose rabbit down rabbitmq -v
 
 apis-up:
 	docker compose up accounts-api cards-api loans-api -d --build

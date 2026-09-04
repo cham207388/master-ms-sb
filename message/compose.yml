@@ -5,14 +5,10 @@ services:
       dockerfile: Dockerfile
     container_name: message
     environment:
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_RABBITMQ_CONNECTION_TIMEOUT: 10s
+      KAFKA_BROKER: kafka:9092
       OTEL_SERVICE_NAME: message
     depends_on:
-      rabbitmq:
+      kafka:
         condition: service_started
     develop:
       watch:

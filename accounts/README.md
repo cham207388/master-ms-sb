@@ -2,7 +2,7 @@
 
 ![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)
-![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-RabbitMQ-blue.svg)
+![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-Kafka-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
 
 Customer onboarding and account lifecycle for SecuredBank. After create, Accounts publishes a communication event; Message sends email/SMS and Accounts marks the account notified.
@@ -23,15 +23,15 @@ Customer onboarding and account lifecycle for SecuredBank. After create, Account
 
 ## Event-driven communication
 
-Create publishes `AccountsMsgDto` (`accountNumber`, `name`, `email`, `mobileNumber`) to RabbitMQ. Message consumes it, then Accounts sets `communication_sw = true`.
+Create publishes `AccountsMsgDto` (`accountNumber`, `name`, `email`, `mobileNumber`) to Kafka. Message consumes it, then Accounts sets `communication_sw = true`.
 
 ```mermaid
 flowchart LR
   Client -->|POST /api/accounts/create| Accounts
-  Accounts -->|send-communication<br/>AccountsMsgDto| RMQ[(RabbitMQ)]
-  RMQ -->|email then sms| Message
-  Message -->|communication-sent<br/>accountNumber| RMQ
-  RMQ -->|updateCommunication| Accounts
+  Accounts -->|send-communication<br/>AccountsMsgDto| KFK[(Kafka)]
+  KFK -->|email then sms| Message
+  Message -->|communication-sent<br/>accountNumber| KFK
+  KFK -->|updateCommunication| Accounts
   Accounts -->|communication_sw = true| DB[(accounts)]
 ```
 

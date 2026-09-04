@@ -1,7 +1,7 @@
 # Message Service
 
 ![Java 25](https://img.shields.io/badge/Java-25-orange.svg)
-![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-RabbitMQ-blue.svg)
+![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-Kafka-blue.svg)
 
 Background worker that sends account communications. No public HTTP API. Consumes create events from Accounts, logs email then SMS, and publishes the account number so Accounts can set `communication_sw`.
 
@@ -10,18 +10,18 @@ Background worker that sends account communications. No public HTTP API. Consume
 ## Specifications
 
 - **Internal port**: `9010` (not published)
-- **Broker**: RabbitMQ `5672` (UI `15672`)
+- **Broker**: Apache Kafka `9092` (`KAFKA_BROKER`)
 - **Payload**: `AccountsMsgDto` — `accountNumber`, `name`, `email`, `mobileNumber`
 
 Composed function `email|sms`: `email` returns the DTO; `sms` returns `accountNumber`.
 
 ```mermaid
 flowchart LR
-  Accounts -->|send-communication<br/>AccountsMsgDto| RMQ[(RabbitMQ)]
-  RMQ --> email
+  Accounts -->|send-communication<br/>AccountsMsgDto| KFK[(Kafka)]
+  KFK --> email
   email --> sms
-  sms -->|communication-sent<br/>accountNumber| RMQ
-  RMQ --> Accounts
+  sms -->|communication-sent<br/>accountNumber| KFK
+  KFK --> Accounts
 ```
 
 | Binding | Destination | Group |
@@ -33,7 +33,7 @@ flowchart LR
 
 ## Local run
 
-RabbitMQ starts as a dependency of `message-up`.
+Kafka starts as a dependency of `message-up` (via root compose / `docker-compose.event.yml`).
 
 ```bash
 make message-build

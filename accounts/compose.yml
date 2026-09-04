@@ -10,12 +10,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://accounts-db:5432/accounts
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      # RabbitMQ runs separately and publishes port 5672 on the Docker Desktop host.
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
-      SPRING_RABBITMQ_CONNECTION_TIMEOUT: 10s
+      KAFKA_BROKER: kafka:9092
       OTEL_SERVICE_NAME: accounts
     develop:
       watch:
@@ -26,6 +21,8 @@ services:
     depends_on:
       accounts-db:
         condition: service_healthy
+      kafka:
+        condition: service_started
     extends:
       file: ../common-docker-config.yml
       service: microservice-with-config-eureka

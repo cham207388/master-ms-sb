@@ -11,13 +11,13 @@
 ![Alloy](https://img.shields.io/badge/Grafana%20Alloy-1.7.1-red.svg)
 ![MinIO](https://img.shields.io/badge/MinIO-S3%20Store-pink.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
-![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Stream-ff6600.svg)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-Stream-231F20.svg)
 ![Flyway](https://img.shields.io/badge/Flyway-Migration-red.svg)
 ![Testcontainers](https://img.shields.io/badge/Testcontainers-1.20.4-black.svg)
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. Domain APIs (**Accounts**, **Cards**, **Loans**) sit behind a Keycloak-secured Gateway. Config Server and Eureka handle config and discovery. Accounts publishes communication events over RabbitMQ; the **Message** worker sends email/SMS and Accounts marks `communication_sw`. Grafana, Loki, Alloy, Tempo, and MinIO cover telemetry.
+Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. Domain APIs (**Accounts**, **Cards**, **Loans**) sit behind a Keycloak-secured Gateway. Config Server and Eureka handle config and discovery. Accounts publishes communication events over **Apache Kafka**; the **Message** worker sends email/SMS and Accounts marks `communication_sw`. Grafana, Loki, Alloy, Tempo, and MinIO cover telemetry.
 
 Service docs: [accounts](accounts/README.md) · [cards](cards/README.md) · [loans](loans/README.md) · [message](message/README.md) · [gateway](gateway-server/README.md) · [config](config-server/README.md) · [eureka](eureka-server/README.md) · [keycloak](infra/README.md) · [observability](observability/README.md)
 
@@ -37,7 +37,7 @@ flowchart TB
   subgraph platform [Platform]
     CFG[Config Server :8071]
     EU[Eureka :8070]
-    RMQ[(RabbitMQ :5672)]
+    RMQ[(Kafka :9092)]
   end
 
   subgraph domain [Domain]
@@ -89,7 +89,7 @@ On `POST /api/accounts/create`, Accounts publishes `AccountsMsgDto` to `send-com
 
 ```mermaid
 flowchart LR
-  ACC[Accounts] -->|send-communication| RMQ[(RabbitMQ)]
+  ACC[Accounts] -->|send-communication| RMQ[(Kafka)]
   RMQ --> MSG[Message email then sms]
   MSG -->|communication-sent| RMQ
   RMQ --> ACC
@@ -130,7 +130,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Load Balancer** | Spring Cloud LoadBalancer | `lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS` |
 | **Central Config** | Spring Cloud Config | ([`config-server`](config-server)) |
 | **Service Discovery** | Netflix Eureka | ([`eureka-server`](eureka-server)) |
-| **Messaging** | Spring Cloud Stream + RabbitMQ | Accounts ↔ Message (`send-communication` / `communication-sent`) |
+| **Messaging** | Spring Cloud Stream + Apache Kafka | Accounts ↔ Message (`send-communication` / `communication-sent`) |
 | **Observability UI** | Grafana 11.5.2 | Dashboards; Loki datasource `tenant1` |
 | **Log Engine** | Grafana Loki 3.4.2 | `read`, `write`, `backend` targets |
 | **Log Collector** | Grafana Alloy v1.7.1 | Harvests Docker logs via `/var/run/docker.sock` |
@@ -161,7 +161,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Config Server** | [`config-server`](config-server) | `8071` | — | — | [health](http://localhost:8071/actuator/health) |
 | **Eureka** | [`eureka-server`](eureka-server) | `8070` | — | [dashboard](http://localhost:8070) | [health](http://localhost:8070/actuator/health) |
 | **Keycloak** | [`infra`](infra) | `7080` | — | [admin](http://localhost:7080) · realm `securedbankdev` | — |
-| **RabbitMQ** | — | `5672` | — | [mgmt 15672](http://localhost:15672) | — |
+| **Kafka** | — | `9092` | — | Broker for Accounts ↔ Message | — |
 | **Redis** | — | `6379` | — | Gateway rate limiter | — |
 | **Grafana** | [`observability/grafana`](observability/grafana) | `3000` | — | [UI](http://localhost:3000) | [api/health](http://localhost:3000/api/health) |
 | **Tempo** | [`observability/tempo`](observability/tempo) | `3110` | OTLP `4317`/`4318` | — | — |
@@ -213,7 +213,7 @@ Full detail: [observability/README.md](observability/README.md).
 **Prerequisites:** JDK 25, Docker & Docker Compose.
 
 ```bash
-# Full stack (includes Message + RabbitMQ + observability)
+# Full stack (includes Message + Kafka + observability)
 make all-up
 # or: docker compose up -d
 
@@ -267,7 +267,7 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 | `SPRING_DATASOURCE_USERNAME` / `PASSWORD` | DB credentials | `postgres` / `postgres` |
 | `SPRING_CONFIG_IMPORT` | Config Server | `optional:configserver:http://localhost:8071/` |
 | `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | Eureka zone | `http://localhost:8070/eureka/` |
-| `SPRING_RABBITMQ_HOST` / `PORT` | Broker | `localhost` / `5672` (in Compose: `rabbitmq`) |
+| `KAFKA_BROKER` | Kafka bootstrap | `localhost:9092` (in Compose: `kafka:9092`) |
 | `SPRING_DATA_REDIS_HOST` / `PORT` | Gateway rate limiter | `localhost` / `6379` |
 | `KEYCLOAK_JWK_SET_URI` | Gateway JWT JWKS | `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs` |
 
@@ -301,3 +301,4 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 ## References
 
 - [Spring Boot Application Properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html)
+- [Apache Kafka](https://kafka.apache.org/)
