@@ -312,7 +312,8 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 - start kind cluster
   - docker desktop for local
   - any cloud provider: EKS, GKE, AKS, etc.
-- start `cloud-provider-kind`
+- start `sudo cloud-provider-kind` or `sudo -b cloud-provider-kind` to run in the background
+  - `sudo pkill cloud-provider-kind` to stop it
   - install with brew if not already installed on your machine
   - `brew install cloud-provider-kind`
   - this provides an external IP for LoadBalancer services
