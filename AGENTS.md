@@ -40,12 +40,12 @@ The application is structured as a domain-driven microservices architecture comp
    - **Server Port**: `8072`
    - **Domain**: Edge API routing, reactive load balancing (`lb://ACCOUNTS`, `lb://CARDS`, `lb://LOANS`), dynamic path rewriting (`/ACCOUNTS/**` -> `/api/accounts/**`), and Gateway Actuator metrics (`/actuator/gateway/routes`).
 
-8. **Apache Kafka Event Broker** ([`docker-compose.event.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose.event.yml))
+8. **Apache Kafka Event Broker** ([`docker/compose.event.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker/compose.event.yml))
    - **Host Port**: `9092` (`PLAINTEXT_HOST` for local `bootRun`)
    - **Docker Network Port**: `19092` (`PLAINTEXT` advertised as `kafka:19092` for containers)
    - **Domain**: Spring Cloud Stream binder for Accounts ↔ Message (`send-communication` / `communication-sent`).
 
-9. **Observability Telemetry Stack** ([`docker-compose-observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose-observability.yml), [`/observability`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability))
+9. **Observability Telemetry Stack** ([`docker/compose.observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker/compose.observability.yml), [`/observability`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability))
    - **Grafana UI Port**: `3000`
    - **Loki Gateway Port**: `3100` (Read target: `3101`, Write target: `3102`)
    - **MinIO S3 Store Ports**: `9000` (API) / `9001` (Console)
@@ -69,7 +69,7 @@ The application is structured as a domain-driven microservices architecture comp
 - **Build System**: Independent Gradle wrapper scripts (`./gradlew`) inside each microservice directory, managed globally via the root [`Makefile`](file:///Users/baicham/develop/java-projects/master-ms-sb/Makefile).
 - **Containerization & Orchestration**:
   - Multi-stage Docker builds (`eclipse-temurin:25-jdk-alpine` -> `eclipse-temurin:25-jre-alpine`) executing under non-root users (`producer:producer`, `gateway:gateway`).
-  - Consolidated root [`compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/compose.yml) with `include:` directives pulling in infrastructure, observability (`docker-compose-observability.yml`), config-server, eureka-server, and microservices via shared bridge networks (`securedbank`, `loki`).
+  - Consolidated [`docker/compose.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker/compose.yml) with `include:` directives pulling in infrastructure, observability (`docker/compose.observability.yml`), config-server, eureka-server, and microservices via shared bridge networks (`securedbank`, `loki`). Platform guides: [`docs/`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs). OpenTofu/Keycloak: [`infra/`](file:///Users/baicham/develop/java-projects/master-ms-sb/infra).
 
 ---
 
@@ -99,10 +99,11 @@ When building, testing, or executing commands in this workspace, always adhere t
 
 3. **Orchestration with Root Compose**:
    - To bring up the entire platform (all DBs, Config Server, Eureka Server, Gateway Server, Kafka, APIs, Message, Loki, Alloy, MinIO, Grafana) on the network stack:
-     - `make all-up` or `docker compose up -d`
-     - Standalone Observability: `docker compose -f docker-compose-observability.yml up -d`
-     - Standalone Kafka: `make kafka-up` or `docker compose -f docker-compose.event.yml up kafka -d`
-     - Teardown: `docker compose down -v`
+     - `make all-up` or `docker compose -f docker/compose.yml --project-directory . up -d`
+     - Standalone Kafka: `make kafka-up`
+     - Standalone DBs: `make dbs-up`
+     - Teardown: `make all-down`
+     - See [`docs/docker.md`](file:///Users/baicham/develop/java-projects/master-ms-sb/docs/docker.md) for Compose path rules.
 
 4. **Environment Configuration**:
    - Settings in `application.yaml` use standard Spring Boot relaxed binding environment variables:

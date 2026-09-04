@@ -163,7 +163,7 @@ flowchart TD
 - **Grafana Provisioned Datasources**: [`observability/grafana/datasource.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/grafana/datasource.yml)
 - **Loki Engine Configuration**: [`observability/loki/loki-config.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/loki/loki-config.yml)
 - **Alloy Pipeline Definition**: [`observability/alloy/alloy-local-config.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/observability/alloy/alloy-local-config.yml)
-- **Docker Compose Stack**: [`docker-compose-observability.yml`](file:///Users/baicham/develop/java-projects/master-ms-sb/docker-compose-observability.yml)
+- **Docker Compose Stack**: [`docker/compose.observability.yml`](../docker/compose.observability.yml)
 
 ---
 
@@ -178,7 +178,8 @@ The observability stack is fully integrated with the main Compose orchestration:
 make all-up
 
 # Option 2: Start standalone observability services
-docker compose -f docker-compose-observability.yml up -d
+docker compose -f docker/compose.yml --project-directory . up -d
+# or: make all-up
 ```
 
 ### Verification & Testing
