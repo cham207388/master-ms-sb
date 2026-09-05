@@ -277,7 +277,8 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 
 ---
 
-## Environment overrides
+<details>
+<summary><span style="color: cyan;"><strong>Environment variables</strong></span></summary>
 
 | Variable | Description | Typical defaults |
 | :--- | :--- | :--- |
@@ -289,9 +290,12 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 | `SPRING_DATA_REDIS_HOST` / `PORT` | Gateway rate limiter | `localhost` / `6379` |
 | `KEYCLOAK_JWK_SET_URI` | Gateway JWT JWKS | `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs` |
 
+</details>
+
 ---
 
-## Makefile ([`Makefile`](Makefile))
+<details>
+<summary><span style="color: cyan;"><strong>Makefile</strong></span></summary>
 
 Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 
@@ -348,6 +352,8 @@ make gateway-server-image-build-tag TAG=v1.0.0
 make gateway-server-image-push-tag TAG=v1.0.0
 ```
 
+</details>
+
 **Observability resources**
 
 - Metrics: `/actuator/metrics`, `/actuator/prometheus` — [Micrometer](https://micrometer.io/) · [Prometheus](https://prometheus.io/)
@@ -400,6 +406,48 @@ make k8s-services          # or: make k8s-up for platform + services
 </details>
 
 ---
+
+<details>
+<summary><span style="color: cyan;"><strong>Helm chart</strong></span></summary>
+
+Chart: [`helm/securedbank`](helm/securedbank). Full notes: [helm/securedbank/README.md](helm/securedbank/README.md).
+
+**After code changes → new images → cluster**
+
+Pick a tag (example `s16`), then run from the repo root:
+
+```bash
+# 1. Build and push all securedbank-* images
+make images-build-push IMAGE_TAG=s16
+
+# 2. Package the local library chart (.tgz is gitignored)
+make helm-deps
+
+# 3. Upgrade the release to that tag
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+
+# 4. Confirm pods pulled the new images
+kubectl get pods -l 'app in (accounts,cards,loans,message,config-server,eureka-server,gateway-server)' -o wide
+kubectl rollout status deployment/eureka-server-deployment
+```
+
+Single service only:
+
+```bash
+make accounts-image-build IMAGE_TAG=s16
+make accounts-image-push IMAGE_TAG=s16
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+```
+
+Immutable tag style (requires `TAG=`):
+
+```bash
+make images-build-push-tag TAG=s16
+make helm-deps
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+```
+
+</details>
 
 <details>
 <summary><span style="color: cyan;"><strong>References</strong></span></summary>

@@ -12,5 +12,6 @@
 ---
 {{ include "securedbank-lib.networkpolicy" $ctx }}
 {{- end }}
+---
 {{- end }}
 {{- end }}
