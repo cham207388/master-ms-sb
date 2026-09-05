@@ -77,69 +77,8 @@ spec:
           requests:
             storage: {{ .Values.global.postgresStorage }}
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: keycloak
-  template:
-    metadata:
-      labels:
-        app: keycloak
-    spec:
-      initContainers:
-        - name: wait-for-db
-          image: {{ .Values.global.postgresImage }}
-          command:
-            - /bin/sh
-            - -c
-            - |
-              until pg_isready -h keycloak-db -p 5432 -U keycloak -d keycloak; do
-                echo "waiting for keycloak-db..."
-                sleep 2
-              done
-          env:
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: keycloak-db-secret
-                  key: POSTGRES_PASSWORD
-      containers:
-        - name: keycloak
-          image: {{ .Values.keycloak.image }}
-          args: ["start"]
-          env:
-            - name: KC_BOOTSTRAP_ADMIN_USERNAME
-              value: {{ .Values.keycloak.adminUser | quote }}
-            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
-              value: {{ .Values.keycloak.adminPassword | quote }}
-            - name: KC_DB
-              value: postgres
-            - name: KC_DB_URL
-              value: jdbc:postgresql://keycloak-db:5432/keycloak
-            - name: KC_DB_USERNAME
-              value: keycloak
-            - name: KC_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: keycloak-db-secret
-                  key: KC_DB_PASSWORD
-            - name: KC_HTTP_ENABLED
-              value: "true"
-            - name: KC_HOSTNAME
-              value: {{ .Values.keycloak.hostname | quote }}
-          ports:
-            - name: http
-              containerPort: 8080
-          resources:
-            {{- toYaml .Values.keycloak.resources | nindent 12 }}
----
+# In-cluster DNS alias: keycloakx exposes LoadBalancer as keycloak-http.
+# Gateway JWKS and docs use http://keycloak:7080/...
 apiVersion: v1
 kind: Service
 metadata:
@@ -147,11 +86,12 @@ metadata:
   labels:
     app: keycloak
 spec:
-  selector:
-    app: keycloak
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: http
       port: 7080
-      targetPort: 8080
+      targetPort: http
+  selector:
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

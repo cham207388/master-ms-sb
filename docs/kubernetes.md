@@ -140,7 +140,7 @@ kubectl apply -f kubernetes/10_message.yml
 
 ## Helm (DRY alternative)
 
-Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies** — Kafka, Keycloak, and Postgres use the same first-party images as the raw YAML.
+Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies.** Kafka and domain Postgres stay first-party (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via the **codecentric/keycloakx** subchart plus a first-party `keycloak-db` Postgres template — see [`helm/securedbank/README.md`](../helm/securedbank/README.md).
 
 Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies.
 
@@ -155,16 +155,22 @@ Tune ports, images, and Feign NetPol `ingressFrom` in [`helm/securedbank/values.
 
 ## Keycloak + realm
 
-After Keycloak is Ready:
+Bring Keycloak up with either path (not both on the same cluster), then provision the realm:
 
 ```bash
+# Raw manifests
+make k8s-keycloak          # kubernetes/1_keycloak.yml
+
+# Or Helm umbrella (codecentric/keycloakx + keycloak-db)
+make helm-up
+
 # Admin UI (expand left nav; realm dropdown → securedbankdev)
 open http://localhost:7080/admin/
 
 make infra                 # OpenTofu creates securedbankdev on the Keycloak Postgres PVC
 ```
 
-H2/`start-dev` is not used in k8s: realm data survives Keycloak pod restarts while the Postgres PVC remains.
+Both expose admin on `http://localhost:7080` and in-cluster JWKS at `http://keycloak:7080/...`. H2/`start-dev` is not used in k8s: realm data survives Keycloak pod restarts while the Postgres PVC remains.
 
 ## Shared ConfigMap keys
 

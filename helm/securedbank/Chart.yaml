@@ -1,6 +1,6 @@
 apiVersion: v2
 name: securedbank
-description: SecuredBank microservices umbrella chart (no Bitnami deps)
+description: SecuredBank microservices umbrella chart (no Bitnami; Keycloak via codecentric/keycloakx)
 type: application
 version: 0.1.0
 appVersion: "s15"
@@ -8,3 +8,8 @@ dependencies:
   - name: securedbank-lib
     version: 0.1.0
     repository: "file://charts/securedbank-lib"
+  - name: keycloakx
+    version: "7.2.2"
+    repository: "https://codecentric.github.io/helm-charts"
+    alias: keycloak
+    condition: keycloak.enabled

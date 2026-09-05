@@ -46,11 +46,42 @@ kafka:
 
 keycloak:
   enabled: true
-  image: quay.io/keycloak/keycloak:26.7.0
-  hostname: "http://localhost:7080"
-  adminUser: admin
-  adminPassword: admin
+  # Parent-only: used by templates/keycloak-db.yaml (ignored by keycloakx)
   dbPassword: keycloak-db-password
+  # codecentric/keycloakx (alias: keycloak)
+  fullnameOverride: keycloak
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: "26.7.0"
+  # Image ENTRYPOINT is kc.sh; without args the pod exits immediately.
+  args:
+    - start
+  http:
+    relativePath: "/"
+  proxy:
+    enabled: false
+  service:
+    type: LoadBalancer
+    httpPort: 7080
+  database:
+    vendor: postgres
+    hostname: keycloak-db
+    port: 5432
+    database: keycloak
+    username: keycloak
+    existingSecret: keycloak-db-secret
+    existingSecretKey: KC_DB_PASSWORD
+  dbchecker:
+    enabled: true
+  ingress:
+    enabled: false
+  extraEnv: |
+    - name: KC_BOOTSTRAP_ADMIN_USERNAME
+      value: admin
+    - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+      value: admin
+    - name: KC_HOSTNAME
+      value: "http://localhost:7080"
   resources:
     requests:
       cpu: "250m"

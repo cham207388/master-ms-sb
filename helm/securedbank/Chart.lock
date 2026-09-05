@@ -2,5 +2,8 @@ dependencies:
 - name: securedbank-lib
   repository: file://charts/securedbank-lib
   version: 0.1.0
-digest: sha256:9ab9a03b540f7ce7359f6c19367f019ad6a01b42edea921f376ae9d0d1f54f82
-generated: "2026-09-04T17:23:02.173229-05:00"
+- name: keycloakx
+  repository: https://codecentric.github.io/helm-charts
+  version: 7.2.2
+digest: sha256:cd73e2e99303b33cd40fa27f4761bf56755a359dc7a0879d8022dba54fdfd7d7
+generated: "2026-09-05T06:12:41.40992-05:00"

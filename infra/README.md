@@ -1,14 +1,15 @@
 # Keycloak infra
 
-OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0**. Local Compose: [`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml). Kind: [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml) (Postgres StatefulSet + Deployment). Host URL: `http://localhost:7080`. This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
+OpenTofu provisions a local [Keycloak](https://www.keycloak.org/) tenant for Securedbank: realm, OAuth clients, realm roles, and two demo users. The server itself is **Keycloak 26.7.0**. Local Compose: [`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml). Kind (raw): [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml). Kind (Helm): [`helm/securedbank`](../helm/securedbank) via `make helm-up` (codecentric/keycloakx + first-party Postgres). Host URL: `http://localhost:7080`. This stack uses OpenTofu with provider `keycloak/keycloak` `5.8.0`.
 
 ```bash
 # Compose
 make keycloak-up      # start Keycloak + Postgres
 make keycloak-down    # stop Keycloak and wipe its volume
 
-# kind
+# kind (pick one path)
 make k8s-keycloak     # apply kubernetes/1_keycloak.yml
+# or: make helm-up    # umbrella chart (see helm/securedbank/README.md)
 
 make infra            # tofu init + apply (alias: make infra-apply)
 make infra-plan       # preview changes
