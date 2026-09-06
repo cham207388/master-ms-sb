@@ -369,7 +369,7 @@ make gateway-server-image-push-tag TAG=v1.0.0
 ---
 
 <details>
-<summary><span style="color: blue;">Kubernetes</span></summary>
+<summary><span style="color: cyan;"><strong>Kubernetes</strong></span></summary>
 
 Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 
@@ -454,7 +454,107 @@ make helm-deps
 helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
 ```
 
+---
+
+<details>
+<summary><span style="color: cyan;"><strong>Step by step helm guide after repo is cloned</strong></span></summary>
+
+Assumes a **kind** cluster is already running and `kubectl` points at it (`kubectl config current-context` → `kind-kind`). Chart archives under `helm/securedbank/charts/*.tgz` are **gitignored** — you must fetch them before install.
+
+**0. Host prerequisites (once)**
+
+```bash
+# Helm CLI
+brew install helm
+
+# LoadBalancer EXTERNAL-IP → localhost on kind (keep running)
+brew install cloud-provider-kind
+sudo cloud-provider-kind          # foreground
+# or: sudo -b cloud-provider-kind
+```
+
+Optional NetworkPolicy enforcement (requires a cluster created with `disableDefaultCNI: true` — see [docs/kubernetes.md](docs/kubernetes.md)):
+
+```bash
+make k8s-calico
+kubectl -n kube-system rollout status ds/calico-node
+```
+
+**1. Fetch Helm chart dependencies (required after clone)**
+
+```bash
+cd /path/to/master-ms-sb
+make helm-deps
+# → helm dependency update helm/securedbank
+# → writes securedbank-lib + keycloakx / loki / alloy / tempo / grafana / prometheus *.tgz
+
+ls helm/securedbank/charts/*.tgz
+make helm-lint
+```
+
+**2. App images**
+
+Chart default is `global.appImageRegistry=baicham` and `global.imageTag=s16`. Kind pulls from Docker Hub unless you build/push your own tag.
+
+```bash
+# Use published Hub images (default values), or build/push first:
+# make images-build-push IMAGE_TAG=s16
+```
+
+**3. Install the umbrella release**
+
+```bash
+make helm-up
+# → helm upgrade --install securedbank ./helm/securedbank
+# (runs helm-deps again automatically)
+
+# Or pin a tag explicitly:
+# helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+```
+
+**4. Wait for Keycloak, then provision the realm**
+
+```bash
+kubectl rollout status statefulset/keycloak --timeout=5m
+make infra                 # OpenTofu → realm securedbankdev on Keycloak Postgres
+```
+
+**5. Confirm the stack**
+
+```bash
+kubectl get deploy,sts,ds
+kubectl get pods
+kubectl get svc
+```
+
+Expect Deployments `grafana` / `prometheus`, StatefulSets `loki` / `tempo` / `keycloak`, DaemonSet `alloy`, plus Spring apps and Kafka.
+
+**6. Access (macOS / Docker Desktop: use `localhost`, not bridge EXTERNAL-IP)**
+
+| What | URL |
+|------|-----|
+| Keycloak admin | http://localhost:7080/admin/ → realm `securedbankdev` |
+| Grafana | http://localhost:3000 (`admin` / `admin`) |
+| Prometheus | http://localhost:9090 |
+| Gateway / Eureka / Config | `kubectl get svc` → `http://localhost:<Service port>/…` |
+
+Call domain APIs through the **gateway** LoadBalancer, not accounts/cards/loans Services directly.
+
+**Tear down**
+
+```bash
+make helm-down             # helm uninstall securedbank
+# sudo pkill cloud-provider-kind   # when finished with LoadBalancers
+```
+
+**Optional remove data**
+
+
 </details>
+
+</details>
+
+---
 
 <details>
 <summary><span style="color: cyan;"><strong>References</strong></span></summary>
