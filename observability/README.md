@@ -206,3 +206,21 @@ docker compose -f docker/compose.yml --project-directory . up -d
    - Access MinIO Console at [http://localhost:9001](http://localhost:9001).
    - Login with Credentials: Username `loki` / Password `supersecret`.
    - Verify `loki-data` bucket contains generated TSDB index and chunk objects.
+
+---
+
+## Kubernetes (Helm) path
+
+In-cluster observability ships with the [`helm/securedbank`](../helm/securedbank) umbrella (`make helm-up`), not with raw `make k8s-*`.
+
+| Concern | Compose | Helm (kind) |
+| :--- | :--- | :--- |
+| Install | `make all-up` | `make helm-up` |
+| Grafana | `http://localhost:3000` | LoadBalancer `http://localhost:3000` |
+| Prometheus | `http://localhost:9090` | LoadBalancer `http://localhost:9090` |
+| Loki | nginx gateway `:3100` + `tenant1` | SingleBinary `http://loki:3100`, `auth_enabled: false` (no tenant header) |
+| Alloy | Docker socket | DaemonSet (`loki.source.kubernetes`) → `http://loki:3100/loki/api/v1/push` |
+| Tempo OTLP | `http://tempo:4317` | same DNS (`OTEL_EXPORTER_OTLP_ENDPOINT` in ConfigMap) |
+| Tempo query (Grafana) | `http://tempo:3100` | `http://tempo:3200` (chart HTTP API port) |
+
+Details and disable flags: [helm/securedbank/README.md](../helm/securedbank/README.md). Platform notes: [docs/kubernetes.md](../docs/kubernetes.md).

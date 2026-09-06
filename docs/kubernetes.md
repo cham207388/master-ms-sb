@@ -10,7 +10,7 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
 | [`kubernetes/3_*.yml` … `10_message.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
 | [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) | Single-node KRaft Kafka (`kafka:19092`) |
-| [`helm/securedbank/`](../helm/securedbank/) | Umbrella Helm chart (DRYs Deployments/Services/DBs/NetPol); library under `charts/securedbank-lib/` |
+| [`helm/securedbank/`](../helm/securedbank/) | Umbrella Helm chart (DRYs Deployments/Services/DBs/NetPol + observability); library under `charts/securedbank-lib/` |
 | `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml` |
 | `message/k8s/` | `deployment.yml`, `service.yml` (ClusterIP worker; Kafka via ConfigMap) |
 | `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/` | `deployment.yml`, `service.yml` (LoadBalancer) |
@@ -140,18 +140,29 @@ kubectl apply -f kubernetes/10_message.yml
 
 ## Helm (DRY alternative)
 
-Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies.** Kafka and domain Postgres stay first-party (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via the **codecentric/keycloakx** subchart plus a first-party `keycloak-db` Postgres template — see [`helm/securedbank/README.md`](../helm/securedbank/README.md).
+Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies.** Kafka and domain Postgres stay first-party (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via the **codecentric/keycloakx** subchart plus a first-party `keycloak-db` Postgres template. Observability (Loki, Alloy, Tempo, Grafana, Prometheus) is installed as conditional upstream subcharts — see [`helm/securedbank/README.md`](../helm/securedbank/README.md).
 
-Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies.
+Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies. In-cluster metrics/logs/traces require **`make helm-up`** (not `make k8s-up` alone).
 
 ```bash
 make helm-lint       # dependency update + lint
 make helm-template   # render manifests to stdout
-make helm-up         # helm upgrade --install securedbank
+make helm-up         # helm upgrade --install securedbank (apps + Keycloak + observability)
 make helm-down       # helm uninstall securedbank
 ```
 
-Tune ports, images, and Feign NetPol `ingressFrom` in [`helm/securedbank/values.yaml`](../helm/securedbank/values.yaml) (`global.imageTag`, `services.*`). Example: bump all app images with `--set global.imageTag=s15`.
+Tune ports, images, Feign NetPol `ingressFrom`, and observability toggles in [`helm/securedbank/values.yaml`](../helm/securedbank/values.yaml) (`global.imageTag`, `services.*`, `loki.enabled`, …). Example: bump all app images with `--set global.imageTag=s15`.
+
+### Observability on kind
+
+| UI / API | Access |
+| :--- | :--- |
+| Grafana | `http://localhost:3000` (LoadBalancer; needs `cloud-provider-kind`) |
+| Prometheus | `http://localhost:9090` |
+| Tempo OTLP | in-cluster `http://tempo:4317` (apps via ConfigMap OTEL keys) |
+| Loki | in-cluster `http://loki:3100` (Alloy DaemonSet pushes pod logs) |
+
+With Calico, domain API NetworkPolicies allow Prometheus scrape peers (`app.kubernetes.io/name: prometheus`) in addition to gateway / Feign. Loki runs SingleBinary with a small PVC — expect extra node disk/CPU vs apps-only.
 
 ## Keycloak + realm
 
@@ -180,8 +191,9 @@ Consumed via `configMapKeyRef` from `securedbank-configmap` (see [`kubernetes/2_
 - `EUREKA_DEFAULT_ZONE`, `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE`
 - `KAFKA_BROKER`, `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`
 - `KEYCLOAK_JWK_SET_URI` (gateway; use Service port `7080` → `http://keycloak:7080/...`)
+- OTEL (Compose parity): `JAVA_TOOL_OPTIONS`, `OTEL_EXPORTER_OTLP_ENDPOINT` (`http://tempo:4317`), `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, logback appender flags
 
-Per-service names and datasource URLs stay on each Deployment (not in the shared map).
+Per-service names and datasource URLs stay on each Deployment (not in the shared map). Helm injects the OTEL keys via each service’s `configMapKeys` and sets `OTEL_SERVICE_NAME` in `extraEnv`. Raw `*/k8s/deployment.yml` files do not yet reference the OTEL keys — tracing in-cluster needs the Helm path (and a running Tempo Service).
 
 ## Suggested order
 

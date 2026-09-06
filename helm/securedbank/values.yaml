@@ -1,6 +1,6 @@
 global:
   imageRegistry: baicham
-  imageTag: s15
+  imageTag: s16
   configMapName: securedbank-configmap
   postgresImage: postgres:18-alpine
   postgresStorage: 1Gi
@@ -31,6 +31,13 @@ configMap:
     KAFKA_BROKER: "kafka:19092"
     SPRING_DATA_REDIS_HOST: "redis"
     SPRING_DATA_REDIS_PORT: "6379"
+    JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo:4317"
+    OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+    OTEL_METRICS_EXPORTER: "none"
+    OTEL_LOGS_EXPORTER: "none"
+    OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED: "false"
+    OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED: "false"
 
 kafka:
   enabled: true
@@ -90,6 +97,285 @@ keycloak:
       cpu: "1000m"
       memory: "1Gi"
 
+# ---------------------------------------------------------------------------
+# Observability (Grafana Loki / Alloy / Tempo / Grafana + Prometheus)
+# Toggle with <chart>.enabled; disable all for apps-only installs.
+# ---------------------------------------------------------------------------
+
+loki:
+  enabled: true
+  fullnameOverride: loki
+  deploymentMode: SingleBinary
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    useTestSchema: true
+  singleBinary:
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  gateway:
+    enabled: false
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
+  test:
+    enabled: false
+  lokiCanary:
+    enabled: false
+  monitoring:
+    selfMonitoring:
+      enabled: false
+    lokiCanary:
+      enabled: false
+  minio:
+    enabled: false
+
+alloy:
+  enabled: true
+  fullnameOverride: alloy
+  alloy:
+    mounts:
+      varlog: true
+    configMap:
+      create: true
+      content: |
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+        discovery.relabel "pods" {
+          targets = discovery.kubernetes.pods.targets
+
+          rule {
+            source_labels = ["__meta_kubernetes_namespace"]
+            target_label  = "namespace"
+          }
+
+          rule {
+            source_labels = ["__meta_kubernetes_pod_name"]
+            target_label  = "pod"
+          }
+
+          rule {
+            source_labels = ["__meta_kubernetes_pod_container_name"]
+            target_label  = "container"
+          }
+
+          rule {
+            source_labels = ["__meta_kubernetes_pod_label_app"]
+            target_label  = "app"
+          }
+        }
+
+        loki.source.kubernetes "pods" {
+          targets    = discovery.relabel.pods.output
+          forward_to = [loki.process.pods.receiver]
+        }
+
+        loki.process "pods" {
+          forward_to = [loki.write.default.receiver]
+
+          stage.json {
+            expressions = {
+              level     = "level",
+              timestamp = "timestamp",
+              message   = "message",
+              trace_id  = "trace_id",
+            }
+          }
+
+          stage.labels {
+            values = {
+              level    = "",
+              trace_id = "",
+            }
+          }
+        }
+
+        loki.write "default" {
+          endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+          }
+        }
+  controller:
+    type: daemonset
+    tolerations:
+      - operator: Exists
+        effect: NoSchedule
+
+tempo:
+  enabled: true
+  fullnameOverride: tempo
+  tempo:
+    retention: 168h
+    metricsGenerator:
+      enabled: false
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+grafana:
+  enabled: true
+  fullnameOverride: grafana
+  adminUser: admin
+  adminPassword: admin
+  service:
+    type: LoadBalancer
+    port: 3000
+  grafana.ini:
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          uid: prometheus
+          url: http://prometheus:9090
+          access: proxy
+          isDefault: true
+        - name: Tempo
+          type: tempo
+          uid: tempo
+          url: http://tempo:3200
+          access: proxy
+          jsonData:
+            httpMethod: GET
+            serviceMap:
+              datasourceUid: prometheus
+        - name: Loki
+          type: loki
+          uid: loki
+          url: http://loki:3100
+          access: proxy
+          jsonData:
+            derivedFields:
+              - datasourceUid: tempo
+                matcherRegex: "\\[.+,(.+),.+\\]"
+                name: TraceID
+                url: "$${__value.raw}"
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+prometheus:
+  enabled: true
+  server:
+    fullnameOverride: prometheus
+    global:
+      scrape_interval: 5s
+      evaluation_interval: 5s
+    service:
+      type: LoadBalancer
+      servicePort: 9090
+    persistentVolume:
+      enabled: false
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  scrapeConfigs:
+    prometheus:
+      enabled: true
+    kubernetes-api-servers:
+      enabled: false
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-service-endpoints:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    kubernetes-services-slow:
+      enabled: false
+    kubernetes-pods:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
+    accounts:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["accounts:8091"]
+    cards:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["cards:8092"]
+    loans:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["loans:8093"]
+    gateway-server:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["gateway-server:8072"]
+    eureka-server:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["eureka-server:8070"]
+    config-server:
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ["config-server:8071"]
+
 services:
   config-server:
     enabled: true
@@ -98,7 +384,17 @@ services:
     serviceType: LoadBalancer
     springApplicationName: false
     database: false
-    configMapKeys: []
+    configMapKeys:
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: config-server
 
   eureka-server:
     enabled: true
@@ -110,8 +406,17 @@ services:
       - CONFIG_SERVER_URL
       - SPRING_CONFIG_IMPORT
       - EUREKA_DEFAULT_ZONE
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
     extraEnv:
       - name: EUREKA_HOSTNAME
+        value: eureka-server
+      - name: OTEL_SERVICE_NAME
         value: eureka-server
 
   accounts:
@@ -127,10 +432,22 @@ services:
       - SPRING_CONFIG_IMPORT
       - EUREKA_DEFAULT_ZONE
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: accounts
     networkPolicy:
       enabled: true
       ingressFrom:
         - gateway-server
+      ingressFromLabels:
+        - app.kubernetes.io/name: prometheus
 
   cards:
     enabled: true
@@ -144,11 +461,23 @@ services:
       - SPRING_CONFIG_IMPORT
       - EUREKA_DEFAULT_ZONE
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: cards
     networkPolicy:
       enabled: true
       ingressFrom:
         - gateway-server
         - accounts
+      ingressFromLabels:
+        - app.kubernetes.io/name: prometheus
 
   loans:
     enabled: true
@@ -162,11 +491,23 @@ services:
       - SPRING_CONFIG_IMPORT
       - EUREKA_DEFAULT_ZONE
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: loans
     networkPolicy:
       enabled: true
       ingressFrom:
         - gateway-server
         - accounts
+      ingressFromLabels:
+        - app.kubernetes.io/name: prometheus
 
   message:
     enabled: true
@@ -175,7 +516,17 @@ services:
     serviceType: ClusterIP
     database: false
     kafkaBroker: true
-    configMapKeys: []
+    configMapKeys:
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: message
     resources:
       requests:
         cpu: "100m"
@@ -199,3 +550,13 @@ services:
       - KEYCLOAK_JWK_SET_URI
       - SPRING_DATA_REDIS_HOST
       - SPRING_DATA_REDIS_PORT
+      - JAVA_TOOL_OPTIONS
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_METRICS_EXPORTER
+      - OTEL_LOGS_EXPORTER
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+    extraEnv:
+      - name: OTEL_SERVICE_NAME
+        value: gateway-server

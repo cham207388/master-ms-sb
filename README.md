@@ -319,7 +319,7 @@ Full cheat sheet: [docs/makefile.md](docs/makefile.md).
 | `k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message` | Apply `<service>/k8s/` (message: Deployment + ClusterIP) |
 | `k8s-config-server` / `k8s-eureka-server` / `k8s-gateway-server` | Apply platform service `k8s/` folders |
 | `k8s-platform` / `k8s-services` / `k8s-up` | Platform only, services only, or everything |
-| `helm-up` / `helm-down` / `helm-lint` / `helm-template` | Umbrella Helm chart (`helm/securedbank`; no Bitnami; Keycloak via codecentric/keycloakx) |
+| `helm-up` / `helm-down` / `helm-lint` / `helm-template` | Umbrella Helm chart (`helm/securedbank`; Keycloak + Loki/Alloy/Tempo/Grafana/Prometheus) |
 
 ### Docker Hub images
 
@@ -373,12 +373,12 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 - Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
 - Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `message/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
 - Numbered files `kubernetes/3_*.yml` … `10_message.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies; `9` is Kafka)
-- Optional DRY install: [`helm/securedbank`](helm/securedbank) (`make helm-up`) — values-driven; no Bitnami; Keycloak via codecentric/keycloakx + first-party Postgres
+- Optional DRY install: [`helm/securedbank`](helm/securedbank) (`make helm-up`) — values-driven; no Bitnami; Keycloak via codecentric/keycloakx + first-party Postgres; observability via Grafana/Prometheus Helm subcharts
 
 **Isolation**
 
-- Edge (gateway / config / eureka / keycloak): LoadBalancer
-- Domain APIs + DBs: ClusterIP; NetworkPolicies allow gateway→APIs, accounts→cards/loans (Feign), and API→own DB only
+- Edge (gateway / config / eureka / keycloak / Grafana / Prometheus): LoadBalancer
+- Domain APIs + DBs: ClusterIP; NetworkPolicies allow gateway→APIs, accounts→cards/loans (Feign), Prometheus→APIs (scrape), and API→own DB only
 - kindnet does **not** enforce NetworkPolicy — use `make k8s-calico` on a cluster created with `disableDefaultCNI: true` (see [docs/kubernetes.md](docs/kubernetes.md))
 
 **Prerequisites**
@@ -411,6 +411,8 @@ make k8s-services          # or: make k8s-up for platform + services
 <summary><span style="color: cyan;"><strong>Helm chart</strong></span></summary>
 
 Chart: [`helm/securedbank`](helm/securedbank). Full notes: [helm/securedbank/README.md](helm/securedbank/README.md).
+
+`make helm-up` installs apps, Keycloak, and observability (Grafana `:3000`, Prometheus `:9090`, Loki, Alloy, Tempo). Raw `make k8s-*` does not deploy the telemetry stack. Toggle with `--set loki.enabled=false` (and the other `*.enabled` flags) if you want apps-only.
 
 **After code changes → new images → cluster**
 

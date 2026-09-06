@@ -1,6 +1,6 @@
 apiVersion: v2
 name: securedbank
-description: SecuredBank microservices umbrella chart (no Bitnami; Keycloak via codecentric/keycloakx)
+description: SecuredBank microservices umbrella chart (no Bitnami; Keycloak via codecentric/keycloakx; observability via Grafana/Prometheus charts)
 type: application
 version: 0.1.0
 appVersion: "s15"
@@ -13,3 +13,23 @@ dependencies:
     repository: "https://codecentric.github.io/helm-charts"
     alias: keycloak
     condition: keycloak.enabled
+  - name: loki
+    version: "6.42.0"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: loki.enabled
+  - name: alloy
+    version: "1.12.1"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: alloy.enabled
+  - name: tempo
+    version: "1.24.4"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: tempo.enabled
+  - name: grafana
+    version: "10.5.15"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: grafana.enabled
+  - name: prometheus
+    version: "29.27.1"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: prometheus.enabled

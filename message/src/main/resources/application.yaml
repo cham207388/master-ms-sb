@@ -19,6 +19,8 @@ spring:
           brokers: ${KAFKA_BROKER:localhost:9092}
 
 logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id}]"
   level:
     org.apache.kafka: WARN
     org.apache.kafka.clients.consumer.internals.OffsetFetcherUtils: ERROR

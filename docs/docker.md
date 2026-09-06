@@ -56,4 +56,6 @@ make all-down                        # tear down default project
 make all-up                          # includes observability
 ```
 
+For **kind / Kubernetes**, install the same stack via the Helm umbrella (`make helm-up`) instead of Compose — see [kubernetes.md](kubernetes.md) and [helm/securedbank/README.md](../helm/securedbank/README.md).
+
 See [makefile.md](makefile.md) for the full target list.

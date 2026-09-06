@@ -1,8 +1,8 @@
 # SecuredBank Helm chart
 
-Umbrella chart that renders ConfigMap, Kafka, Keycloak (via upstream subchart), and all Spring services from [`values.yaml`](values.yaml). Shared Spring/Postgres/NetworkPolicy templates live in the **library** chart [`charts/securedbank-lib`](charts/securedbank-lib) (`type: library`).
+Umbrella chart that renders ConfigMap, Kafka, Keycloak (via upstream subchart), observability (Loki, Alloy, Tempo, Grafana, Prometheus), and all Spring services from [`values.yaml`](values.yaml). Shared Spring/Postgres/NetworkPolicy templates live in the **library** chart [`charts/securedbank-lib`](charts/securedbank-lib) (`type: library`).
 
-**No Bitnami** (or other commercial) chart dependencies. Kafka and domain Postgres use first-party images (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via **[codecentric/keycloakx](https://artifacthub.io/packages/helm/codecentric/keycloakx)**.
+**No Bitnami** (or other commercial) chart dependencies. Kafka and domain Postgres use first-party images (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via **[codecentric/keycloakx](https://artifacthub.io/packages/helm/codecentric/keycloakx)**. Observability uses Grafana and Prometheus Community Helm charts.
 
 ## Keycloak
 
@@ -30,19 +30,46 @@ Toggle with `keycloak.enabled`. Important `keycloak.*` values (see [`values.yaml
 - `database.*` → `keycloak-db` + Secret `keycloak-db-secret` / `KC_DB_PASSWORD`
 - `args: [start]`, `extraEnv` for bootstrap admin + `KC_HOSTNAME` (`KC_HTTP_ENABLED` comes from the subchart)
 
+## Observability
+
+Installed with `make helm-up` (same release as apps). Compose remains the Docker telemetry path; raw `make k8s-*` does **not** deploy Loki/Tempo/Prometheus.
+
+| Component | Chart | In-cluster | Host (LoadBalancer) |
+|-----------|--------|------------|---------------------|
+| Loki (SingleBinary) | `grafana/loki` | `http://loki:3100` | — |
+| Alloy (DaemonSet) | `grafana/alloy` | pushes to Loki | — |
+| Tempo | `grafana/tempo` | OTLP `http://tempo:4317`; query `http://tempo:3200` | — |
+| Grafana | `grafana/grafana` | — | `http://localhost:3000` (`admin` / `admin`) |
+| Prometheus | `prometheus-community/prometheus` | `http://prometheus:9090` | `http://localhost:9090` |
+
+DNS contracts use `fullnameOverride` so names stay stable under release `securedbank`. Apps get OTEL env from the shared ConfigMap (`OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317`) plus per-service `OTEL_SERVICE_NAME`. Domain API NetworkPolicies allow Prometheus scrape peers (`app.kubernetes.io/name: prometheus`) in addition to gateway/Feign.
+
+Toggle (all default `true`):
+
+```bash
+helm upgrade --install securedbank ./helm/securedbank \
+  --set loki.enabled=false \
+  --set alloy.enabled=false \
+  --set tempo.enabled=false \
+  --set grafana.enabled=false \
+  --set prometheus.enabled=false
+```
+
 ## Package dependencies (`.tgz`)
 
 `charts/*.tgz` archives are **gitignored**. Helm needs them before `lint` / `template` / `install`.
 
 - Local library: source tree [`charts/securedbank-lib/`](charts/securedbank-lib/)
-- Keycloak: downloaded **keycloakx** from `https://codecentric.github.io/helm-charts` (pinned in [`Chart.yaml`](Chart.yaml) / [`Chart.lock`](Chart.lock))
+- Keycloak: **keycloakx** from `https://codecentric.github.io/helm-charts`
+- Observability: **loki**, **alloy**, **tempo**, **grafana** from `https://grafana.github.io/helm-charts`; **prometheus** from `https://prometheus-community.github.io/helm-charts`
+- Versions pinned in [`Chart.yaml`](Chart.yaml) / [`Chart.lock`](Chart.lock)
 
 From repo root (preferred):
 
 ```bash
 make helm-deps
 # → helm dependency update helm/securedbank
-# → writes charts/securedbank-lib-0.1.0.tgz and charts/keycloakx-*.tgz
+# → writes charts/securedbank-lib-0.1.0.tgz and upstream *.tgz archives
 ```
 
 Or from this directory:

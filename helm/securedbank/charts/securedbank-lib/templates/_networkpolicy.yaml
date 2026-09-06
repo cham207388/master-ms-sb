@@ -44,5 +44,16 @@ spec:
       ports:
         - protocol: TCP
           port: {{ $svc.port }}
+    {{- with $svc.networkPolicy.ingressFromLabels }}
+    - from:
+        {{- range . }}
+        - podSelector:
+            matchLabels:
+              {{- toYaml . | nindent 14 }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ $svc.port }}
+    {{- end }}
 {{- end }}
 {{- end -}}

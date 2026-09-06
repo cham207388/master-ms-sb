@@ -5,5 +5,20 @@ dependencies:
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 7.2.2
-digest: sha256:cd73e2e99303b33cd40fa27f4761bf56755a359dc7a0879d8022dba54fdfd7d7
-generated: "2026-09-05T06:12:41.40992-05:00"
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 6.42.0
+- name: alloy
+  repository: https://grafana.github.io/helm-charts
+  version: 1.12.1
+- name: tempo
+  repository: https://grafana.github.io/helm-charts
+  version: 1.24.4
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 10.5.15
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 29.27.1
+digest: sha256:aa0a5bfab217abdcf1899a5fb2cd9d4b5392beaf9aff049269fd5f8df4838f40
+generated: "2026-09-06T07:55:47.293017-05:00"

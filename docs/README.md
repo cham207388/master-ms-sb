@@ -6,8 +6,8 @@ Guides for running and navigating the SecuredBank monorepo.
 | :--- | :--- |
 | [docker.md](docker.md) | Compose layout under `docker/`, networks, Kafka listeners, how to start stacks |
 | [makefile.md](makefile.md) | Make target cheat sheet |
-| [kubernetes.md](kubernetes.md) | kind manifests, `*/k8s/`, Helm umbrella (`helm/securedbank`), ClusterIP + NetworkPolicy, Calico, `make k8s-*` / `make helm-*` |
-| [../observability/README.md](../observability/README.md) | Loki, Alloy, Grafana, Tempo, Prometheus |
+| [kubernetes.md](kubernetes.md) | kind manifests, `*/k8s/`, Helm umbrella (`helm/securedbank` + observability), ClusterIP + NetworkPolicy, Calico, `make k8s-*` / `make helm-*` |
+| [../observability/README.md](../observability/README.md) | Loki, Alloy, Grafana, Tempo, Prometheus (Compose **and** Helm) |
 | [../infra/README.md](../infra/README.md) | Keycloak + OpenTofu realm |
 
 ## Layout
@@ -16,9 +16,10 @@ Guides for running and navigating the SecuredBank monorepo.
 master-ms-sb/
   docker/           # Compose orchestration (compose.yml, fragments, common.yml)
   docs/             # Platform guides (this folder)
+  helm/securedbank/ # Umbrella chart (apps, Keycloak, observability)
   infra/            # OpenTofu for Keycloak realm/clients/users
   kubernetes/       # Platform manifests (Keycloak, ConfigMap) + monolithic copies
-  observability/    # Telemetry config (mounted by docker/compose.observability.yml)
+  observability/    # Telemetry config (Compose mounts; Helm uses chart values)
   accounts/ …       # Services: source, Dockerfile, compose.yml, k8s/
 ```
 
