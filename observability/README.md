@@ -209,18 +209,23 @@ docker compose -f docker/compose.yml --project-directory . up -d
 
 ---
 
-## Kubernetes (Helm) path
+## Kubernetes paths
 
-In-cluster observability ships with the [`helm/securedbank`](../helm/securedbank) umbrella (`make helm-up`), not with raw `make k8s-*`.
+In-cluster observability is available via **Helm** or **raw manifests** (prefer one method per cluster).
 
-| Concern | Compose | Helm (kind) |
-| :--- | :--- | :--- |
-| Install | `make all-up` | `make helm-up` |
-| Grafana | `http://localhost:3000` | LoadBalancer `http://localhost:3000` |
-| Prometheus | `http://localhost:9090` | LoadBalancer `http://localhost:9090` |
-| Loki | nginx gateway `:3100` + `tenant1` | SingleBinary `http://loki:3100`, `auth_enabled: false` (no tenant header) |
-| Alloy | Docker socket | DaemonSet (`loki.source.kubernetes`) → `http://loki:3100/loki/api/v1/push` |
-| Tempo OTLP | `http://tempo:4317` | same DNS (`OTEL_EXPORTER_OTLP_ENDPOINT` in ConfigMap) |
-| Tempo query (Grafana) | `http://tempo:3100` | `http://tempo:3200` (chart HTTP API port) |
+| Concern | Compose | Helm (`make helm-up`) | Raw (`make k8s-observability`) |
+| :--- | :--- | :--- | :--- |
+| Install | `make all-up` | umbrella chart | `kubernetes/11`–`15` after `make k8s-up` |
+| Grafana | `http://localhost:3000` | LoadBalancer `http://localhost:3000` | same |
+| Prometheus | `http://localhost:9090` | LoadBalancer `http://localhost:9090` | same |
+| Loki | nginx gateway `:3100` + `tenant1` | SingleBinary `http://loki:3100`, `auth_enabled: false` | same as Helm |
+| Alloy | Docker socket | DaemonSet → `http://loki:3100/loki/api/v1/push` | same |
+| Tempo OTLP | `http://tempo:4317` | ConfigMap `OTEL_EXPORTER_OTLP_ENDPOINT` | same |
+| Tempo query (Grafana) | `http://tempo:3100` | `http://tempo:3200` | `http://tempo:3200` |
 
-Details and disable flags: [helm/securedbank/README.md](../helm/securedbank/README.md). Platform notes: [docs/kubernetes.md](../docs/kubernetes.md).
+```bash
+make k8s-up
+make k8s-observability
+```
+
+Details: [helm/securedbank/README.md](../helm/securedbank/README.md), [docs/kubernetes.md](../docs/kubernetes.md).

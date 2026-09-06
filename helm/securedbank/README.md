@@ -32,7 +32,7 @@ Toggle with `keycloak.enabled`. Important `keycloak.*` values (see [`values.yaml
 
 ## Observability
 
-Installed with `make helm-up` (same release as apps). Compose remains the Docker telemetry path; raw `make k8s-*` does **not** deploy Loki/Tempo/Prometheus.
+Installed with `make helm-up` (same release as apps). Compose remains the Docker telemetry path. Raw path: `make k8s-observability` applies [`kubernetes/11_loki.yml`](../kubernetes/11_loki.yml) … [`15_prometheus.yml`](../kubernetes/15_prometheus.yml) after `make k8s-up`.
 
 | Component | Chart | In-cluster | Host (LoadBalancer) |
 |-----------|--------|------------|---------------------|

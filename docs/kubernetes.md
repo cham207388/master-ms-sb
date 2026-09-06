@@ -10,6 +10,7 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
 | [`kubernetes/3_*.yml` … `10_message.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
 | [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) | Single-node KRaft Kafka (`kafka:19092`) |
+| [`kubernetes/11_loki.yml` … `15_prometheus.yml`](../kubernetes/) | Raw observability (Loki, Alloy, Tempo, Grafana, Prometheus); `make k8s-observability` |
 | [`helm/securedbank/`](../helm/securedbank/) | Umbrella Helm chart (DRYs Deployments/Services/DBs/NetPol + observability); library under `charts/securedbank-lib/` |
 | `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` | `db.yml`, `deployment.yml`, `service.yml` (ClusterIP), `networkpolicy.yml` |
 | `message/k8s/` | `deployment.yml`, `service.yml` (ClusterIP worker; Kafka via ConfigMap) |
@@ -142,7 +143,7 @@ kubectl apply -f kubernetes/10_message.yml
 
 Umbrella chart [`helm/securedbank/`](../helm/securedbank/) parameterizes the repeated Deployment / Service / Postgres / NetworkPolicy patterns via library chart `charts/securedbank-lib`. **No Bitnami dependencies.** Kafka and domain Postgres stay first-party (`apache/kafka`, `postgres:18-alpine`). Keycloak uses official `quay.io/keycloak/keycloak` via the **codecentric/keycloakx** subchart plus a first-party `keycloak-db` Postgres template. Observability (Loki, Alloy, Tempo, Grafana, Prometheus) is installed as conditional upstream subcharts — see [`helm/securedbank/README.md`](../helm/securedbank/README.md).
 
-Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies. In-cluster metrics/logs/traces require **`make helm-up`** (not `make k8s-up` alone).
+Raw [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) stay valid for learning and granular `make k8s-*` applies. In-cluster metrics/logs/traces: **`make k8s-observability`** after `make k8s-up`, or use **`make helm-up`** (apps + observability in one release). Prefer one apply method per cluster.
 
 ```bash
 make helm-lint       # dependency update + lint
@@ -161,6 +162,13 @@ Tune ports, images, Feign NetPol `ingressFrom`, and observability toggles in [`h
 | Prometheus | `http://localhost:9090` |
 | Tempo OTLP | in-cluster `http://tempo:4317` (apps via ConfigMap OTEL keys) |
 | Loki | in-cluster `http://loki:3100` (Alloy DaemonSet pushes pod logs) |
+
+**Raw path** (`make k8s-observability`): applies [`kubernetes/11_loki.yml`](../kubernetes/11_loki.yml) … [`15_prometheus.yml`](../kubernetes/15_prometheus.yml). Same DNS contracts as Helm (`loki`, `tempo`, `prometheus`, `grafana`). Domain API NetworkPolicies and `*/k8s` Deployments include Prometheus scrape peers and OTEL env.
+
+```bash
+make k8s-up
+make k8s-observability
+```
 
 With Calico, domain API NetworkPolicies allow Prometheus scrape peers (`app.kubernetes.io/name: prometheus`) in addition to gateway / Feign. Loki runs SingleBinary with a small PVC — expect extra node disk/CPU vs apps-only.
 
@@ -193,7 +201,7 @@ Consumed via `configMapKeyRef` from `securedbank-configmap` (see [`kubernetes/2_
 - `KEYCLOAK_JWK_SET_URI` (gateway; use Service port `7080` → `http://keycloak:7080/...`)
 - OTEL (Compose parity): `JAVA_TOOL_OPTIONS`, `OTEL_EXPORTER_OTLP_ENDPOINT` (`http://tempo:4317`), `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, logback appender flags
 
-Per-service names and datasource URLs stay on each Deployment (not in the shared map). Helm injects the OTEL keys via each service’s `configMapKeys` and sets `OTEL_SERVICE_NAME` in `extraEnv`. Raw `*/k8s/deployment.yml` files do not yet reference the OTEL keys — tracing in-cluster needs the Helm path (and a running Tempo Service).
+Per-service names and datasource URLs stay on each Deployment (not in the shared map). Both Helm and raw `*/k8s/deployment.yml` inject the OTEL keys via `configMapKeyRef` and set `OTEL_SERVICE_NAME`. Tracing needs a running Tempo Service (`make k8s-observability` or `make helm-up`).
 
 ## Suggested order
 
@@ -202,5 +210,6 @@ Per-service names and datasource URLs stay on each Deployment (not in the shared
 3. `make k8s-config-server` then `make k8s-eureka-server`
 4. `make k8s-kafka` then `make k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message`
 5. `make k8s-gateway-server` (needs Redis if rate limiting is enabled; ConfigMap points at `redis`)
+6. `make k8s-observability` (Loki, Alloy, Tempo, Grafana, Prometheus) — or use `make helm-up` instead of steps 2–6
 
 Message and Accounts bootstrap Kafka at ConfigMap `KAFKA_BROKER` (`kafka:19092`), which matches the in-cluster Service in [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml).

@@ -6,8 +6,8 @@ Guides for running and navigating the SecuredBank monorepo.
 | :--- | :--- |
 | [docker.md](docker.md) | Compose layout under `docker/`, networks, Kafka listeners, how to start stacks |
 | [makefile.md](makefile.md) | Make target cheat sheet |
-| [kubernetes.md](kubernetes.md) | kind manifests, `*/k8s/`, Helm umbrella (`helm/securedbank` + observability), ClusterIP + NetworkPolicy, Calico, `make k8s-*` / `make helm-*` |
-| [../observability/README.md](../observability/README.md) | Loki, Alloy, Grafana, Tempo, Prometheus (Compose **and** Helm) |
+| [kubernetes.md](kubernetes.md) | kind manifests, `*/k8s/`, raw observability (`11`–`15`), Helm umbrella (`helm/securedbank`), ClusterIP + NetworkPolicy, Calico, `make k8s-*` / `make helm-*` |
+| [../observability/README.md](../observability/README.md) | Loki, Alloy, Grafana, Tempo, Prometheus (Compose, Helm, and raw k8s) |
 | [../infra/README.md](../infra/README.md) | Keycloak + OpenTofu realm |
 
 ## Layout

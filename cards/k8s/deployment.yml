@@ -64,6 +64,45 @@ spec:
           value: "postgres"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "postgres"
+
+        - name: JAVA_TOOL_OPTIONS
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: JAVA_TOOL_OPTIONS
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_EXPORTER_OTLP_ENDPOINT
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_EXPORTER_OTLP_PROTOCOL
+        - name: OTEL_METRICS_EXPORTER
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_METRICS_EXPORTER
+        - name: OTEL_LOGS_EXPORTER
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_LOGS_EXPORTER
+        - name: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED
+        - name: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: securedbank-configmap
+              key: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
+        - name: OTEL_SERVICE_NAME
+          value: "cards"
+
         resources:
           requests:
             cpu: "200m"

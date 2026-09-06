@@ -24,7 +24,7 @@
         k8s-keycloak k8s-configmap k8s-calico k8s-kafka \
         k8s-accounts k8s-cards k8s-loans k8s-message \
         k8s-config-server k8s-eureka-server k8s-gateway-server \
-        k8s-services k8s-platform k8s-up \
+        k8s-services k8s-platform k8s-up k8s-observability \
         helm-deps helm-lint helm-template helm-up helm-down
 
 INFRA_DIR := infra
@@ -453,6 +453,14 @@ k8s-services: k8s-config-server k8s-eureka-server k8s-kafka k8s-accounts k8s-car
 
 k8s-up: k8s-platform k8s-services
 	@echo "all kubernetes manifests applied"
+
+k8s-observability:
+	kubectl apply -f kubernetes/11_loki.yml
+	kubectl apply -f kubernetes/12_alloy.yml
+	kubectl apply -f kubernetes/13_tempo.yml
+	kubectl apply -f kubernetes/14_grafana.yml
+	kubectl apply -f kubernetes/15_prometheus.yml
+	@echo "observability manifests applied (loki alloy tempo grafana prometheus)"
 
 # ==============================================================================
 # Helm (umbrella chart — alternative to make k8s-*)

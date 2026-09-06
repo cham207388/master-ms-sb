@@ -378,6 +378,7 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 - Platform: [`kubernetes/1_keycloak.yml`](kubernetes/1_keycloak.yml), [`kubernetes/2_configmap.yml`](kubernetes/2_configmap.yml)
 - Per service: `accounts/k8s/`, `cards/k8s/`, `loans/k8s/` (include `networkpolicy.yml`), `message/k8s/`, `config-server/k8s/`, `eureka-server/k8s/`, `gateway-server/k8s/`
 - Numbered files `kubernetes/3_*.yml` … `10_message.yml` are monolithic copies (kept for the learning path; `5`–`7` include NetworkPolicies; `9` is Kafka)
+- Observability: `kubernetes/11_loki.yml` … `15_prometheus.yml` (`make k8s-observability`)
 - Optional DRY install: [`helm/securedbank`](helm/securedbank) (`make helm-up`) — values-driven; no Bitnami; Keycloak via codecentric/keycloakx + first-party Postgres; observability via Grafana/Prometheus Helm subcharts
 
 **Isolation**
@@ -399,6 +400,7 @@ Full guide: [docs/kubernetes.md](docs/kubernetes.md).
 make k8s-platform          # Keycloak + ConfigMap
 make infra                 # OpenTofu realm on Keycloak Postgres
 make k8s-services          # or: make k8s-up for platform + services
+make k8s-observability     # Loki, Alloy, Tempo, Grafana, Prometheus
 # per service: make k8s-kafka | k8s-accounts | k8s-cards | k8s-loans | k8s-message | k8s-config-server | …
 ```
 
@@ -417,7 +419,7 @@ make k8s-services          # or: make k8s-up for platform + services
 
 Chart: [`helm/securedbank`](helm/securedbank). Full notes: [helm/securedbank/README.md](helm/securedbank/README.md).
 
-`make helm-up` installs apps, Keycloak, and observability (Grafana `:3000`, Prometheus `:9090`, Loki, Alloy, Tempo). Raw `make k8s-*` does not deploy the telemetry stack. Toggle with `--set loki.enabled=false` (and the other `*.enabled` flags) if you want apps-only.
+`make helm-up` installs apps, Keycloak, and observability (Grafana `:3000`, Prometheus `:9090`, Loki, Alloy, Tempo). Raw path: `make k8s-up` then `make k8s-observability` (same DNS contracts). Toggle Helm with `--set loki.enabled=false` (and the other `*.enabled` flags) if you want apps-only.
 
 **After code changes → new images → cluster**
 
