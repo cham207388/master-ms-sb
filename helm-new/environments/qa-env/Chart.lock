@@ -1,0 +1,27 @@
+dependencies:
+- name: securedbank-common
+  repository: file://../../securedbank-common
+  version: 0.1.0
+- name: config-server
+  repository: file://../../securedbank-services/config-server
+  version: 0.1.0
+- name: eureka-server
+  repository: file://../../securedbank-services/eureka-server
+  version: 0.1.0
+- name: accounts
+  repository: file://../../securedbank-services/accounts
+  version: 0.1.0
+- name: cards
+  repository: file://../../securedbank-services/cards
+  version: 0.1.0
+- name: loans
+  repository: file://../../securedbank-services/loans
+  version: 0.1.0
+- name: gateway-server
+  repository: file://../../securedbank-services/gateway-server
+  version: 0.1.0
+- name: message
+  repository: file://../../securedbank-services/message
+  version: 0.1.0
+digest: sha256:d9aec855311f72286a711322734358fd90d61e7ab0e8ef80dea05b637e020544
+generated: "2023-09-01T12:06:31.531688+05:30"
