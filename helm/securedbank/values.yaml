@@ -1,5 +1,7 @@
 global:
-  imageRegistry: baicham
+  # Docker Hub namespace for Spring app images only (securedbank-lib).
+  # Do not name this imageRegistry — Grafana's chart treats global.imageRegistry as a registry host.
+  appImageRegistry: baicham
   imageTag: s16
   configMapName: securedbank-configmap
   postgresImage: postgres:18-alpine
@@ -307,6 +309,7 @@ prometheus:
     fullnameOverride: prometheus
     global:
       scrape_interval: 5s
+      scrape_timeout: 5s
       evaluation_interval: 5s
     service:
       type: LoadBalancer

@@ -5,7 +5,7 @@ Context dict keys:
   svc   - service values map
 */ -}}
 {{- define "securedbank-lib.fullname" -}}
-{{- printf "%s/%s:%s" .root.Values.global.imageRegistry .svc.image .root.Values.global.imageTag -}}
+{{- printf "%s/%s:%s" .root.Values.global.appImageRegistry .svc.image .root.Values.global.imageTag -}}
 {{- end -}}
 
 {{- define "securedbank-lib.labels" -}}

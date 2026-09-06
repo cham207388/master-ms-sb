@@ -354,12 +354,17 @@ make gateway-server-image-push-tag TAG=v1.0.0
 
 </details>
 
-**Observability resources**
+---
+
+<details>
+<summary><span style="color: cyan;"><strong>Observability resources</strong></span></summary>
 
 - Metrics: `/actuator/metrics`, `/actuator/prometheus` — [Micrometer](https://micrometer.io/) · [Prometheus](https://prometheus.io/)
 - Logs: [Loki](https://grafana.com/docs/loki/latest/) via Alloy
 - Traces: [Tempo](https://grafana.com/docs/tempo/latest/) · [OpenTelemetry](https://opentelemetry.io/)
 - UI: [Grafana](https://grafana.com/) at [http://localhost:3000](http://localhost:3000)
+
+</details>
 
 ---
 
