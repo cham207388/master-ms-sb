@@ -457,7 +457,7 @@ helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
 ---
 
 <details>
-<summary><span style="color: cyan;"><strong>Step by step helm guide after repo is cloned</strong></span></summary>
+<summary><span style="color: green;"><strong>Step by step helm guide after repo is cloned</strong></span></summary>
 
 Assumes a **kind** cluster is already running and `kubectl` points at it (`kubectl config current-context` → `kind-kind`). Chart archives under `helm/securedbank/charts/*.tgz` are **gitignored** — you must fetch them before install.
 
@@ -549,6 +549,23 @@ make helm-down             # helm uninstall securedbank
 
 **Optional remove data**
 
+`make helm-down` uninstalls the release but **leaves PVCs** (Postgres, Loki, Tempo, Keycloak DB). Wipe them for a clean reinstall:
+
+```bash
+make helm-down
+kubectl get pvc
+kubectl delete pvc --all
+# or selectively, e.g.:
+# kubectl delete pvc accounts-pg-data-accounts-db-0 cards-pg-data-cards-db-0 \
+#   loans-pg-data-loans-db-0 keycloak-pg-data-keycloak-db-0 storage-tempo-0
+```
+
+To also drop the kind cluster volumes entirely:
+
+```bash
+kind delete cluster
+# recreate cluster, then start again from step 1
+```
 
 </details>
 
