@@ -13,6 +13,11 @@ output "auth_code_client_id" {
   value       = keycloak_openid_client.auth_code_type.client_id
 }
 
+output "spa_client_id" {
+  description = "Public SPA OAuth client ID (no secret). Use with authorization code + PKCE S256 from http://localhost:5173."
+  value       = keycloak_openid_client.spa_pkce.client_id
+}
+
 output "issuer_uri" {
   description = "OIDC issuer identifier for this realm (iss claim). Resource servers use it to validate that tokens were issued by this Keycloak realm."
   value       = "${trimsuffix(var.keycloak_url, "/")}/realms/${keycloak_realm.main.realm}"

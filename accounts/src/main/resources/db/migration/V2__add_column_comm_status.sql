@@ -1,1 +1,0 @@
-ALTER TABLE accounts ADD COLUMN communication_sw BOOLEAN;

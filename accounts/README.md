@@ -5,7 +5,7 @@
 ![Spring Cloud Stream](https://img.shields.io/badge/Spring%20Cloud%20Stream-Kafka-blue.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18--alpine-blue.svg)
 
-Customer onboarding and account lifecycle for SecuredBank. After create, Accounts publishes a communication event; Message sends email/SMS and Accounts marks the account notified.
+Customer onboarding, account lifecycle, and USD money movement for SecuredBank. Create and money events publish typed notifications; Message sends email via Resend. Only account-open completes the SMS → `communication_sw` path.
 
 ---
 
@@ -17,18 +17,27 @@ Customer onboarding and account lifecycle for SecuredBank. After create, Account
 
 **Schema**
 - `customer`: `customer_id`, `name`, `email`, `mobile_number`, audit fields
-- `accounts`: `account_number`, `customer_id`, `account_type`, `branch_address`, `communication_sw`, audit fields
+- `accounts`: `account_number`, `customer_id`, `account_type`, `branch_address`, `balance`, `communication_sw`, audit fields
+- `transactions`: history rows (`DEPOSIT` / `WITHDRAWAL` / `TRANSFER_OUT` / `TRANSFER_IN`)
+
+> Rewriting Flyway `V1` invalidates checksums — wipe the Accounts Postgres volume/PVC before first boot after a schema rewrite (`make accounts-down` / delete PVC).
 
 ---
 
 ## Event-driven communication
 
-Create publishes `AccountsMsgDto` (`accountNumber`, `name`, `email`, `mobileNumber`) to Kafka. Message consumes it, then Accounts sets `communication_sw = true`.
+Accounts publishes `NotificationMsgDto` (`type`, `accountNumber`, `name`, `email`, `mobileNumber`, optional `amount` / `balance` / `counterpartyAccount`) to `send-communication`.
+
+| Type | When | `communication_sw` |
+| :--- | :--- | :--- |
+| `ACCOUNT_OPENED` | After create | Yes (via `communication-sent`) |
+| `TRANSFER_COMPLETED` | After transfer (sender + destination) | No |
+| `LOW_BALANCE` | When balance crosses below `$100` | No |
 
 ```mermaid
 flowchart LR
   Client -->|POST /api/accounts/create| Accounts
-  Accounts -->|send-communication<br/>AccountsMsgDto| KFK[(Kafka)]
+  Accounts -->|send-communication<br/>NotificationMsgDto| KFK[(Kafka)]
   KFK -->|email then sms| Message
   Message -->|communication-sent<br/>accountNumber| KFK
   KFK -->|updateCommunication| Accounts
@@ -37,7 +46,7 @@ flowchart LR
 
 | Binding | Direction | Destination | Function |
 | :--- | :--- | :--- | :--- |
-| `sendCommunication-out-0` | out | `send-communication` | `StreamBridge` after create |
+| `sendCommunication-out-0` | out | `send-communication` | `StreamBridge` |
 | `updateCommunication-in-0` | in (`group: accounts`) | `communication-sent` | `Consumer<Long>` |
 
 ---
@@ -46,11 +55,17 @@ flowchart LR
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/accounts/create` | Onboard customer, open account, publish event |
-| `GET` | `/api/accounts/fetch` | Fetch by `mobileNumber` |
+| `POST` | `/api/accounts/create` | Onboard customer, open account (balance `0`), publish `ACCOUNT_OPENED` |
+| `GET` | `/api/accounts/fetch` | Fetch by `mobileNumber` (includes `balance`) |
 | `PUT` | `/api/accounts/update` | Update customer and account |
 | `DELETE` | `/api/accounts/delete` | Delete by `mobileNumber` |
+| `POST` | `/api/accounts/deposit` | Credit balance |
+| `POST` | `/api/accounts/withdraw` | Debit if funds allow |
+| `POST` | `/api/accounts/transfer` | Atomic transfer between accounts |
+| `GET` | `/api/accounts/transactions` | History by `accountNumber` or `mobileNumber` |
 | `GET` | `/api/accounts/customers/fetchCustomerDetails` | Aggregate customer, cards, and loans |
+
+Money moves use `@Transactional` and pessimistic locks. Self-transfers and non-positive amounts are rejected.
 
 ---
 

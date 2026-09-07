@@ -11,8 +11,8 @@ The application is structured as a domain-driven microservices architecture comp
 1. **Accounts Microservice** ([`/accounts`](file:///Users/baicham/develop/java-projects/master-ms-sb/accounts))
    - **Server Port**: `8091`
    - **Database**: PostgreSQL 18 on host port `5423` (DB: `accounts`)
-   - **Domain**: Customer onboarding, account lifecycle management, and profile metadata.
-   - **Messaging**: Publishes to Kafka topic `send-communication`; consumes `communication-sent` to set `communication_sw`.
+   - **Domain**: Customer onboarding, account lifecycle, USD balance / deposit / withdraw / transfer, and profile metadata.
+   - **Messaging**: Publishes typed `NotificationMsgDto` to Kafka topic `send-communication`; consumes `communication-sent` to set `communication_sw` (account-open only).
 
 2. **Cards Microservice** ([`/cards`](file:///Users/baicham/develop/java-projects/master-ms-sb/cards))
    - **Server Port**: `8092`
@@ -26,7 +26,8 @@ The application is structured as a domain-driven microservices architecture comp
 
 4. **Message Worker** ([`/message`](file:///Users/baicham/develop/java-projects/master-ms-sb/message))
    - **Internal Port**: `9010` (not published)
-   - **Domain**: Consumes account communication events from Kafka, simulates email then SMS, and publishes `communication-sent`.
+   - **Domain**: Consumes typed notification events from Kafka, sends email via Resend (SMS simulated for account open), and publishes `communication-sent` only for `ACCOUNT_OPENED`.
+   - **Secrets**: `RESEND_API_KEY`, `RESEND_FROM` (verified sender).
 
 5. **Spring Cloud Config Server** ([`/config-server`](file:///Users/baicham/develop/java-projects/master-ms-sb/config-server))
    - **Server Port**: `8071`

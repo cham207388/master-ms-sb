@@ -20,7 +20,7 @@ Edge API for `accounts`, `cards`, and `loans`. Routes through Eureka (`lb://…`
 
 ## Security
 
-OAuth2 resource server. JWT is validated against Keycloak JWKS. `KeycloakRoleConverter` maps `realm_access.roles` to Spring authorities (`ROLE_ACCOUNTS`, `ROLE_CARDS`, `ROLE_LOANS`). CSRF is off.
+OAuth2 resource server. JWT is validated against Keycloak JWKS. `KeycloakRoleConverter` maps `realm_access.roles` to Spring authorities (`ROLE_ACCOUNTS`, `ROLE_CARDS`, `ROLE_LOANS`). CSRF is off. CORS allows the future Vite SPA origin `http://localhost:5173` (Authorization header, common methods).
 
 ```mermaid
 flowchart LR
@@ -37,7 +37,9 @@ flowchart LR
 | `/cards/**`, `/CARDS/**` | `ROLE_CARDS` |
 | `/loans/**`, `/LOANS/**` | `ROLE_LOANS` |
 
-Realm roles and clients are provisioned in [`infra/`](../infra/README.md) (`ACCOUNTS`, `CARDS`, `LOANS`). Example: `POST http://localhost:8072/accounts/api/accounts/create` with a token that includes `ACCOUNTS`.
+Realm roles and clients are provisioned in [`infra/`](../infra/README.md) (`ACCOUNTS`, `CARDS`, `LOANS`). SPA login uses public client `securedbank-spa` (PKCE); M2M uses `securedbank-cc`. Example: `POST http://localhost:8072/accounts/api/accounts/create` with a token that includes `ACCOUNTS`.
+
+The React UI will be a **separate** Vite deployment (not Gateway `resources/static`).
 
 ---
 

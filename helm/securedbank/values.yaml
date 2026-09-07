@@ -41,6 +41,15 @@ configMap:
     OTEL_INSTRUMENTATION_LOGBACK_APPENDER_1_0_ENABLED: "false"
     OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED: "false"
 
+# Resend (Message worker). Chart creates Secret by default with a placeholder key so Message can start.
+# Override with a real key: --set resend.apiKey=re_xxx (never commit real keys).
+# Or set createSecret=false and pre-create Secret named resend.secretName.
+resend:
+  createSecret: true
+  secretName: resend-secret
+  apiKey: "replace-me"
+  from: "Securedbank <onboarding@resend.dev>"
+
 kafka:
   enabled: true
   image: apache/kafka:4.3.1
@@ -519,6 +528,7 @@ services:
     serviceType: ClusterIP
     database: false
     kafkaBroker: true
+    resendSecret: true
     configMapKeys:
       - JAVA_TOOL_OPTIONS
       - OTEL_EXPORTER_OTLP_ENDPOINT

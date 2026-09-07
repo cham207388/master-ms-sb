@@ -1,9 +1,13 @@
 package com.abcham.accounts.controller;
 
 import com.abcham.accounts.constants.AccountsConstants;
+import com.abcham.accounts.dto.AccountsDto;
+import com.abcham.accounts.dto.AmountRequestDto;
 import com.abcham.accounts.dto.CustomerDto;
 import com.abcham.accounts.dto.ErrorResponseDto;
 import com.abcham.accounts.dto.ResponseDto;
+import com.abcham.accounts.dto.TransactionDto;
+import com.abcham.accounts.dto.TransferRequestDto;
 import com.abcham.accounts.service.IAccountsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,7 +24,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "CRUD REST APIs for Accounts in SecuredBank", description = "CRUD REST APIs in SecuredBank to CREATE, UPDATE, FETCH AND DELETE account details")
+import java.util.List;
+
+@Tag(name = "CRUD REST APIs for Accounts in SecuredBank", description = "CRUD and money-movement REST APIs for SecuredBank accounts")
 @RestController
 @RequestMapping(path = "/api/accounts", produces = {MediaType.APPLICATION_JSON_VALUE})
 @AllArgsConstructor
@@ -101,6 +107,44 @@ public class AccountsController {
                     .body(new ResponseDto(AccountsConstants.STATUS_417,
                             AccountsConstants.MESSAGE_417_DELETE));
         }
+    }
+
+    @Operation(summary = "Deposit funds", description = "Credit an account balance")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "HTTP Status OK"),
+            @ApiResponse(responseCode = "400", description = "Invalid amount or account", content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PostMapping("/deposit")
+    public ResponseEntity<AccountsDto> deposit(@Valid @RequestBody AmountRequestDto request) {
+        return ResponseEntity.ok(iAccountsService.deposit(request));
+    }
+
+    @Operation(summary = "Withdraw funds", description = "Debit an account when sufficient balance exists")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "HTTP Status OK"),
+            @ApiResponse(responseCode = "400", description = "Insufficient funds or invalid request", content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PostMapping("/withdraw")
+    public ResponseEntity<AccountsDto> withdraw(@Valid @RequestBody AmountRequestDto request) {
+        return ResponseEntity.ok(iAccountsService.withdraw(request));
+    }
+
+    @Operation(summary = "Transfer funds", description = "Move funds between two accounts")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "HTTP Status OK"),
+            @ApiResponse(responseCode = "400", description = "Insufficient funds or invalid transfer", content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
+    @PostMapping("/transfer")
+    public ResponseEntity<AccountsDto> transfer(@Valid @RequestBody TransferRequestDto request) {
+        return ResponseEntity.ok(iAccountsService.transfer(request));
+    }
+
+    @Operation(summary = "List transactions", description = "Fetch transaction history by accountNumber or mobileNumber")
+    @GetMapping("/transactions")
+    public ResponseEntity<List<TransactionDto>> listTransactions(
+            @RequestParam(required = false) Long accountNumber,
+            @RequestParam(required = false) @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits") String mobileNumber) {
+        return ResponseEntity.ok(iAccountsService.listTransactions(accountNumber, mobileNumber));
     }
 
 }

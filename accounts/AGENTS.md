@@ -6,14 +6,15 @@ Welcome to the **Accounts Microservice** codebase (Domain: Customer Onboarding &
 
 ## 🏛 Domain Boundaries & Architecture
 
-The **Accounts Microservice** manages customer registration, profile metadata, and bank account lifecycles.
+The **Accounts Microservice** manages customer registration, profile metadata, bank account lifecycles, and USD money movement (deposit / withdraw / transfer).
 
 - **Service Port**: `8091`
 - **Database**: PostgreSQL 18 on host port `5423` (Database name: `accounts`)
 - **Package Base**: `com.abcham.accounts`
 - **Entities**:
   - `Customer`: `customer_id` (PK), `name`, `email`, `mobile_number`, audit fields.
-  - `Accounts`: `account_number` (PK), `customer_id` (FK), `account_type`, `branch_address`, `communication_sw`, audit fields.
+  - `Accounts`: `account_number` (PK), `customer_id` (FK), `account_type`, `branch_address`, `balance`, `communication_sw`, audit fields.
+  - `Transaction`: ledger history (`DEPOSIT` / `WITHDRAWAL` / `TRANSFER_OUT` / `TRANSFER_IN`).
 - **Central Infrastructure Dependencies**:
   - **Spring Cloud Config Server**: Port `8071` (`/accounts/default`)
   - **Spring Cloud Netflix Eureka**: Port `8070` (`EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8070/eureka/`)
@@ -75,9 +76,11 @@ Run all build and execution commands within the `accounts` directory:
    - `GET /api/accounts/fetch` - Fetch customer & account details by `mobileNumber`
    - `PUT /api/accounts/update` - Update customer & account details
    - `DELETE /api/accounts/delete` - Delete customer & account by `mobileNumber`
+   - `POST /api/accounts/deposit` / `/withdraw` / `/transfer` - Money movement
+   - `GET /api/accounts/transactions` - Transaction history
 3. **DTO & Validation**:
    - Request payloads must use `@Valid`.
    - Mobile numbers validated via `@Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile number must be 10 digits")`.
    - Standard responses: `ResponseDto` (status/message) and `ErrorResponseDto` (error metadata).
 4. **Flyway Migrations**:
-   - Never modify existing migration scripts (`V1__init.sql`). Create new versioned files (`V2__description.sql`).
+   - Prefer additive versioned scripts (`V2__…`). Schema rewrites of `V1` require wiping the Accounts DB volume (learning environments only).

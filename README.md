@@ -17,7 +17,7 @@
 ![Docker](https://img.shields.io/badge/Docker%20Compose-Enabled-blue.svg)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0.2-green.svg)
 
-Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. Domain APIs (**Accounts**, **Cards**, **Loans**) sit behind a Keycloak-secured Gateway. Config Server and Eureka handle config and discovery. Accounts publishes communication events over **Apache Kafka**; the **Message** worker sends email/SMS and Accounts marks `communication_sw`. Grafana, Loki, Alloy, Tempo, and MinIO cover telemetry.
+Domain-driven banking platform on **Spring Boot 4.1.0**, **Spring Cloud 2025.1.2**, and **Java 25**. Domain APIs (**Accounts**, **Cards**, **Loans**) sit behind a Keycloak-secured Gateway. Config Server and Eureka handle config and discovery. Accounts publishes typed notification events over **Apache Kafka**; the **Message** worker sends email via **Resend** (SMS still simulated for account open) and Accounts marks `communication_sw` for opens. Grafana, Loki, Alloy, Tempo, and MinIO cover telemetry.
 
 Service docs: [accounts](accounts/README.md) · [cards](cards/README.md) · [loans](loans/README.md) · [message](message/README.md) · [gateway](gateway-server/README.md) · [config](config-server/README.md) · [eureka](eureka-server/README.md) · [keycloak](infra/README.md) · [observability](observability/README.md)
 
@@ -91,7 +91,7 @@ flowchart TB
 <details>
 <summary><span style="color: cyan;"><strong>Event-driven communication</strong></span></summary>
 
-On `POST /api/accounts/create`, Accounts publishes `AccountsMsgDto` to `send-communication`. Message runs composed function `email|sms` and publishes `accountNumber` to `communication-sent`. Accounts then sets `communication_sw = true`.
+On `POST /api/accounts/create`, Accounts publishes `NotificationMsgDto` (`ACCOUNT_OPENED`) to `send-communication`. Message sends email via Resend, then SMS, and publishes `accountNumber` to `communication-sent`. Accounts sets `communication_sw = true`. Transfer and low-balance notifications are email-only (no `communication_sw` update).
 
 ```mermaid
 flowchart LR
@@ -107,6 +107,8 @@ flowchart LR
 | `emailsms-in-0` / `emailsms-out-0` | in / `communication-sent` | Message `email\|sms` |
 | `updateCommunication-in-0` | `communication-sent` | Accounts consumer |
 
+Money APIs on Accounts: `POST /deposit`, `/withdraw`, `/transfer`, `GET /transactions`. Set `RESEND_API_KEY` for Message.
+
 </details>
 
 ---
@@ -114,7 +116,7 @@ flowchart LR
 <details>
 <summary><span style="color: cyan;"><strong>Gateway security</strong></span></summary>
 
-OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`). Realm roles `ACCOUNTS`, `CARDS`, `LOANS` become `ROLE_*`. CSRF is off. Realm and clients: [`infra/`](infra/README.md).
+OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs`). Realm roles `ACCOUNTS`, `CARDS`, `LOANS` become `ROLE_*`. CSRF is off. CORS allows `http://localhost:5173` for the future Vite SPA. Clients: [`infra/`](infra/README.md) (`securedbank-cc`, `securedbank-ac`, public PKCE `securedbank-spa`).
 
 | Path | Rule |
 | :--- | :--- |
@@ -570,6 +572,334 @@ kind delete cluster
 ```
 
 </details>
+
+</details>
+
+---
+
+<details>
+<summary><span style="color: cyan;"><strong>All backend endpoints</strong></span></summary>
+
+Call domain APIs through the **Gateway** (`http://localhost:8072`). Path rewrite: `/accounts|cards|loans/**` → `/**` on the target service.
+
+| Auth | Rule |
+| :--- | :--- |
+| `GET /**` | No JWT required (learning mode) |
+| Mutating `/accounts/**` | Bearer JWT with realm role `ACCOUNTS` |
+| Mutating `/cards/**` | Bearer JWT with realm role `CARDS` |
+| Mutating `/loans/**` | Bearer JWT with realm role `LOANS` |
+| SPA CORS | Origin `http://localhost:5173` allowed |
+
+Shared success envelope:
+
+```json
+{ "statusCode": "200", "statusMsg": "Request processed successfully" }
+```
+
+Shared error envelope (`ErrorResponseDto`):
+
+```json
+{
+  "apiPath": "uri=/api/accounts/...",
+  "errorCode": "BAD_REQUEST",
+  "errorMessage": "...",
+  "errorTime": "2026-09-07T12:00:00"
+}
+```
+
+Validation failures (`@Valid`) return `400` with a map of `field → message`.
+
+Currency is **USD**. Amounts are decimals (e.g. `"100.00"`).
+
+---
+
+### Accounts — via Gateway
+
+Base: `http://localhost:8072/accounts/api/accounts`  
+Direct (bypass Gateway): `http://localhost:8091/api/accounts`  
+Swagger: http://localhost:8091/swagger-ui/index.html
+
+#### `POST /create` — open account (balance starts at `0`)
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Request body** (`CustomerDto`; omit `accountsDto` on create):
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "mobileNumber": "1234567890"
+}
+```
+
+**Response `201`:**
+
+```json
+{ "statusCode": "201", "statusMsg": "Account created successfully" }
+```
+
+Side effect: publishes `ACCOUNT_OPENED` → Message (Resend) → SMS → `communication_sw = true`.
+
+---
+
+#### `GET /fetch?mobileNumber=` — customer + account (incl. balance)
+
+**Auth:** none (GET)  
+**Query:** `mobileNumber` (10 digits)
+
+**Response `200`:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "mobileNumber": "1234567890",
+  "accountsDto": {
+    "accountNumber": 1234567890,
+    "accountType": "Savings",
+    "branchAddress": "123 Main Street, New York",
+    "balance": 250.00
+  }
+}
+```
+
+---
+
+#### `PUT /update` — update customer + account metadata
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Request body:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "mobileNumber": "1234567890",
+  "accountsDto": {
+    "accountNumber": 1234567890,
+    "accountType": "Savings",
+    "branchAddress": "123 Main Street, New York",
+    "balance": 250.00
+  }
+}
+```
+
+> Balance in the body is ignored on update (money APIs own the ledger).
+
+**Response `200`:** `{ "statusCode": "200", "statusMsg": "Request processed successfully" }`  
+**Response `417`:** update failed (`MESSAGE_417_UPDATE`)
+
+---
+
+#### `DELETE /delete?mobileNumber=` — delete customer, account, transactions
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Query:** `mobileNumber`
+
+**Response `200`:** success envelope  
+**Response `417`:** delete failed
+
+---
+
+#### `POST /deposit` — credit balance
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Request body** (`AmountRequestDto`; amount must be `> 0`):
+
+```json
+{ "accountNumber": 1234567890, "amount": 100.00 }
+```
+
+**Response `200`** (`AccountsDto`):
+
+```json
+{
+  "accountNumber": 1234567890,
+  "accountType": "Savings",
+  "branchAddress": "123 Main Street, New York",
+  "balance": 350.00
+}
+```
+
+Writes a `DEPOSIT` transaction row.
+
+---
+
+#### `POST /withdraw` — debit balance
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Request body:** same as deposit
+
+**Response `200`:** `AccountsDto` with new balance  
+**Response `400`:** insufficient funds / invalid amount / account not found
+
+If previous balance `≥ 100` and new balance `< 100`, publishes `LOW_BALANCE` email.
+
+---
+
+#### `POST /transfer` — move funds between accounts
+
+**Auth:** `ROLE_ACCOUNTS`  
+**Request body** (`TransferRequestDto`):
+
+```json
+{
+  "sourceAccountNumber": 1234567890,
+  "destinationAccountNumber": 9876543210,
+  "amount": 40.00
+}
+```
+
+**Response `200`:** `AccountsDto` for the **source** account (updated balance)  
+**Response `400`:** self-transfer, insufficient funds, missing account, or non-positive amount
+
+Writes `TRANSFER_OUT` + `TRANSFER_IN`. Publishes `TRANSFER_COMPLETED` to sender and destination owners. May also publish `LOW_BALANCE` for the source.
+
+---
+
+#### `GET /transactions` — history
+
+**Auth:** none (GET)  
+**Query (one required):** `accountNumber` **or** `mobileNumber`
+
+**Response `200`:**
+
+```json
+[
+  {
+    "id": 1,
+    "accountNumber": 1234567890,
+    "type": "DEPOSIT",
+    "amount": 100.00,
+    "balanceAfter": 100.00,
+    "counterpartyAccount": null,
+    "description": "Deposit",
+    "createdAt": "2026-09-07T12:00:00"
+  }
+]
+```
+
+`type`: `DEPOSIT` | `WITHDRAWAL` | `TRANSFER_OUT` | `TRANSFER_IN`
+
+---
+
+#### `GET /customers/fetchCustomerDetails?mobileNumber=` — aggregate
+
+**Auth:** none (GET)  
+**Gateway:** `http://localhost:8072/accounts/api/accounts/customers/fetchCustomerDetails?mobileNumber=1234567890`
+
+**Response `200`** (`CustomerDetailsDto`):
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "mobileNumber": "1234567890",
+  "accountsDto": { "accountNumber": 1234567890, "accountType": "Savings", "branchAddress": "...", "balance": 250.00 },
+  "cardsDto": { "mobileNumber": "1234567890", "cardNumber": "100646930341", "cardType": "Credit Card", "totalLimit": 100000, "amountUsed": 1000, "availableAmount": 99000 },
+  "loansDto": { "mobileNumber": "1234567890", "loanNumber": "548732457654", "loanType": "Home Loan", "totalLoan": 100000, "amountPaid": 1000, "outstandingAmount": 99000 }
+}
+```
+
+Cards/loans may be null when Feign fallbacks fire.
+
+---
+
+#### Accounts info (optional for UI)
+
+| Method | Gateway path | Response |
+| :--- | :--- | :--- |
+| `GET` | `/accounts/api/accounts/contact-info` | Config-server `ContactInfo` (`message`, `contactDetails`, `onCallSupport`) |
+| `GET` | `/accounts/api/accounts/name-info` | plain string |
+| `GET` | `/accounts/api/accounts/build-info` | plain string (retry + fallback) |
+| `GET` | `/accounts/api/accounts/java-version` | plain string (rate-limited) |
+
+---
+
+### Cards — via Gateway
+
+Base: `http://localhost:8072/cards/api/cards`  
+Direct: `http://localhost:8092/api/cards`  
+Swagger: http://localhost:8092/swagger-ui/index.html
+
+| Method | Path | Auth | Request | Response |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/create?mobileNumber=` | `CARDS` | query param (10 digits) | `201` `{ statusCode, statusMsg }` |
+| `GET` | `/fetch?mobileNumber=` | none | query | `200` `CardsDto` |
+| `PUT` | `/update` | `CARDS` | body `CardsDto` | `200` / `417` envelope |
+| `DELETE` | `/delete?mobileNumber=` | `CARDS` | query | `200` / `417` envelope |
+| `GET` | `/contact-info` | none | — | contact config |
+
+**`CardsDto`:**
+
+```json
+{
+  "mobileNumber": "4354437687",
+  "cardNumber": "100646930341",
+  "cardType": "Credit Card",
+  "totalLimit": 100000,
+  "amountUsed": 1000,
+  "availableAmount": 99000
+}
+```
+
+---
+
+### Loans — via Gateway
+
+Base: `http://localhost:8072/loans/api/loans`  
+Direct: `http://localhost:8093/api/loans`  
+Swagger: http://localhost:8093/swagger-ui/index.html
+
+| Method | Path | Auth | Request | Response |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/create?mobileNumber=` | `LOANS` | query param | `201` envelope |
+| `GET` | `/fetch?mobileNumber=` | none | query | `200` `LoansDto` |
+| `PUT` | `/update` | `LOANS` | body `LoansDto` | `200` / `417` envelope |
+| `DELETE` | `/delete?mobileNumber=` | `LOANS` | query | `200` / `417` envelope |
+| `GET` | `/contact-info` | none | — | contact config |
+
+**`LoansDto`:**
+
+```json
+{
+  "mobileNumber": "4365327698",
+  "loanNumber": "548732457654",
+  "loanType": "Home Loan",
+  "totalLoan": 100000,
+  "amountPaid": 1000,
+  "outstandingAmount": 99000
+}
+```
+
+Loans mutating routes are also Redis rate-limited at the Gateway (`user` header, else `anonymous`).
+
+---
+
+### Gateway ops & fallback
+
+| Method | Path | Response |
+| :--- | :--- | :--- |
+| `GET` | `http://localhost:8072/actuator/health` | health |
+| `GET` | `http://localhost:8072/actuator/gateway/routes` | route list |
+| `GET` | `http://localhost:8072/actuator/circuitbreakers` | CB status |
+| `*` | `http://localhost:8072/accounts-fallback` | plain text when Accounts CB opens |
+
+---
+
+### Message worker (no public HTTP)
+
+Internal Kafka consumer only (`send-communication` → Resend email → optional `communication-sent`).  
+Env: `RESEND_API_KEY`, `RESEND_FROM`. Not called from the SPA.
+
+---
+
+### SPA integration notes (later)
+
+- Login: Keycloak public client `securedbank-spa` (auth-code + PKCE S256), origin `http://localhost:5173`
+- API base: `http://localhost:8072`
+- Send `Authorization: Bearer <access_token>` on mutating calls
+- Typical UI flow: create → deposit → fetch (show balance) → transfer / withdraw → list transactions
 
 </details>
 

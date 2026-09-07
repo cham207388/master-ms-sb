@@ -22,4 +22,7 @@ public class AccountsDto {
     @Schema(description = "Secured Bank branch address", example = "123 NewYork")
     private String branchAddress;
 
+    @Schema(description = "Account balance in USD", example = "250.00")
+    private java.math.BigDecimal balance;
+
 }

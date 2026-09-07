@@ -18,6 +18,10 @@ spring:
         binder:
           brokers: ${KAFKA_BROKER:localhost:9092}
 
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from: ${RESEND_FROM:Securedbank <onboarding@resend.dev>}
+
 logging:
   pattern:
     level: "%5p [${spring.application.name:},%X{trace_id:-},%X{span_id}]"

@@ -107,6 +107,18 @@ Change the global app image tag / registry (`global.appImageRegistry` is the Doc
 helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s15
 ```
 
+### Resend (Message)
+
+`make helm-up` creates Secret `resend-secret` with a placeholder API key (`resend.createSecret: true`). Override with a real key:
+
+```bash
+helm upgrade --install securedbank ./helm/securedbank --set resend.apiKey=re_xxx
+# or pre-create and set createSecret=false:
+kubectl create secret generic resend-secret \
+  --from-literal=RESEND_API_KEY=re_xxx \
+  --from-literal=RESEND_FROM='Securedbank <onboarding@resend.dev>'
+```
+
 ## Relationship to raw YAML
 
 [`kubernetes/`](../kubernetes/) and [`*/k8s/`](../accounts/k8s/) remain the learning / granular apply path (`make k8s-*`), including [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml). Prefer **one** apply method per cluster (Helm **or** kubectl) to avoid ownership conflicts.

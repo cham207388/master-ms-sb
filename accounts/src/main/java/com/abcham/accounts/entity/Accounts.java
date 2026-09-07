@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -21,6 +23,9 @@ public class Accounts extends BaseEntity {
     private String accountType;
 
     private String branchAddress;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "communication_sw")
     private Boolean communicationSw;

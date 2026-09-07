@@ -15,7 +15,11 @@ public class AccountsFunctions {
     @Bean
     public Consumer<Long> updateCommunication(IAccountsService accountsService) {
         return accountNumber -> {
-            log.info("Updating Communication status for the account number : {}", accountNumber.toString());
+            if (accountNumber == null) {
+                log.warn("Ignoring communication-sent with null accountNumber");
+                return;
+            }
+            log.info("Updating Communication status for the account number : {}", accountNumber);
             boolean isUpdated = accountsService.updateCommunicationStatus(accountNumber);
             if (isUpdated) {
                 log.info("Successfully updated Communication status for the account number : {}", accountNumber);

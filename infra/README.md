@@ -56,6 +56,8 @@ A confidential client with **service accounts** also gets a hidden service-accou
 
 Role mappings decide who gets which role. **Role mappers** decide whether those roles appear in the access token. `full_scope_allowed = false` on every client, so only explicitly mapped roles are included.
 
+API clients also map realm roles `ACCOUNTS`, `CARDS`, and `LOANS` into access tokens for Gateway authorization.
+
 ---
 
 ## Clients
@@ -70,11 +72,24 @@ A **client** is an application that talks to Keycloak. OIDC “Client authentica
 | Client ID | Type | Flow | Audience |
 | :--- | :--- | :--- | :--- |
 | `securedbank-cc` | Confidential | Client credentials | Accounts / cards / loans APIs (M2M) |
-| `securedbank-ac` | Confidential | Authorization code (no PKCE) | Interactive login tests |
+| `securedbank-ac` | Confidential | Authorization code (no PKCE) | Interactive login tests (non-SPA) |
+| `securedbank-spa` | Public | Authorization code + PKCE S256 | Future Vite React SPA on `http://localhost:5173` |
 
-The UI client redirects to `http://localhost:4200/dashboard` after login and `http://localhost:4200/home` after logout. The other browser clients allow `*` redirects for local testing only.
+`securedbank-spa` redirect URIs: `http://localhost:5173/*`; post-logout: `http://localhost:5173/`; `web_origins = ["http://localhost:5173"]`. No client secret — use PKCE only.
 
-Client secrets are write-only (`client_secret_wo`). Rotate by changing the secret **and** bumping `client_secret_version` / `auth_code_client_secret_version`.
+Client secrets for confidential clients are write-only (`client_secret_wo`). Rotate by changing the secret **and** bumping `client_secret_version` / `auth_code_client_secret_version`.
+
+---
+
+## Future SPA deployment
+
+The React UI is **not** packaged inside Gateway static resources. Recommended layout:
+
+- Separate Vite app (dev port **5173**) talking to Gateway `http://localhost:8072` with Bearer tokens
+- Keycloak JS / oauth: auth-code + PKCE against `securedbank-spa`
+- Later: its own Kubernetes Deployment + LoadBalancer/Ingress (independent of Java image rebuilds)
+
+Gateway already allows CORS from `http://localhost:5173`.
 
 ---
 
@@ -84,17 +99,17 @@ Keycloak exposes these OAuth 2.0 / OIDC grants on `/.well-known/openid-configura
 
 | Grant | Keycloak switch | This stack |
 | :--- | :--- | :--- |
-| **Authorization code** | Standard flow | Browser clients. Browser hits `/auth`, gets a code, exchanges it at `/token`. |
-| **Client credentials** | Service accounts | `securedbank-cc` only. POST `/token` with `grant_type=client_credentials` and the client secret. |
+| **Authorization code** | Standard flow | Browser clients (`securedbank-ac`, `securedbank-spa`). |
+| **Client credentials** | Service accounts | `securedbank-cc` only. |
 | **Refresh token** | Issued with code flow | Used to get a new access token without logging in again. |
-| **Implicit** | Implicit flow | Off on every client. Do not use for new apps. |
-| **Direct access grants** (resource owner password) | Direct access grants | Off on every client. Disabled by default on new Keycloak 26 clients. |
+| **Implicit** | Implicit flow | Off on every client. |
+| **Direct access grants** | Direct access grants | Off on every client. |
 
 ---
 
 ## PKCE
 
-**PKCE** (Proof Key for Code Exchange) binds the authorization code to the client that started the login. The public clients require **S256**. They send a `code_challenge` to `/auth` and the matching `code_verifier` to `/token`.
+**PKCE** (Proof Key for Code Exchange) binds the authorization code to the client that started the login. `securedbank-spa` requires **S256**.
 
 `securedbank-ac` leaves PKCE unset so the confidential authorization-code path can be tested with a client secret only.
 
@@ -121,4 +136,4 @@ Base: `http://localhost:7080/realms/securedbankdev`
 | JWKS | `.../protocol/openid-connect/certs` | Public signing keys (`jwk-set-uri` in Spring Security). |
 | Logout | `.../protocol/openid-connect/logout` | End the SSO session. |
 
-`make infra-output` prints the same URLs for the configured `keycloak_url` and realm.
+`make infra-output` prints the same URLs for the configured `keycloak_url` and realm (including `spa_client_id`).

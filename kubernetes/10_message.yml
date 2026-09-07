@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: resend-secret
+  labels:
+    app: message
+type: Opaque
+stringData:
+  RESEND_API_KEY: "replace-me"
+  RESEND_FROM: "Securedbank <onboarding@resend.dev>"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -64,6 +75,16 @@ spec:
               key: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_2_0_ENABLED
         - name: OTEL_SERVICE_NAME
           value: "message"
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resend-secret
+              key: RESEND_API_KEY
+        - name: RESEND_FROM
+          valueFrom:
+            secretKeyRef:
+              name: resend-secret
+              key: RESEND_FROM
 
         resources:
           requests:
@@ -80,8 +101,7 @@ metadata:
 spec:
   selector:
     app: message
-  type: ClusterIP
   ports:
-    - protocol: TCP
-      port: 9010
-      targetPort: 9010
+  - port: 9010
+    targetPort: 9010
+  type: ClusterIP

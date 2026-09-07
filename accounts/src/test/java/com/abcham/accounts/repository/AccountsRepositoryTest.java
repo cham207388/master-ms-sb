@@ -53,6 +53,7 @@ class AccountsRepositoryTest {
         accounts.setCustomerId(savedCustomer.getCustomerId());
         accounts.setAccountType(AccountsConstants.SAVINGS);
         accounts.setBranchAddress(AccountsConstants.ADDRESS);
+        accounts.setBalance(java.math.BigDecimal.ZERO);
         accounts.setCreatedBy("TestUser");
         accounts.setCreatedAt(LocalDateTime.now());
     }

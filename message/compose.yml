@@ -7,6 +7,8 @@ services:
     environment:
       KAFKA_BROKER: kafka:19092
       OTEL_SERVICE_NAME: message
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Securedbank <onboarding@resend.dev>}
     depends_on:
       kafka:
         condition: service_started

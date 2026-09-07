@@ -55,16 +55,10 @@ variable "auth_code_client_secret_version" {
   default     = 1
 }
 
-variable "pkce_client_id" {
-  description = "Client ID for the public authorization-code OAuth client with PKCE S256"
+variable "spa_client_id" {
+  description = "Public OpenID client ID for the Vite SPA (auth-code + PKCE S256)"
   type        = string
-  default     = "securedbankpublicclient"
-}
-
-variable "pkce_ui_client_id" {
-  description = "Client ID for the Angular UI public authorization-code OAuth client with PKCE S256"
-  type        = string
-  default     = "securedbankpublicclientui"
+  default     = "securedbank-spa"
 }
 
 variable "user_password" {

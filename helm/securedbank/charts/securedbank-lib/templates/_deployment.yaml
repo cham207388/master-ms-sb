@@ -38,7 +38,7 @@ spec:
         image: {{ include "securedbank-lib.fullname" . }}
         ports:
         - containerPort: {{ $svc.port }}
-        {{- $hasEnv := or (or (not (hasKey $svc "springApplicationName")) $svc.springApplicationName) $svc.kafkaBroker $svc.configMapKeys $svc.extraEnv $svc.database }}
+        {{- $hasEnv := or (or (not (hasKey $svc "springApplicationName")) $svc.springApplicationName) $svc.kafkaBroker $svc.configMapKeys $svc.extraEnv $svc.database $svc.resendSecret }}
         {{- if $hasEnv }}
         env:
         {{- if or (not (hasKey $svc "springApplicationName")) $svc.springApplicationName }}
@@ -67,9 +67,26 @@ spec:
         - name: SPRING_DATASOURCE_PASSWORD
           value: "postgres"
         {{- end }}
+        {{- if $svc.resendSecret }}
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $root.Values.resend.secretName }}
+              key: RESEND_API_KEY
+        - name: RESEND_FROM
+          valueFrom:
+            secretKeyRef:
+              name: {{ $root.Values.resend.secretName }}
+              key: RESEND_FROM
+        {{- end }}
         {{- range $svc.extraEnv | default list }}
         - name: {{ .name }}
+          {{- if .valueFrom }}
+          valueFrom:
+            {{- toYaml .valueFrom | nindent 12 }}
+          {{- else }}
           value: {{ .value | quote }}
+          {{- end }}
         {{- end }}
         {{- end }}
         resources:
