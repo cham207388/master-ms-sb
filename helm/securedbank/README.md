@@ -104,7 +104,7 @@ make helm-down
 Change the global app image tag / registry (`global.appImageRegistry` is the Docker Hub namespace for Spring app images only — do not use `global.imageRegistry`, which Grafana interprets as a registry host):
 
 ```bash
-helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s15
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s18
 ```
 
 ### Resend (Message)

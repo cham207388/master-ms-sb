@@ -8,7 +8,7 @@ Platform orchestration lives under [`docker/`](../docker/). Service Dockerfiles 
 | :--- | :--- |
 | [`docker/compose.yml`](../docker/compose.yml) | Default full stack (`include:` of DBs, Kafka, observability, APIs, message, gateway) |
 | [`docker/compose.image.yml`](../docker/compose.image.yml) | Hub images for domain APIs + message (+ Kafka via `compose.event.yml`) |
-| [`docker/compose.dbs.yml`](../docker/compose.dbs.yml) | PostgreSQL + Redis |
+| [`docker/compose.dbs.yml`](../docker/compose.dbs.yml) | PostgreSQL databases |
 | [`docker/compose.event.yml`](../docker/compose.event.yml) | Apache Kafka |
 | [`docker/compose.observability.yml`](../docker/compose.observability.yml) | Loki, Alloy, Grafana, Tempo, Prometheus, MinIO |
 | [`docker/compose.keycloak.yml`](../docker/compose.keycloak.yml) | Keycloak + its Postgres (not in default `include`) |
@@ -30,7 +30,7 @@ Volume mounts in [`docker/compose.observability.yml`](../docker/compose.observab
 
 ## Networks
 
-- `securedbank` — APIs, DBs, Kafka, Redis, gateway, config, Eureka
+- `securedbank` — APIs, DBs, Kafka, gateway, config, Eureka
 - `loki` — observability stack (Alloy, Loki targets, MinIO, Grafana, Tempo)
 
 ## Kafka dual listeners
@@ -47,7 +47,7 @@ Compose services set `KAFKA_BROKER=kafka:19092`. Bootstrapping containers on `ka
 ```bash
 make all-up                          # full stack
 make kafka-up                        # Kafka only (via main compose)
-make dbs-up                          # Postgres + Redis
+make dbs-up                          # PostgreSQL databases
 make keycloak-up && make infra       # Keycloak + OpenTofu realm
 make accounts-restart                # rebuild/recreate accounts-api
 make all-down                        # tear down default project

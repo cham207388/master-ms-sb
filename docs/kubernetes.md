@@ -7,7 +7,7 @@ Local orchestration for SecuredBank on [kind](https://kind.sigs.k8s.io/). Platfo
 | Path | Role |
 | :--- | :--- |
 | [`kubernetes/1_keycloak.yml`](../kubernetes/1_keycloak.yml) | Keycloak Deployment + Postgres StatefulSet + Secret + Services |
-| [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Redis, Keycloak JWKS) |
+| [`kubernetes/2_configmap.yml`](../kubernetes/2_configmap.yml) | Shared `securedbank-configmap` (Config, Eureka, Kafka, Keycloak JWKS) |
 | [`kubernetes/3_*.yml` … `10_message.yml`](../kubernetes/) | Monolithic copies (learning / alternate apply path); **do not delete** |
 | [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml) | Single-node KRaft Kafka (`kafka:19092`) |
 | [`kubernetes/11_loki.yml` … `15_prometheus.yml`](../kubernetes/) | Raw observability (Loki, Alloy, Tempo, Grafana, Prometheus); `make k8s-observability` |
@@ -152,7 +152,7 @@ make helm-up         # helm upgrade --install securedbank (apps + Keycloak + obs
 make helm-down       # helm uninstall securedbank
 ```
 
-Tune ports, images, Feign NetPol `ingressFrom`, and observability toggles in [`helm/securedbank/values.yaml`](../helm/securedbank/values.yaml) (`global.imageTag`, `services.*`, `loki.enabled`, …). Example: bump all app images with `--set global.imageTag=s15`.
+Tune ports, images, Feign NetPol `ingressFrom`, and observability toggles in [`helm/securedbank/values.yaml`](../helm/securedbank/values.yaml) (`global.imageTag`, `services.*`, `loki.enabled`, …). Example: bump all app images with `--set global.imageTag=s18`.
 
 ### Observability on kind
 
@@ -197,7 +197,7 @@ Consumed via `configMapKeyRef` from `securedbank-configmap` (see [`kubernetes/2_
 
 - `CONFIG_SERVER_URL`, `SPRING_CONFIG_IMPORT` (`optional:configserver:…`)
 - `EUREKA_DEFAULT_ZONE`, `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE`
-- `KAFKA_BROKER`, `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`
+- `KAFKA_BROKER`
 - `KEYCLOAK_JWK_SET_URI` (gateway; use Service port `7080` → `http://keycloak:7080/...`)
 - OTEL (Compose parity): `JAVA_TOOL_OPTIONS`, `OTEL_EXPORTER_OTLP_ENDPOINT` (`http://tempo:4317`), `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_METRICS_EXPORTER`, `OTEL_LOGS_EXPORTER`, logback appender flags
 
@@ -209,7 +209,7 @@ Per-service names and datasource URLs stay on each Deployment (not in the shared
 2. `make k8s-platform` (wait for Keycloak; `make infra`)
 3. `make k8s-config-server` then `make k8s-eureka-server`
 4. `make k8s-kafka` then `make k8s-accounts` / `k8s-cards` / `k8s-loans` / `k8s-message`
-5. `make k8s-gateway-server` (needs Redis if rate limiting is enabled; ConfigMap points at `redis`)
+5. `make k8s-gateway-server`
 6. `make k8s-observability` (Loki, Alloy, Tempo, Grafana, Prometheus) — or use `make helm-up` instead of steps 2–6
 
 Message and Accounts bootstrap Kafka at ConfigMap `KAFKA_BROKER` (`kafka:19092`), which matches the in-cluster Service in [`kubernetes/9_kafka.yml`](../kubernetes/9_kafka.yml).

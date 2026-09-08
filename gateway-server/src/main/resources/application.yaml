@@ -17,12 +17,6 @@ spring:
       httpclient:
         connect-timeout: 5000
         response-timeout: 10s
-  data:
-    redis:
-      connect-timeout: 2s
-      host: localhost
-      port: 6379
-      timeout: 1s
   security:
     oauth2:
       resourceserver:

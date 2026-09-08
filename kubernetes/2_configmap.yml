@@ -10,8 +10,6 @@ data:
   EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8070/eureka/"
   KEYCLOAK_JWK_SET_URI: "http://keycloak:7080/realms/securedbankdev/protocol/openid-connect/certs"
   KAFKA_BROKER: "kafka:19092"
-  SPRING_DATA_REDIS_HOST: "redis"
-  SPRING_DATA_REDIS_PORT: "6379"
   JAVA_TOOL_OPTIONS: "-javaagent:/app/libs/opentelemetry-javaagent.jar"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://tempo:4317"
   OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"

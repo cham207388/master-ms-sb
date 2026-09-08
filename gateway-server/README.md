@@ -49,7 +49,7 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 
 - **Accounts**: circuit breaker `accountsCircuitBreaker` → `/accounts-fallback`; GET retry ×3
 - **Cards**: GET retry ×3
-- **Loans**: GET retry ×3; Redis rate limiter (`user` header, else `anonymous`)
+- **Loans**: GET retry ×3
 
 ---
 

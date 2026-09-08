@@ -125,7 +125,7 @@ OAuth2 resource server. JWT is validated against Keycloak JWKS (`http://localhos
 | `/cards/**`, `/CARDS/**` | `ROLE_CARDS` |
 | `/loans/**`, `/LOANS/**` | `ROLE_LOANS` |
 
-Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matching service. Accounts has a circuit breaker + fallback; loans has a Redis rate limiter.
+Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matching service. Accounts has a circuit breaker + fallback.
 
 </details>
 
@@ -175,7 +175,6 @@ Path rewrite `(?i)/accounts|cards|loans/(.*)` → `/$1`, then `lb://` the matchi
 | **Eureka** | [`eureka-server`](eureka-server) | `8070` | — | [dashboard](http://localhost:8070) | [health](http://localhost:8070/actuator/health) |
 | **Keycloak** | [`infra`](infra) | `7080` | — | [admin](http://localhost:7080) · realm `securedbankdev` | — |
 | **Kafka** | [`docker/compose.event.yml`](docker/compose.event.yml) | `9092` host / `19092` Docker | — | Broker for Accounts ↔ Message | — |
-| **Redis** | — | `6379` | — | Gateway rate limiter | — |
 | **Grafana** | [`observability/grafana`](observability/grafana) | `3000` | — | [UI](http://localhost:3000) | [api/health](http://localhost:3000/api/health) |
 | **Tempo** | [`observability/tempo`](observability/tempo) | `3110` | OTLP `4317`/`4318` | — | — |
 | **Loki gateway** | [`observability/loki`](observability/loki) | `3100` | Read `3101` · Write `3102` | [3100](http://localhost:3100) | [read ready](http://localhost:3101/ready) · [write ready](http://localhost:3102/ready) |
@@ -289,7 +288,6 @@ cd message && ./gradlew bootRun         # 9010 (worker)
 | `SPRING_CONFIG_IMPORT` | Config Server | `optional:configserver:http://localhost:8071/` |
 | `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | Eureka zone | `http://localhost:8070/eureka/` |
 | `KAFKA_BROKER` | Kafka bootstrap | `localhost:9092` (in Compose: `kafka:19092`) |
-| `SPRING_DATA_REDIS_HOST` / `PORT` | Gateway rate limiter | `localhost` / `6379` |
 | `KEYCLOAK_JWK_SET_URI` | Gateway JWT JWKS | `http://localhost:7080/realms/securedbankdev/protocol/openid-connect/certs` |
 
 </details>
@@ -425,17 +423,17 @@ Chart: [`helm/securedbank`](helm/securedbank). Full notes: [helm/securedbank/REA
 
 **After code changes → new images → cluster**
 
-Pick a tag (example `s16`), then run from the repo root:
+Pick a tag (example `s18`), then run from the repo root:
 
 ```bash
 # 1. Build and push all securedbank-* images
-make images-build-push IMAGE_TAG=s16
+make images-build-push IMAGE_TAG=s18
 
 # 2. Package the local library chart (.tgz is gitignored)
 make helm-deps
 
 # 3. Upgrade the release to that tag
-helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s18
 
 # 4. Confirm pods pulled the new images
 kubectl get pods -l 'app in (accounts,cards,loans,message,config-server,eureka-server,gateway-server)' -o wide
@@ -445,17 +443,17 @@ kubectl rollout status deployment/eureka-server-deployment
 Single service only:
 
 ```bash
-make accounts-image-build IMAGE_TAG=s16
-make accounts-image-push IMAGE_TAG=s16
-helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+make accounts-image-build IMAGE_TAG=s18
+make accounts-image-push IMAGE_TAG=s18
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s18
 ```
 
 Immutable tag style (requires `TAG=`):
 
 ```bash
-make images-build-push-tag TAG=s16
+make images-build-push-tag TAG=s18
 make helm-deps
-helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s18
 ```
 
 ---
@@ -498,11 +496,11 @@ make helm-lint
 
 **2. App images**
 
-Chart default is `global.appImageRegistry=baicham` and `global.imageTag=s16`. Kind pulls from Docker Hub unless you build/push your own tag.
+Chart default is `global.appImageRegistry=baicham` and `global.imageTag=s18`. Kind pulls from Docker Hub unless you build/push your own tag.
 
 ```bash
 # Use published Hub images (default values), or build/push first:
-# make images-build-push IMAGE_TAG=s16
+# make images-build-push IMAGE_TAG=s18
 ```
 
 **3. Install the umbrella release**
@@ -513,7 +511,7 @@ make helm-up
 # (runs helm-deps again automatically)
 
 # Or pin a tag explicitly:
-# helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s16
+# helm upgrade --install securedbank ./helm/securedbank --set global.imageTag=s18
 ```
 
 **4. Wait for Keycloak, then provision the realm**
@@ -871,8 +869,6 @@ Swagger: http://localhost:8093/swagger-ui/index.html
   "outstandingAmount": 99000
 }
 ```
-
-Loans mutating routes are also Redis rate-limited at the Gateway (`user` header, else `anonymous`).
 
 ---
 

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: config-server
-        image: baicham/securedbank-config-server:s15
+        image: baicham/securedbank-config-server:s18
         ports:
         - containerPort: 8071
         env:

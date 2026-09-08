@@ -114,7 +114,6 @@ When building, testing, or executing commands in this workspace, always adhere t
      - Config Server: `SPRING_CONFIG_IMPORT` (e.g. `optional:configserver:http://config-server:8071/`)
      - Eureka Server: `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` (e.g. `http://eureka-server:8070/eureka/`)
      - Kafka: `KAFKA_BROKER` (default: `localhost:9092` for host; Compose: `kafka:19092`)
-     - Redis Rate Limiter: `SPRING_DATA_REDIS_HOST` (default: `localhost` or `redis`), `SPRING_DATA_REDIS_PORT` (`6379`)
 
 5. **Docker Container Networking & Eureka Dashboard Status Links**:
    - **Bridge IP Isolation**: Inside Docker Desktop (macOS/Windows), container IP addresses (e.g., `172.19.x.x`) run in an isolated Linux VM and are not directly routable from host web browsers.

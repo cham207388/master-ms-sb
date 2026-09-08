@@ -158,10 +158,10 @@ kafka-down:
 # Global / Teardown
 # ==============================================================================
 dbs-up:
-	$(COMPOSE) up accounts-db cards-db loans-db redis -d
+	$(COMPOSE) up accounts-db cards-db loans-db -d
 
 dbs-down:
-	$(COMPOSE) stop accounts-db cards-db loans-db redis
+	$(COMPOSE) stop accounts-db cards-db loans-db
 	@echo "all dbs are down"
 
 api-up: accounts-api-run cards-api-run loans-api

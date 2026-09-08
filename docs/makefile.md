@@ -7,7 +7,7 @@ Root [`Makefile`](../Makefile). Compose invocations use `docker/compose*.yml` wi
 | Target | Purpose |
 | :--- | :--- |
 | `all-up` / `all-down` | Start or tear down the default compose stack |
-| `dbs-up` / `dbs-down` | All databases (+ Redis via dbs compose) |
+| `dbs-up` / `dbs-down` | All PostgreSQL databases |
 | `kafka-up` / `kafka-down` | Apache Kafka broker |
 | `keycloak-up` / `keycloak-down` | Keycloak + its Postgres |
 | `config-eureka` / `config-eureka-down` | Config Server + Eureka |
