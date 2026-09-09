@@ -1,0 +1,509 @@
+{
+  "info": {
+    "_postman_id": "05bd58b0-d563-4eac-91b3-4d7b2de8ad70",
+    "name": "SecuredBank Microservices API",
+    "description": "End-to-end requests for the SecuredBank gateway, Accounts, Cards, Loans, Config Server, Eureka, and actuator APIs. Run Authentication first, then Accounts, Cards, Loans, Aggregated Customer, Service Information, Platform Operations, and Cleanup. Set clientSecret to the value provisioned for Keycloak client securedbank-cc.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response status is below 500', function () {",
+          "  pm.expect(pm.response.code).to.be.below(500);",
+          "});",
+          "pm.test('Response time is below 5 seconds', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:8072", "type": "string" },
+    { "key": "accountsUrl", "value": "http://localhost:8091", "type": "string" },
+    { "key": "cardsUrl", "value": "http://localhost:8092", "type": "string" },
+    { "key": "loansUrl", "value": "http://localhost:8093", "type": "string" },
+    { "key": "configServerUrl", "value": "http://localhost:8071", "type": "string" },
+    { "key": "eurekaUrl", "value": "http://localhost:8070", "type": "string" },
+    { "key": "keycloakUrl", "value": "http://localhost:7080", "type": "string" },
+    { "key": "realm", "value": "securedbankdev", "type": "string" },
+    { "key": "clientId", "value": "securedbank-cc", "type": "string" },
+    { "key": "clientSecret", "value": "replace-with-your-client-secret", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "mobileNumber", "value": "9345432123", "type": "string" },
+    { "key": "secondMobileNumber", "value": "9345432124", "type": "string" },
+    { "key": "accountNumber", "value": "", "type": "string" },
+    { "key": "secondAccountNumber", "value": "", "type": "string" },
+    { "key": "cardNumber", "value": "", "type": "string" },
+    { "key": "loanNumber", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Get service-account access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token request succeeded', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.access_token).to.be.a('string').and.not.empty;",
+                  "pm.collectionVariables.set('accessToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "client_credentials", "type": "text" },
+                { "key": "client_id", "value": "{{clientId}}", "type": "text" },
+                { "key": "client_secret", "value": "{{clientSecret}}", "type": "text" }
+              ]
+            },
+            "url": "{{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token",
+            "description": "Gets a bearer token and saves it as the collection variable accessToken."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Accounts",
+      "item": [
+        {
+          "name": "Create primary customer account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Secured Bytes Primary\",\n  \"email\": \"primary@securedbank.test\",\n  \"mobileNumber\": \"{{mobileNumber}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/create",
+            "description": "Expected status: 201. Choose a new mobileNumber when rerunning after an interrupted cleanup."
+          }
+        },
+        {
+          "name": "Create destination customer account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Secured Bytes Destination\",\n  \"email\": \"destination@securedbank.test\",\n  \"mobileNumber\": \"{{secondMobileNumber}}\"\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/create",
+            "description": "Creates the destination account used by the transfer request."
+          }
+        },
+        {
+          "name": "Fetch primary account and save account number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account fetched', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('accountNumber', String(body.accountsDto.accountNumber));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/fetch?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Fetch destination account and save account number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Destination account fetched', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('secondAccountNumber', String(body.accountsDto.accountNumber));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/fetch?mobileNumber={{secondMobileNumber}}"
+          }
+        },
+        {
+          "name": "Update primary account",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Secured Bytes Updated\",\n  \"email\": \"updated@securedbank.test\",\n  \"mobileNumber\": \"{{mobileNumber}}\",\n  \"accountsDto\": {\n    \"accountNumber\": {{accountNumber}},\n    \"accountType\": \"Savings\",\n    \"branchAddress\": \"456 New York\",\n    \"balance\": 0\n  }\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/update"
+          }
+        },
+        {
+          "name": "Deposit funds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountNumber\": {{accountNumber}},\n  \"amount\": 250.00\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/deposit"
+          }
+        },
+        {
+          "name": "Withdraw funds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountNumber\": {{accountNumber}},\n  \"amount\": 25.00\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/withdraw"
+          }
+        },
+        {
+          "name": "Transfer funds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountNumber\": {{accountNumber}},\n  \"destinationAccountNumber\": {{secondAccountNumber}},\n  \"amount\": 50.00\n}"
+            },
+            "url": "{{gatewayUrl}}/accounts/api/accounts/transfer"
+          }
+        },
+        {
+          "name": "List transactions by mobile number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/transactions?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "List transactions by account number",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/transactions?accountNumber={{accountNumber}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Cards",
+      "item": [
+        {
+          "name": "Create card",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{gatewayUrl}}/cards/api/cards/create?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Fetch card and save card number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Card fetched', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('cardNumber', body.cardNumber);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/cards/api/cards/fetch?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Update card",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNumber\": \"{{mobileNumber}}\",\n  \"cardNumber\": \"{{cardNumber}}\",\n  \"cardType\": \"Credit Card\",\n  \"totalLimit\": 100000,\n  \"amountUsed\": 1000,\n  \"availableAmount\": 99000\n}"
+            },
+            "url": "{{gatewayUrl}}/cards/api/cards/update"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Loans",
+      "item": [
+        {
+          "name": "Create loan",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{gatewayUrl}}/loans/api/loans/create?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Fetch loan and save loan number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Loan fetched', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('loanNumber', body.loanNumber);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/loans/api/loans/fetch?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Update loan",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNumber\": \"{{mobileNumber}}\",\n  \"loanNumber\": \"{{loanNumber}}\",\n  \"loanType\": \"Home Loan\",\n  \"totalLoan\": 100000,\n  \"amountPaid\": 1000,\n  \"outstandingAmount\": 99000\n}"
+            },
+            "url": "{{gatewayUrl}}/loans/api/loans/update"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Aggregated Customer",
+      "item": [
+        {
+          "name": "Fetch customer details with account, card, and loan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/customers/fetchCustomerDetails?mobileNumber={{mobileNumber}}",
+            "description": "Calls Accounts, which aggregates Cards and Loans through Feign clients."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Service Information",
+      "item": [
+        {
+          "name": "Accounts contact info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/contact-info"
+          }
+        },
+        {
+          "name": "Accounts name info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/name-info"
+          }
+        },
+        {
+          "name": "Accounts build info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/build-info"
+          }
+        },
+        {
+          "name": "Accounts Java version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/java-version"
+          }
+        },
+        {
+          "name": "Cards contact info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/cards/api/cards/contact-info"
+          }
+        },
+        {
+          "name": "Loans contact info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayUrl}}/loans/api/loans/contact-info"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Platform Operations",
+      "item": [
+        {
+          "name": "Gateway health",
+          "request": { "method": "GET", "header": [], "url": "{{gatewayUrl}}/actuator/health" }
+        },
+        {
+          "name": "Gateway routes",
+          "request": { "method": "GET", "header": [], "url": "{{gatewayUrl}}/actuator/gateway/routes" }
+        },
+        {
+          "name": "Gateway circuit breakers",
+          "request": { "method": "GET", "header": [], "url": "{{gatewayUrl}}/actuator/circuitbreakers" }
+        },
+        {
+          "name": "Gateway circuit-breaker events",
+          "request": { "method": "GET", "header": [], "url": "{{gatewayUrl}}/actuator/circuitbreakerevents" }
+        },
+        {
+          "name": "Gateway accounts fallback",
+          "request": { "method": "GET", "header": [], "url": "{{gatewayUrl}}/accounts-fallback" }
+        },
+        {
+          "name": "Accounts health (direct)",
+          "request": { "method": "GET", "header": [], "url": "{{accountsUrl}}/actuator/health" }
+        },
+        {
+          "name": "Cards health (direct)",
+          "request": { "method": "GET", "header": [], "url": "{{cardsUrl}}/actuator/health" }
+        },
+        {
+          "name": "Loans health (direct)",
+          "request": { "method": "GET", "header": [], "url": "{{loansUrl}}/actuator/health" }
+        },
+        {
+          "name": "Config Server health",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/actuator/health" }
+        },
+        {
+          "name": "Eureka health",
+          "request": { "method": "GET", "header": [], "url": "{{eurekaUrl}}/actuator/health" }
+        },
+        {
+          "name": "Accounts default configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/accounts/default" }
+        },
+        {
+          "name": "Accounts production configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/accounts/prod" }
+        },
+        {
+          "name": "Cards default configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/cards/default" }
+        },
+        {
+          "name": "Cards production configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/cards/prod" }
+        },
+        {
+          "name": "Loans default configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/loans/default" }
+        },
+        {
+          "name": "Loans production configuration",
+          "request": { "method": "GET", "header": [], "url": "{{configServerUrl}}/loans/prod" }
+        },
+        {
+          "name": "Accounts OpenAPI document",
+          "request": { "method": "GET", "header": [], "url": "{{accountsUrl}}/v3/api-docs" }
+        },
+        {
+          "name": "Cards OpenAPI document",
+          "request": { "method": "GET", "header": [], "url": "{{cardsUrl}}/v3/api-docs" }
+        },
+        {
+          "name": "Loans OpenAPI document",
+          "request": { "method": "GET", "header": [], "url": "{{loansUrl}}/v3/api-docs" }
+        }
+      ]
+    },
+    {
+      "name": "08 - Cleanup",
+      "description": "Run this folder last. It removes the test records created by the collection.",
+      "item": [
+        {
+          "name": "Delete card",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gatewayUrl}}/cards/api/cards/delete?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Delete loan",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gatewayUrl}}/loans/api/loans/delete?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Delete primary account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/delete?mobileNumber={{mobileNumber}}"
+          }
+        },
+        {
+          "name": "Delete destination account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{gatewayUrl}}/accounts/api/accounts/delete?mobileNumber={{secondMobileNumber}}"
+          }
+        }
+      ]
+    }
+  ]
+}
